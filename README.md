@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="custom_components/nodon_enocean/brand/dark_logo.png">
+    <img src="custom_components/nodon_enocean/brand/logo.png" alt="NodOn" height="64">
+  </picture>
+</p>
+
 # NodOn EnOcean pour Home Assistant
 
 Intégration Home Assistant **officieuse** dédiée aux produits **EnOcean NodOn**.

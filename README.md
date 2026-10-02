@@ -15,22 +15,28 @@ Pas de profil EEP à chercher, pas d'identifiant à recopier, pas de fichier YAM
 
 ## Produits pris en charge
 
-| Produit | Référence | Dans Home Assistant |
-|---|---|---|
-| Module Multifonction | SIN-2-1-01 | Interrupteur |
-| Module Éclairage ON/OFF 2 canaux | SIN-2-2-01 | 2 lumières |
-| Module Chauffage Fil Pilote | SIN-2-FP-01 | Sélecteur de mode (6 ordres) + puissance + énergie |
-| Module Volet Roulant | SIN-2-RS-01 | Volet avec position |
-| Prise intelligente | ASP-2 (ASP-2-1-00 / -10) | Prise |
-| Micro Smart Plug + Mesure | MSP-2 (MSP-2-1-01 / -11) | Prise + puissance + énergie |
-| Interrupteur mural sans pile | CWS-2-1 | Événements par touche (haut/bas, gauche/droite, combinaisons) |
-| Soft Button | TSB-2 | Événements simple / double / long + batterie |
-| Détecteur d'ouverture | SDO-2 | Capteur d'ouverture |
-| Capteur d'ouverture invisible sans pile | SWO-2 | Capteur d'ouverture |
-| Capteur de température | STP-2 | Température |
-| Capteur de température et d'humidité | STPH-2 | Température + humidité |
+|  | Référence | Produit | Dans Home Assistant |
+|:---:|---|---|---|
+| <img src="docs/images/products/SIN-2-1-01.png" alt="SIN-2-1-01" width="64"> | **SIN-2-1-01** | Module Multifonction | Interrupteur |
+| <img src="docs/images/products/SIN-2-2-01.png" alt="SIN-2-2-01" width="64"> | **SIN-2-2-01** | Module Éclairage ON/OFF 2 canaux | 2 lumières |
+| <img src="docs/images/products/SIN-2-FP-01.png" alt="SIN-2-FP-01" width="64"> | **SIN-2-FP-01** | Module Chauffage Fil Pilote | Sélecteur de mode (6 ordres) + puissance + énergie |
+| <img src="docs/images/products/SIN-2-RS-01.png" alt="SIN-2-RS-01" width="64"> | **SIN-2-RS-01** | Module Volet Roulant | Volet avec position |
+| <img src="docs/images/products/ASP-2.png" alt="ASP-2" width="64"> | **ASP-2-1-00 (FR)<br>ASP-2-1-10 (DE)** | Prise intelligente | Prise |
+| <img src="docs/images/products/MSP-2.png" alt="MSP-2" width="64"> | **MSP-2-1-01 (FR)<br>MSP-2-1-11 (DE)** | Micro Smart Plug + Mesure | Prise + puissance + énergie |
+| <img src="docs/images/products/CWS-2-1.png" alt="CWS-2-1" width="64"> | **CWS-2-1-01** | Interrupteur mural sans pile | Événements par touche (haut/bas, gauche/droite, combinaisons) |
+| <img src="docs/images/products/TSB-2.png" alt="TSB-2" width="64"> | **TSB-2-2-02** | Soft Button | Événements simple / double / long + batterie |
+| <img src="docs/images/products/SDO-2.png" alt="SDO-2" width="64"> | **SDO-2-1-05** | Détecteur d'ouverture portes et fenêtres | Capteur d'ouverture |
+| <img src="docs/images/products/SWO-2.png" alt="SWO-2" width="64"> | **SWO-2-1-00** | Capteur d'ouverture invisible sans pile | Capteur d'ouverture |
+| <img src="docs/images/products/STP-2.png" alt="STP-2" width="64"> | **STP-2-1-05** | Capteur de température | Température |
+| <img src="docs/images/products/STPH-2.png" alt="STPH-2" width="64"> | **STPH-2-1-05** | Capteur de température et d'humidité | Température + humidité |
 
 Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut.
+
+## Aperçu
+
+| Choix du produit | Consigne d'appairage | Produit ajouté |
+|:---:|:---:|:---:|
+| <img src="docs/images/screenshots/01-choix-produit.png" alt="Choix du produit NodOn" width="260"> | <img src="docs/images/screenshots/02-appairage.png" alt="Consigne d'appairage" width="260"> | <img src="docs/images/screenshots/03-appareil.png" alt="Fiche de la Micro Smart Plug" width="300"> |
 
 ## Prérequis
 

@@ -22,7 +22,9 @@
       }
     },
     "error": {
-      "cannot_connect": "Impossible de communiquer avec la clé EnOcean. Vérifiez le port et qu'aucune autre intégration ne l'utilise."
+      "cannot_open": "Impossible d'ouvrir le port série ({error}). Il est sans doute déjà utilisé par une autre intégration ou un add-on (intégration EnOcean native, add-on EnOcean MQTT…).",
+      "no_response": "Le port s'ouvre mais la clé ne répond pas (protocole EnOcean ESP3). Vérifiez qu'il s'agit bien de la clé EnOcean et qu'aucun add-on ne l'utilise.",
+      "native_enocean": "L'intégration EnOcean native de Home Assistant est active : supprimez-la d'abord, sinon la clé reste occupée."
     },
     "abort": {
       "already_configured": "Cette clé EnOcean est déjà configurée."

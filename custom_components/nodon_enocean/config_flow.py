@@ -17,7 +17,9 @@ from homeassistant.config_entries import (
     SubentryFlowResult,
 )
 from homeassistant.core import callback
+from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers.selector import (
+    AreaSelector,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
@@ -28,6 +30,8 @@ from homeassistant.helpers.service_info.usb import UsbServiceInfo
 
 from .catalog import PRODUCTS, TEACH_UTE_BIDIR, Product
 from .const import (
+    CONF_AREA,
+    CONF_NEW_AREA,
     CONF_DEVICE_ID,
     CONF_DEVICE_PATH,
     CONF_MODEL,
@@ -194,6 +198,10 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
         if self._task is not None and not self._task.done():
             self._task.cancel()
 
+    def _default_name(self) -> str:
+        assert self._product is not None
+        return f"{self._product.name(self._lang)} NodOn"
+
     @property
     def _lang(self) -> str:
         return self.hass.config.language or "en"
@@ -357,8 +365,17 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
             }
             if self._product.is_actuator:
                 data[CONF_SENDER_OFFSET] = self._sender_offset
+            area_id = user_input.get(CONF_AREA)
+            if new_area := (user_input.get(CONF_NEW_AREA) or "").strip():
+                area_id = ar.async_get(self.hass).async_get_or_create(new_area).id
+            if area_id:
+                data[CONF_AREA] = area_id
+                # Appliquée à la création de l'appareil, au rechargement qui suit.
+                self.hass.data.setdefault(DOMAIN, {}).setdefault("pending_areas", {})[
+                    data[CONF_DEVICE_ID]
+                ] = area_id
             return self.async_create_entry(
-                title=user_input.get("name") or self._product.name(self._lang),
+                title=user_input.get("name") or self._default_name(),
                 data=data,
                 unique_id=id_to_str(self._result.device_id),
             )
@@ -369,7 +386,11 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
         return self.async_show_form(
             step_id="confirm",
             data_schema=vol.Schema(
-                {vol.Required("name", default=self._product.name(self._lang)): str}
+                {
+                    vol.Required("name", default=self._default_name()): str,
+                    vol.Optional(CONF_AREA): AreaSelector(),
+                    vol.Optional(CONF_NEW_AREA): TextSelector(),
+                }
             ),
             description_placeholders=placeholders,
         )

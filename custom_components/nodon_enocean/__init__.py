@@ -11,6 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.event import async_track_time_interval
 
@@ -71,6 +72,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
         serial_number=id_to_str(info.chip_id) if info.chip_id else None,
     )
 
+    pending_areas: dict[str, str] = hass.data.setdefault(DOMAIN, {}).setdefault("pending_areas", {})
     for subentry_id, subentry in entry.subentries.items():
         if subentry.subentry_type != SUBENTRY_DEVICE:
             continue
@@ -88,7 +90,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
         )
         device.start()
         runtime.devices[subentry_id] = device
-        dev_reg.async_get_or_create(
+        dev_entry = dev_reg.async_get_or_create(
             config_entry_id=entry.entry_id,
             config_subentry_id=subentry_id,
             identifiers={(DOMAIN, device.id_str)},
@@ -100,6 +102,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
             via_device=(DOMAIN, f"gateway_{id_to_str(info.base_id)}"),
             configuration_url=product.url,
         )
+        # Pièce choisie lors de l'ajout : appliquée une seule fois, à la création.
+        area_id = pending_areas.pop(device.id_str, None)
+        if area_id and dev_entry.area_id is None and ar.async_get(hass).async_get_area(area_id):
+            dev_reg.async_update_device(dev_entry.id, area_id=area_id)
     del hub
 
     @callback

@@ -5,7 +5,7 @@
   </picture>
 </p>
 
-# NodOn EnOcean pour Home Assistant by "eHome Labs"
+# NodOcean pour Home Assistant by "eHome Labs"
 
 Intégration Home Assistant **officieuse** dédiée aux produits **EnOcean NodOn**.
 Le principe : on choisit son produit dans une liste et Home Assistant fait le reste.
@@ -108,7 +108,7 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 
 ## English
 
-Unofficial Home Assistant integration for **NodOn EnOcean** products. Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
+Unofficial Home Assistant integration for **NodOcean** products. Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
 
 **Requirements:** Home Assistant 2025.3 or newer and an EnOcean USB300 (or ESP3-compatible) stick. No MQTT needed.
 

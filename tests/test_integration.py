@@ -34,7 +34,7 @@ async def _setup_gateway(hass: HomeAssistant):
     return entry
 
 
-async def _pair(hass, entry, dongle, model, inject, name):
+async def _pair(hass, entry, dongle, model, inject, name, area_id=None, new_area=None):
     result = await hass.config_entries.subentries.async_init(
         (entry.entry_id, "device"), context={"source": "user"}
     )
@@ -52,7 +52,12 @@ async def _pair(hass, entry, dongle, model, inject, name):
     result = await hass.config_entries.subentries.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.FORM, result
     assert result["step_id"] == "confirm"
-    result = await hass.config_entries.subentries.async_configure(result["flow_id"], {"name": name})
+    user_input = {"name": name}
+    if area_id:
+        user_input["area_id"] = area_id
+    if new_area:
+        user_input["new_area"] = new_area
+    result = await hass.config_entries.subentries.async_configure(result["flow_id"], user_input)
     assert result["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
     return hass.config_entries.async_get_entry(entry.entry_id)
@@ -60,6 +65,9 @@ async def _pair(hass, entry, dongle, model, inject, name):
 
 async def test_full_flow(hass: HomeAssistant, dongle) -> None:
     entry = await _setup_gateway(hass)
+    from homeassistant.helpers import area_registry as ar  # noqa: PLC0415
+
+    garage = ar.async_get(hass).async_get_or_create("Garage")
 
     # 1) Actionneur : UTE bidirectionnel -> réponse automatique
     entry = await _pair(
@@ -69,6 +77,7 @@ async def test_full_flow(hass: HomeAssistant, dongle) -> None:
         "SIN-2-1-01",
         lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0F 01 D2"), SIN21),
         "Lampe salon",
+        garage.id,
     )
     ute_resp = [s for s in dongle.sent if s.rorg == 0xD4]
     assert ute_resp, "aucune réponse UTE envoyée"
@@ -93,6 +102,7 @@ async def test_full_flow(hass: HomeAssistant, dongle) -> None:
         "CWS-2-1",
         lambda: dongle.inject(0xF6, bytes.fromhex("30"), CWS),
         "Interrupteur entrée",
+        new_area="Entrée",
     )
     # 4) Prise avec mesure : doit obtenir un 2e identifiant d'émission
     entry = await _pair(
@@ -118,6 +128,13 @@ async def test_full_flow(hass: HomeAssistant, dongle) -> None:
     dev_reg = dr.async_get(hass)
     dev = dev_reg.async_get_device(identifiers={(DOMAIN, "0512AB34")})
     assert dev and dev.manufacturer == "NodOn" and dev.model_id == "SIN-2-1-01"
+    assert dev.area_id == garage.id
+    other = dev_reg.async_get_device(identifiers={(DOMAIN, "01A2B3C4")})
+    assert other.area_id is None
+    entree = ar.async_get(hass).async_get_area_by_name("Entrée")
+    assert (
+        entree and dev_reg.async_get_device(identifiers={(DOMAIN, "FEF00001")}).area_id == entree.id
+    )
 
     ent_reg = er.async_get(hass)
     switch_id = ent_reg.async_get_entity_id("switch", DOMAIN, "0512AB34_switch")

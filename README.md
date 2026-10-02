@@ -5,7 +5,9 @@
   </picture>
 </p>
 
-# NodOcean pour Home Assistant by "eHome Labs"
+# NodOcean for HA
+
+**Les produits EnOcean NodOn dans Home Assistant.**
 
 Intégration Home Assistant **officieuse** dédiée aux produits **EnOcean NodOn**.
 Le principe : on choisit son produit dans une liste et Home Assistant fait le reste.
@@ -50,15 +52,15 @@ Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut
 
 ## Installation (HACS)
 
-1. Dans HACS, ouvrez **⋮ → Dépôts personnalisés**, ajoutez `https://github.com/eHomeLabs/nodon-enocean-ha` en catégorie **Intégration**.
-2. Installez **NodOn EnOcean**, puis redémarrez Home Assistant.
-3. **Paramètres → Appareils et services → Ajouter une intégration → NodOn EnOcean**. Une clé USB300 branchée est normalement détectée automatiquement.
+1. Dans HACS, ouvrez **⋮ → Dépôts personnalisés**, ajoutez `https://github.com/eHomeLabs/NodOcean-for-HA` en catégorie **Intégration**.
+2. Installez **NodOcean for HA**, puis redémarrez Home Assistant.
+3. **Paramètres → Appareils et services → Ajouter une intégration → NodOcean for HA**. Une clé USB300 branchée est normalement détectée automatiquement.
 
 Installation manuelle : copiez le dossier `custom_components/nodon_enocean` dans le dossier `config/custom_components/` de Home Assistant, puis redémarrez.
 
 ## Ajouter un produit NodOn
 
-1. Ouvrez l'intégration **NodOn EnOcean** et cliquez sur **Ajouter un produit NodOn**.
+1. Ouvrez l'intégration **NodOcean for HA** et cliquez sur **Ajouter un produit NodOn**.
 2. Choisissez le produit dans la liste.
 3. Suivez la consigne affichée (par exemple « appuyez 3 fois rapidement sur le bouton du module »), puis cliquez sur **Valider**.
 4. Home Assistant écoute pendant 60 s. Il détecte le produit et répond lui-même à sa demande d'appairage pour les modules et les prises.
@@ -108,11 +110,11 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 
 ## English
 
-Unofficial Home Assistant integration for **NodOcean** products. Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
+**NodOcean for HA** is an unofficial Home Assistant integration for **NodOn EnOcean** products. Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
 
 **Requirements:** Home Assistant 2025.3 or newer and an EnOcean USB300 (or ESP3-compatible) stick. No MQTT needed.
 
-**Install:** add this repository to HACS as a custom repository (category *Integration*), install **NodOn EnOcean**, restart, then add the integration from *Settings → Devices & services*.
+**Install:** add this repository to HACS as a custom repository (category *Integration*), install **NodOcean for HA**, restart, then add the integration from *Settings → Devices & services*.
 
 **Add a product:** open the integration, click **Add a NodOn product**, choose the model, follow the on-screen pairing instructions and give it a name.
 

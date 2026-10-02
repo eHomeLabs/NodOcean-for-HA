@@ -5,7 +5,7 @@
   </picture>
 </p>
 
-# NodOn EnOcean pour Home Assistant
+# NodOn EnOcean pour Home Assistant by "eHome Labs"
 
 Intégration Home Assistant **officieuse** dédiée aux produits **EnOcean NodOn**.
 Le principe : on choisit son produit dans une liste et Home Assistant fait le reste.

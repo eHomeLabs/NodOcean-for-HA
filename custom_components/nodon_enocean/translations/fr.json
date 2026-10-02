@@ -1,0 +1,149 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Clé EnOcean",
+        "description": "Sélectionnez la clé USB EnOcean (USB300 ou compatible) branchée sur Home Assistant.",
+        "data": {
+          "device": "Port série"
+        }
+      },
+      "manual": {
+        "title": "Clé EnOcean",
+        "description": "Saisissez le chemin du port série (ex. /dev/serial/by-id/usb-EnOcean_GmbH_EnOcean_USB_300_...).",
+        "data": {
+          "device": "Chemin du port"
+        }
+      },
+      "usb_confirm": {
+        "title": "Clé EnOcean détectée",
+        "description": "Une clé EnOcean a été détectée sur {path}. Voulez-vous l'utiliser ?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de communiquer avec la clé EnOcean. Vérifiez le port et qu'aucune autre intégration ne l'utilise."
+    },
+    "abort": {
+      "already_configured": "Cette clé EnOcean est déjà configurée."
+    }
+  },
+  "config_subentries": {
+    "device": {
+      "initiate_flow": {
+        "user": "Ajouter un produit NodOn"
+      },
+      "entry_type": "Produit NodOn",
+      "step": {
+        "user": {
+          "title": "Ajouter un produit NodOn",
+          "description": "Choisissez le produit NodOn à ajouter. Tout est préconfiguré : il n'y a rien d'autre à renseigner.",
+          "data": {
+            "model": "Produit"
+          }
+        },
+        "instructions": {
+          "title": "{model} — {name}",
+          "description": "{image}**Préparez l'appairage :**\n\n{instructions}\n\nCliquez sur **Valider** pour lancer l'écoute ({timeout} s), puis faites la manipulation ci-dessus."
+        },
+        "timeout": {
+          "title": "Aucun produit détecté",
+          "description": "Aucune demande d'appairage du **{model}** n'a été reçue.\n\n- Rapprochez le produit de la clé EnOcean (moins de 10 m pour l'appairage).\n- Vérifiez qu'il est alimenté (ou exposé à la lumière pour les capteurs solaires).\n- Refaites la manipulation : {instructions}",
+          "data": {
+            "action": "Que voulez-vous faire ?"
+          }
+        },
+        "manual": {
+          "title": "Saisie manuelle",
+          "description": "Saisissez l'identifiant EnOcean à 8 caractères imprimé sur le produit ou son emballage (ex. 0512AB34).",
+          "data": {
+            "device_id": "Identifiant EnOcean"
+          }
+        },
+        "confirm": {
+          "title": "Produit détecté !",
+          "description": "**{model}** détecté — identifiant `{device_id}`, signal {rssi}.\n\n{after}\n\nDonnez-lui un nom (par exemple la pièce où il est installé).",
+          "data": {
+            "name": "Nom"
+          }
+        }
+      },
+      "progress": {
+        "pairing": "{image}**En attente du {model}…**\n\n{instructions}\n\nL'écoute dure {timeout} secondes."
+      },
+      "error": {
+        "invalid_id": "Identifiant invalide : 8 caractères hexadécimaux attendus."
+      },
+      "abort": {
+        "already_configured": "Ce produit est déjà configuré.",
+        "gateway_not_ready": "La clé EnOcean n'est pas prête. Vérifiez sa connexion puis réessayez."
+      }
+    }
+  },
+  "selector": {
+    "timeout_action": {
+      "options": {
+        "retry": "Réessayer l'appairage",
+        "manual": "Saisir l'identifiant manuellement"
+      }
+    }
+  },
+  "entity": {
+    "light": {
+      "channel": {
+        "name": "Canal {channel}"
+      }
+    },
+    "select": {
+      "pilot_wire_mode": {
+        "name": "Mode fil pilote",
+        "state": {
+          "off": "Arrêt",
+          "comfort": "Confort",
+          "eco": "Éco",
+          "frost_protection": "Hors-gel",
+          "comfort_1": "Confort -1",
+          "comfort_2": "Confort -2"
+        }
+      }
+    },
+    "sensor": {
+      "rssi": {
+        "name": "Signal"
+      }
+    },
+    "event": {
+      "wall_switch": {
+        "name": "Touches",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "left_up": "Haut gauche",
+              "left_down": "Bas gauche",
+              "right_up": "Haut droite",
+              "right_down": "Bas droite",
+              "left_up_right_up": "Haut gauche + haut droite",
+              "left_down_right_down": "Bas gauche + bas droite",
+              "left_up_right_down": "Haut gauche + bas droite",
+              "left_down_right_up": "Bas gauche + haut droite",
+              "release": "Relâchement"
+            }
+          }
+        }
+      },
+      "soft_button": {
+        "name": "Bouton",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "single": "Appui simple",
+              "double": "Double appui",
+              "long": "Appui long",
+              "long_release": "Fin d'appui long"
+            }
+          }
+        }
+      }
+    }
+  }
+}

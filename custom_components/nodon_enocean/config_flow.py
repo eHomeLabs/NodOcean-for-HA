@@ -1,0 +1,357 @@
+"""Assistant de configuration : clé EnOcean puis ajout guidé des produits NodOn."""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+from typing import Any
+
+import voluptuous as vol
+
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigEntryState,
+    ConfigFlow,
+    ConfigFlowResult,
+    ConfigSubentryFlow,
+    SubentryFlowResult,
+)
+from homeassistant.core import callback
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+    TextSelector,
+)
+from homeassistant.helpers.service_info.usb import UsbServiceInfo
+
+from .catalog import PRODUCTS, TEACH_UTE_BIDIR, Product
+from .const import (
+    CONF_DEVICE_ID,
+    CONF_DEVICE_PATH,
+    CONF_MODEL,
+    CONF_SENDER_OFFSET,
+    DOMAIN,
+    PAIRING_TIMEOUT,
+    SUBENTRY_DEVICE,
+)
+from .esp3 import id_to_str, str_to_id
+from .gateway import Gateway, GatewayError
+from .pairing import PairingResult, wait_for_teach_in
+
+_LOGGER = logging.getLogger(__name__)
+
+MANUAL_PATH = "manual"
+
+
+def _list_ports() -> list[tuple[str, str]]:
+    import serial.tools.list_ports  # noqa: PLC0415
+
+    ports = []
+    for port in serial.tools.list_ports.comports():
+        path = port.device
+        try:
+            from homeassistant.components.usb import get_serial_by_id  # noqa: PLC0415
+
+            path = get_serial_by_id(port.device)
+        except Exception:  # noqa: BLE001
+            pass
+        label = f"{port.device} — {port.description or ''}"
+        if port.manufacturer:
+            label += f" ({port.manufacturer})"
+        ports.append((path, label))
+    return ports
+
+
+async def _validate_port(path: str) -> tuple[str, Gateway]:
+    gateway = Gateway(path)
+    info = await gateway.connect()
+    gateway.close()
+    return id_to_str(info.base_id), gateway
+
+
+class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
+    """Configuration de la clé EnOcean."""
+
+    VERSION = 1
+
+    def __init__(self) -> None:
+        self._usb_path: str | None = None
+
+    @classmethod
+    @callback
+    def async_get_supported_subentry_types(
+        cls, config_entry: ConfigEntry
+    ) -> dict[str, type[ConfigSubentryFlow]]:
+        return {SUBENTRY_DEVICE: NodOnDeviceSubentryFlow}
+
+    async def _create(self, path: str) -> ConfigFlowResult:
+        base_id, _ = await _validate_port(path)
+        await self.async_set_unique_id(base_id)
+        self._abort_if_unique_id_configured(updates={CONF_DEVICE_PATH: path})
+        return self.async_create_entry(
+            title=f"Clé EnOcean {base_id}", data={CONF_DEVICE_PATH: path}
+        )
+
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            path = user_input[CONF_DEVICE_PATH]
+            if path == MANUAL_PATH:
+                return await self.async_step_manual()
+            try:
+                return await self._create(path)
+            except GatewayError:
+                errors["base"] = "cannot_connect"
+
+        ports = await self.hass.async_add_executor_job(_list_ports)
+        options = [SelectOptionDict(value=p, label=lbl) for p, lbl in ports]
+        options.append(SelectOptionDict(value=MANUAL_PATH, label="Saisie manuelle…"))
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_DEVICE_PATH): SelectSelector(
+                        SelectSelectorConfig(options=options, mode=SelectSelectorMode.LIST)
+                    )
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_manual(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                return await self._create(user_input[CONF_DEVICE_PATH])
+            except GatewayError:
+                errors["base"] = "cannot_connect"
+        return self.async_show_form(
+            step_id="manual",
+            data_schema=vol.Schema({vol.Required(CONF_DEVICE_PATH): str}),
+            errors=errors,
+        )
+
+    async def async_step_usb(self, discovery_info: UsbServiceInfo) -> ConfigFlowResult:
+        from homeassistant.components.usb import get_serial_by_id  # noqa: PLC0415
+
+        self._usb_path = await self.hass.async_add_executor_job(
+            get_serial_by_id, discovery_info.device
+        )
+        self._async_abort_entries_match({CONF_DEVICE_PATH: self._usb_path})
+        self.context["title_placeholders"] = {"name": discovery_info.description or "USB300"}
+        return await self.async_step_usb_confirm()
+
+    async def async_step_usb_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        assert self._usb_path is not None
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                return await self._create(self._usb_path)
+            except GatewayError:
+                errors["base"] = "cannot_connect"
+        self._set_confirm_only()
+        return self.async_show_form(
+            step_id="usb_confirm",
+            description_placeholders={"path": self._usb_path},
+            errors=errors,
+        )
+
+
+class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
+    """Ajout guidé d'un produit NodOn : choix → consignes → appairage auto."""
+
+    def __init__(self) -> None:
+        self._product: Product | None = None
+        self._result: PairingResult | None = None
+        self._sender_offset: int | None = None
+        self._task: asyncio.Task[PairingResult | None] | None = None
+
+    @callback
+    def async_remove(self) -> None:
+        """Fenêtre fermée : on arrête l'écoute d'appairage."""
+        if self._task is not None and not self._task.done():
+            self._task.cancel()
+
+    @property
+    def _lang(self) -> str:
+        return self.hass.config.language or "en"
+
+    def _known_ids(self) -> set[int]:
+        ids: set[int] = set()
+        for sub in self._get_entry().subentries.values():
+            if CONF_DEVICE_ID in sub.data:
+                ids.add(str_to_id(sub.data[CONF_DEVICE_ID]))
+        return ids
+
+    def _next_sender_offset(self) -> int:
+        used = {
+            sub.data[CONF_SENDER_OFFSET]
+            for sub in self._get_entry().subentries.values()
+            if sub.data.get(CONF_SENDER_OFFSET) is not None
+        }
+        for offset in range(1, 128):
+            if offset not in used:
+                return offset
+        raise GatewayError("Plus d'identifiant d'émission disponible")
+
+    def _placeholders(self) -> dict[str, str]:
+        assert self._product is not None
+        p = self._product
+        image = f"![{p.model}]({p.image})\n\n" if p.image else ""
+        return {
+            "model": p.model,
+            "name": p.name(self._lang),
+            "image": image,
+            "instructions": p.pairing(self._lang),
+            "timeout": str(PAIRING_TIMEOUT),
+        }
+
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
+        entry = self._get_entry()
+        if entry.state is not ConfigEntryState.LOADED:
+            return self.async_abort(reason="gateway_not_ready")
+        if user_input is not None:
+            self._product = PRODUCTS[user_input[CONF_MODEL]]
+            return await self.async_step_instructions()
+
+        options = [
+            SelectOptionDict(value=p.model, label=f"{p.model} — {p.name(self._lang)}")
+            for p in PRODUCTS.values()
+        ]
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_MODEL): SelectSelector(
+                        SelectSelectorConfig(options=options, mode=SelectSelectorMode.LIST)
+                    )
+                }
+            ),
+        )
+
+    async def async_step_instructions(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        if user_input is not None:
+            return await self.async_step_pairing()
+        return self.async_show_form(
+            step_id="instructions", description_placeholders=self._placeholders()
+        )
+
+    async def async_step_pairing(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        assert self._product is not None
+        if self._task is None:
+            gateway = self._get_entry().runtime_data.gateway
+            if self._product.teach_in == TEACH_UTE_BIDIR:
+                self._sender_offset = self._next_sender_offset()
+            self._task = self.hass.async_create_task(
+                wait_for_teach_in(
+                    gateway,
+                    self._product,
+                    self._sender_offset,
+                    PAIRING_TIMEOUT,
+                    self._known_ids(),
+                )
+            )
+        if not self._task.done():
+            return self.async_show_progress(
+                step_id="pairing",
+                progress_action="pairing",
+                description_placeholders=self._placeholders(),
+                progress_task=self._task,
+            )
+        try:
+            self._result = self._task.result()
+        except Exception:  # noqa: BLE001
+            _LOGGER.exception("Erreur pendant l'appairage")
+            self._result = None
+        self._task = None
+        if self._result is None:
+            return self.async_show_progress_done(next_step_id="timeout")
+        return self.async_show_progress_done(next_step_id="confirm")
+
+    async def async_step_timeout(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        if user_input is not None:
+            if (
+                user_input.get("action") == "manual"
+                and self._product
+                and not self._product.is_actuator
+            ):
+                return await self.async_step_manual()
+            return await self.async_step_instructions()
+        assert self._product is not None
+        actions = [SelectOptionDict(value="retry", label="retry")]
+        if not self._product.is_actuator:
+            actions.append(SelectOptionDict(value="manual", label="manual"))
+        return self.async_show_form(
+            step_id="timeout",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("action", default="retry"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=actions,
+                            mode=SelectSelectorMode.LIST,
+                            translation_key="timeout_action",
+                        )
+                    )
+                }
+            ),
+            description_placeholders=self._placeholders(),
+        )
+
+    async def async_step_manual(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                device_id = str_to_id(user_input[CONF_DEVICE_ID])
+            except ValueError:
+                errors[CONF_DEVICE_ID] = "invalid_id"
+            else:
+                if device_id in self._known_ids():
+                    return self.async_abort(reason="already_configured")
+                assert self._product is not None
+                self._result = PairingResult(device_id, None, self._product.eep)
+                return await self.async_step_confirm()
+        return self.async_show_form(
+            step_id="manual",
+            data_schema=vol.Schema({vol.Required(CONF_DEVICE_ID): TextSelector()}),
+            errors=errors,
+        )
+
+    async def async_step_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        assert self._product is not None and self._result is not None
+        if user_input is not None:
+            data: dict[str, Any] = {
+                CONF_MODEL: self._product.model,
+                CONF_DEVICE_ID: id_to_str(self._result.device_id),
+            }
+            if self._product.is_actuator:
+                data[CONF_SENDER_OFFSET] = self._sender_offset
+            return self.async_create_entry(
+                title=user_input["name"],
+                data=data,
+                unique_id=id_to_str(self._result.device_id),
+            )
+        placeholders = self._placeholders()
+        placeholders["device_id"] = id_to_str(self._result.device_id)
+        placeholders["rssi"] = f"{self._result.dbm} dBm" if self._result.dbm is not None else "—"
+        placeholders["after"] = self._product.after(self._lang)
+        return self.async_show_form(
+            step_id="confirm",
+            data_schema=vol.Schema(
+                {vol.Required("name", default=self._product.name(self._lang)): str}
+            ),
+            description_placeholders=placeholders,
+        )

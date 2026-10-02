@@ -1,0 +1,149 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "EnOcean stick",
+        "description": "Select the EnOcean USB stick (USB300 or compatible) plugged into Home Assistant.",
+        "data": {
+          "device": "Serial port"
+        }
+      },
+      "manual": {
+        "title": "EnOcean stick",
+        "description": "Enter the serial port path (e.g. /dev/serial/by-id/usb-EnOcean_GmbH_EnOcean_USB_300_...).",
+        "data": {
+          "device": "Port path"
+        }
+      },
+      "usb_confirm": {
+        "title": "EnOcean stick detected",
+        "description": "An EnOcean stick was detected on {path}. Do you want to use it?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot communicate with the EnOcean stick. Check the port and that no other integration is using it."
+    },
+    "abort": {
+      "already_configured": "This EnOcean stick is already configured."
+    }
+  },
+  "config_subentries": {
+    "device": {
+      "initiate_flow": {
+        "user": "Add a NodOn product"
+      },
+      "entry_type": "NodOn product",
+      "step": {
+        "user": {
+          "title": "Add a NodOn product",
+          "description": "Choose the NodOn product to add. Everything is preconfigured: nothing else to fill in.",
+          "data": {
+            "model": "Product"
+          }
+        },
+        "instructions": {
+          "title": "{model} — {name}",
+          "description": "{image}**Get ready to pair:**\n\n{instructions}\n\nClick **Submit** to start listening ({timeout} s), then do the steps above."
+        },
+        "timeout": {
+          "title": "No product detected",
+          "description": "No pairing request from the **{model}** was received.\n\n- Move the product closer to the EnOcean stick (less than 10 m while pairing).\n- Check that it is powered (or exposed to light for solar sensors).\n- Repeat the steps: {instructions}",
+          "data": {
+            "action": "What do you want to do?"
+          }
+        },
+        "manual": {
+          "title": "Manual entry",
+          "description": "Enter the 8-character EnOcean ID printed on the product or its packaging (e.g. 0512AB34).",
+          "data": {
+            "device_id": "EnOcean ID"
+          }
+        },
+        "confirm": {
+          "title": "Product detected!",
+          "description": "**{model}** detected — ID `{device_id}`, signal {rssi}.\n\n{after}\n\nGive it a name (for example the room where it is installed).",
+          "data": {
+            "name": "Name"
+          }
+        }
+      },
+      "progress": {
+        "pairing": "{image}**Waiting for the {model}…**\n\n{instructions}\n\nListening lasts {timeout} seconds."
+      },
+      "error": {
+        "invalid_id": "Invalid ID: 8 hexadecimal characters expected."
+      },
+      "abort": {
+        "already_configured": "This product is already configured.",
+        "gateway_not_ready": "The EnOcean stick is not ready. Check its connection and try again."
+      }
+    }
+  },
+  "selector": {
+    "timeout_action": {
+      "options": {
+        "retry": "Retry pairing",
+        "manual": "Enter the ID manually"
+      }
+    }
+  },
+  "entity": {
+    "light": {
+      "channel": {
+        "name": "Channel {channel}"
+      }
+    },
+    "select": {
+      "pilot_wire_mode": {
+        "name": "Pilot wire mode",
+        "state": {
+          "off": "Off",
+          "comfort": "Comfort",
+          "eco": "Eco",
+          "frost_protection": "Frost protection",
+          "comfort_1": "Comfort -1",
+          "comfort_2": "Comfort -2"
+        }
+      }
+    },
+    "sensor": {
+      "rssi": {
+        "name": "Signal"
+      }
+    },
+    "event": {
+      "wall_switch": {
+        "name": "Keys",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "left_up": "Top left",
+              "left_down": "Bottom left",
+              "right_up": "Top right",
+              "right_down": "Bottom right",
+              "left_up_right_up": "Top left + top right",
+              "left_down_right_down": "Bottom left + bottom right",
+              "left_up_right_down": "Top left + bottom right",
+              "left_down_right_up": "Bottom left + top right",
+              "release": "Release"
+            }
+          }
+        }
+      },
+      "soft_button": {
+        "name": "Button",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "single": "Single press",
+              "double": "Double press",
+              "long": "Long press",
+              "long_release": "Long press released"
+            }
+          }
+        }
+      }
+    }
+  }
+}

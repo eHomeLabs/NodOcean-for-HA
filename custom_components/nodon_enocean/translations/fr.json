@@ -64,9 +64,16 @@
         },
         "confirm": {
           "title": "Produit détecté !",
-          "description": "**{model}** détecté — identifiant `{device_id}`, signal {rssi}.\n\n{after}\n\nDonnez-lui un nom (par exemple la pièce où il est installé).",
+          "description": "**{model}** détecté — identifiant `{device_id}`, signal {rssi}.\n\n{after}\n\nDonnez-lui un nom et choisissez la pièce où il est installé.",
           "data": {
-            "name": "Nom"
+            "name": "Nom",
+            "area_id": "Pièce / zone",
+            "new_area": "Ou nouvelle pièce"
+          },
+          "data_description": {
+            "name": "Par exemple « Prise intelligente EnOcean NodOn ».",
+            "area_id": "Pièce existante où le produit est installé (facultatif).",
+            "new_area": "Si la pièce n'existe pas encore, saisissez son nom (ex. « Garage ») : elle sera créée."
           }
         }
       },

@@ -64,9 +64,16 @@
         },
         "confirm": {
           "title": "Product detected!",
-          "description": "**{model}** detected — ID `{device_id}`, signal {rssi}.\n\n{after}\n\nGive it a name (for example the room where it is installed).",
+          "description": "**{model}** detected — ID `{device_id}`, signal {rssi}.\n\n{after}\n\nGive it a name and choose the area where it is installed.",
           "data": {
-            "name": "Name"
+            "name": "Name",
+            "area_id": "Area",
+            "new_area": "Or new area"
+          },
+          "data_description": {
+            "name": "For example “EnOcean Smart Plug NodOn”.",
+            "area_id": "Existing area where the product is installed (optional).",
+            "new_area": "If the area does not exist yet, type its name (e.g. “Garage”): it will be created."
           }
         }
       },

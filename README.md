@@ -35,7 +35,7 @@ Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut
 
 ## Installation (HACS)
 
-1. Dans HACS, ouvrez **⋮ → Dépôts personnalisés**, ajoutez `https://github.com/PascalNodOn/nodon-enocean-ha` en catégorie **Intégration**.
+1. Dans HACS, ouvrez **⋮ → Dépôts personnalisés**, ajoutez `https://github.com/eHomeLabs/nodon-enocean-ha` en catégorie **Intégration**.
 2. Installez **NodOn EnOcean**, puis redémarrez Home Assistant.
 3. **Paramètres → Appareils et services → Ajouter une intégration → NodOn EnOcean**. Une clé USB300 branchée est normalement détectée automatiquement.
 

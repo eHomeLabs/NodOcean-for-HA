@@ -221,7 +221,7 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
         p = self._product
         image = f"![{p.model}]({p.image})\n\n" if p.image else ""
         return {
-            "model": p.model,
+            "model": p.references,
             "name": p.name(self._lang),
             "image": image,
             "instructions": p.pairing(self._lang),
@@ -237,7 +237,7 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
             return await self.async_step_instructions()
 
         options = [
-            SelectOptionDict(value=p.model, label=f"{p.model} — {p.name(self._lang)}")
+            SelectOptionDict(value=p.model, label=f"{p.references} — {p.name(self._lang)}")
             for p in PRODUCTS.values()
         ]
         return self.async_show_form(
@@ -358,7 +358,7 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
             if self._product.is_actuator:
                 data[CONF_SENDER_OFFSET] = self._sender_offset
             return self.async_create_entry(
-                title=user_input["name"],
+                title=user_input.get("name") or self._product.name(self._lang),
                 data=data,
                 unique_id=id_to_str(self._result.device_id),
             )

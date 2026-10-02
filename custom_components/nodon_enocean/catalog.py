@@ -15,7 +15,7 @@ TEACH_1BS = "1bs"  # télégramme 1BS avec bit LRN
 TEACH_4BS = "4bs"  # télégramme 4BS avec bit LRN
 TEACH_RPS = "rps"  # premier appui de touche reçu
 
-_CDN = "https://cdn.shopify.com/s/files/1/0735/2054/6057/files/"
+_IMAGES = "https://raw.githubusercontent.com/eHomeLabs/nodon-enocean-ha/main/docs/images/products/"
 
 
 @dataclass(frozen=True)
@@ -29,11 +29,19 @@ class Product:
     pairing_en: str
     channels: int = 1
     metering: bool = False
-    image: str | None = None
     url: str | None = None
     after_fr: str = ""
     after_en: str = ""
     variants: tuple[str, ...] = field(default_factory=tuple)
+
+    @property
+    def image(self) -> str:
+        return f"{_IMAGES}{self.model}.png"
+
+    @property
+    def references(self) -> str:
+        """Références commerciales complètes (ex. « ASP-2-1-00 / ASP-2-1-10 »)."""
+        return " / ".join(self.variants) if self.variants else self.model
 
     @property
     def is_actuator(self) -> bool:
@@ -80,8 +88,6 @@ PRODUCTS: dict[str, Product] = {
                 "The module must be powered. Press the module button **3 times "
                 "quickly**: the LED flickers red (30 s). " + _ACT_EN
             ),
-            image=_CDN
-            + "SIN-2-1-01-A-ISO-500x500_55cc9093-17bd-432e-b36d-3ac1f95b1d76.webp?format=png",
             url="https://nodon.fr/products/module-multifonction-enocean",
         ),
         Product(
@@ -101,7 +107,6 @@ PRODUCTS: dict[str, Product] = {
                 "quickly**: the LED flickers red (30 s). Both channels are paired at "
                 "once. " + _ACT_EN
             ),
-            image=_CDN + "SIN-2-2-01-A-ISO-500x500.webp?format=png",
             url="https://nodon.fr/products/module-eclairage-on-off-enocean",
         ),
         Product(
@@ -120,7 +125,6 @@ PRODUCTS: dict[str, Product] = {
                 "The module must be powered. Press the module button **3 times "
                 "quickly** (within 2 s): the LED flickers red (30 s). " + _ACT_EN
             ),
-            image=_CDN + "SIN-2-FP-01-A-ISO-500x500.webp?format=png",
             url="https://nodon.fr/products/module-chauffage-fil-pilote-enocean",
         ),
         Product(
@@ -145,7 +149,6 @@ PRODUCTS: dict[str, Product] = {
                 "Remember to calibrate the shutter if not done yet: 5 short presses "
                 "on the module button (up / down / up cycle)."
             ),
-            image=_CDN + "SIN-2-RS-01-A-ISO-500x500.webp?format=png",
             url="https://nodon.fr/products/module-volet-roulant-enocean",
         ),
         Product(
@@ -204,7 +207,6 @@ PRODUCTS: dict[str, Product] = {
                 "Firmly press **any key** of the switch. All keys will then be "
                 "available in Home Assistant."
             ),
-            image=_CDN + "CWS_2-ISO-A_600x600px.webp?format=png",
             url="https://nodon.fr/products/enocean-wall-switch",
         ),
         Product(
@@ -213,7 +215,7 @@ PRODUCTS: dict[str, Product] = {
             name_en="EnOcean Soft Button",
             eep="D2-03-0A",
             teach_in=TEACH_UTE_UNI,
-            variants=("TSB-2-2-02", "TSB-2-2-01", "TSB-2-1-01"),
+            variants=("TSB-2-2-02",),
             pairing_fr=(
                 "Appuyez **5 fois brièvement** de suite sur le Soft Button "
                 "(moins d'une demi-seconde entre chaque appui)."
@@ -222,8 +224,6 @@ PRODUCTS: dict[str, Product] = {
                 "Press the Soft Button **5 times briefly** in a row "
                 "(less than half a second between presses)."
             ),
-            image=_CDN
-            + "TSB-2-2-02-ISO_600x600_2deaa246-329f-442c-b925-71b018ef39f2.webp?format=png",
             url="https://nodon.fr/products/soft-button-enocean",
         ),
         Product(
@@ -243,7 +243,6 @@ PRODUCTS: dict[str, Product] = {
                 "sensor is new, expose it to light for a few minutes to charge its "
                 "solar cell."
             ),
-            image=_CDN + "NodOn-SDO-V-iso-600x600.webp?format=png",
             url="https://nodon.fr/products/capteur-ouverture-portes-et-fenetres-enocean",
         ),
         Product(
@@ -261,7 +260,6 @@ PRODUCTS: dict[str, Product] = {
                 "**Hold the LRN button** of the sensor **and actuate the spring** "
                 "(press or release it). The LRN button alone sends nothing."
             ),
-            image=_CDN + "SWO-ISO-A.webp?format=png",
             url="https://nodon.fr/products/capteur-ouverture-invisible-sans-pile-enocean",
         ),
         Product(
@@ -281,7 +279,6 @@ PRODUCTS: dict[str, Product] = {
                 "sensor is new, expose it to light for a few minutes to charge its "
                 "solar cell."
             ),
-            image=_CDN + "NodOn-STP_STPH-V-iso-600x600.webp?format=png",
             url="https://nodon.fr/products/capteur-de-temperature-enocean",
         ),
         Product(
@@ -301,7 +298,6 @@ PRODUCTS: dict[str, Product] = {
                 "sensor is new, expose it to light for a few minutes to charge its "
                 "solar cell."
             ),
-            image=_CDN + "NodOn-STP_STPH-V-iso-600x600.webp?format=png",
         ),
     )
 }

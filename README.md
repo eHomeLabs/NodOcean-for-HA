@@ -34,9 +34,11 @@ Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut
 
 ## Aperçu
 
-| Choix du produit | Consigne d'appairage | Produit ajouté |
-|:---:|:---:|:---:|
-| <img src="docs/images/screenshots/01-choix-produit.png" alt="Choix du produit NodOn" width="260"> | <img src="docs/images/screenshots/02-appairage.png" alt="Consigne d'appairage" width="260"> | <img src="docs/images/screenshots/03-appareil.png" alt="Fiche de la Micro Smart Plug" width="300"> |
+| 1. Choix du produit | 2. Consigne d'appairage |
+|:---:|:---:|
+| <img src="docs/images/screenshots/01-choix-produit.png" alt="Choix du produit NodOn" width="320"> | <img src="docs/images/screenshots/02-appairage.png" alt="Consigne d'appairage" width="320"> |
+| **3. Nom et pièce** | **4. Produit ajouté** |
+| <img src="docs/images/screenshots/04-nom-et-piece.png" alt="Nom et pièce du produit" width="320"> | <img src="docs/images/screenshots/03-appareil.png" alt="Fiche de la Micro Smart Plug" width="380"> |
 
 ## Prérequis
 
@@ -60,7 +62,7 @@ Installation manuelle : copiez le dossier `custom_components/nodon_enocean` dans
 2. Choisissez le produit dans la liste.
 3. Suivez la consigne affichée (par exemple « appuyez 3 fois rapidement sur le bouton du module »), puis cliquez sur **Valider**.
 4. Home Assistant écoute pendant 60 s. Il détecte le produit et répond lui-même à sa demande d'appairage pour les modules et les prises.
-5. Donnez un nom au produit : c'est terminé.
+5. Donnez un nom au produit et choisissez sa pièce (ou créez-en une, par exemple « Garage ») : c'est terminé.
 
 Pour les capteurs et les interrupteurs, si l'appairage échoue, vous pouvez aussi saisir l'identifiant EnOcean imprimé sur le produit.
 

@@ -22,7 +22,9 @@
       }
     },
     "error": {
-      "cannot_connect": "Cannot communicate with the EnOcean stick. Check the port and that no other integration is using it."
+      "cannot_open": "Cannot open the serial port ({error}). It is probably already used by another integration or add-on (native EnOcean integration, EnOcean MQTT add-on…).",
+      "no_response": "The port opens but the stick does not answer (EnOcean ESP3 protocol). Check that it is the EnOcean stick and that no add-on is using it.",
+      "native_enocean": "The native Home Assistant EnOcean integration is active: remove it first, otherwise the stick stays busy."
     },
     "abort": {
       "already_configured": "This EnOcean stick is already configured."

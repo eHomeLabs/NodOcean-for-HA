@@ -37,7 +37,7 @@ from .const import (
     SUBENTRY_DEVICE,
 )
 from .esp3 import id_to_str, str_to_id
-from .gateway import Gateway, GatewayError
+from .gateway import Gateway, GatewayError, GatewayOpenError
 from .pairing import PairingResult, wait_for_teach_in
 
 _LOGGER = logging.getLogger(__name__)
@@ -71,6 +71,10 @@ async def _validate_port(path: str) -> tuple[str, Gateway]:
     return id_to_str(info.base_id), gateway
 
 
+def _error_key(err: GatewayError) -> str:
+    return "cannot_open" if isinstance(err, GatewayOpenError) else "no_response"
+
+
 class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
     """Configuration de la clé EnOcean."""
 
@@ -78,6 +82,13 @@ class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self._usb_path: str | None = None
+        self._last_error = ""
+
+    def _native_enocean_loaded(self) -> bool:
+        return any(
+            e.state is ConfigEntryState.LOADED
+            for e in self.hass.config_entries.async_entries("enocean")
+        )
 
     @classmethod
     @callback
@@ -102,9 +113,12 @@ class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_manual()
             try:
                 return await self._create(path)
-            except GatewayError:
-                errors["base"] = "cannot_connect"
+            except GatewayError as err:
+                errors["base"] = _error_key(err)
+                self._last_error = str(err)
 
+        if not errors and self._native_enocean_loaded():
+            errors["base"] = "native_enocean"
         ports = await self.hass.async_add_executor_job(_list_ports)
         options = [SelectOptionDict(value=p, label=lbl) for p, lbl in ports]
         options.append(SelectOptionDict(value=MANUAL_PATH, label="Saisie manuelle…"))
@@ -118,6 +132,7 @@ class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+            description_placeholders={"error": self._last_error},
         )
 
     async def async_step_manual(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -125,12 +140,14 @@ class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 return await self._create(user_input[CONF_DEVICE_PATH])
-            except GatewayError:
-                errors["base"] = "cannot_connect"
+            except GatewayError as err:
+                errors["base"] = _error_key(err)
+                self._last_error = str(err)
         return self.async_show_form(
             step_id="manual",
             data_schema=vol.Schema({vol.Required(CONF_DEVICE_PATH): str}),
             errors=errors,
+            description_placeholders={"error": self._last_error},
         )
 
     async def async_step_usb(self, discovery_info: UsbServiceInfo) -> ConfigFlowResult:
@@ -151,12 +168,13 @@ class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 return await self._create(self._usb_path)
-            except GatewayError:
-                errors["base"] = "cannot_connect"
+            except GatewayError as err:
+                errors["base"] = _error_key(err)
+                self._last_error = str(err)
         self._set_confirm_only()
         return self.async_show_form(
             step_id="usb_confirm",
-            description_placeholders={"path": self._usb_path},
+            description_placeholders={"path": self._usb_path, "error": self._last_error},
             errors=errors,
         )
 

@@ -35,6 +35,14 @@ class GatewayError(Exception):
     """Erreur de communication avec la clé."""
 
 
+class GatewayOpenError(GatewayError):
+    """Le port série ne peut pas être ouvert (occupé, droits, absent)."""
+
+
+class GatewayNoResponse(GatewayError):
+    """Le port s'ouvre mais aucune réponse ESP3 (pas une clé EnOcean ?)."""
+
+
 @dataclass
 class GatewayInfo:
     base_id: int
@@ -82,13 +90,32 @@ class Gateway:
                 loop, lambda: _SerialProtocol(self), self.port, baudrate=57600
             )
         except Exception as err:  # noqa: BLE001
-            raise GatewayError(f"Impossible d'ouvrir {self.port} : {err}") from err
-        try:
-            self.info = await self._read_info()
-        except Exception:
-            self.close()
-            raise
-        return self.info
+            _LOGGER.error("Impossible d'ouvrir %s : %s", self.port, err)
+            raise GatewayOpenError(str(err)) from err
+        # Laisse le temps à la clé de démarrer et vide d'éventuels octets parasites.
+        await asyncio.sleep(0.3)
+        self._parser = ESP3Parser()
+        last_err: GatewayError | None = None
+        for attempt in range(1, 4):
+            try:
+                self.info = await self._read_info()
+                return self.info
+            except GatewayError as err:
+                last_err = err
+                _LOGGER.warning(
+                    "Clé EnOcean sur %s : pas de réponse (essai %s/3) : %s",
+                    self.port,
+                    attempt,
+                    err,
+                )
+                await asyncio.sleep(0.5)
+        self.close()
+        _LOGGER.error(
+            "Aucune réponse ESP3 sur %s. Ce port n'est peut-être pas une clé EnOcean, "
+            "ou il est utilisé par une autre intégration / un autre add-on.",
+            self.port,
+        )
+        raise GatewayNoResponse(str(last_err))
 
     async def connect_transport(self, transport: asyncio.Transport) -> GatewayInfo:
         """Utilisé par les tests : transport déjà ouvert."""
@@ -162,6 +189,7 @@ class Gateway:
     # -- Réception -----------------------------------------------------------
 
     def _data_received(self, data: bytes) -> None:
+        _LOGGER.debug("Octets reçus : %s", data.hex(" "))
         for packet in self._parser.feed(data):
             if packet.packet_type == PACKET_RESPONSE:
                 if self._response_waiter and not self._response_waiter.done():

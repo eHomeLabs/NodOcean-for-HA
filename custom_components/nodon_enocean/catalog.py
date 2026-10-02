@@ -15,7 +15,7 @@ TEACH_1BS = "1bs"  # télégramme 1BS avec bit LRN
 TEACH_4BS = "4bs"  # télégramme 4BS avec bit LRN
 TEACH_RPS = "rps"  # premier appui de touche reçu
 
-_IMAGES = "https://raw.githubusercontent.com/eHomeLabs/nodon-enocean-ha/main/docs/images/products/"
+_IMAGES = "https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/"
 
 
 @dataclass(frozen=True)

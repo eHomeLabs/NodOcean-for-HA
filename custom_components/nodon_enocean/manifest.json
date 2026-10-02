@@ -1,6 +1,6 @@
 {
   "domain": "nodon_enocean",
-  "name": "NodOn EnOcean",
+  "name": "NodOcean for HA",
   "codeowners": [
     "@eHomeLabs"
   ],
@@ -8,10 +8,10 @@
   "dependencies": [
     "usb"
   ],
-  "documentation": "https://github.com/eHomeLabs/nodon-enocean-ha",
+  "documentation": "https://github.com/eHomeLabs/NodOcean-for-HA",
   "integration_type": "hub",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/eHomeLabs/nodon-enocean-ha/issues",
+  "issue_tracker": "https://github.com/eHomeLabs/NodOcean-for-HA/issues",
   "requirements": [
     "pyserial-asyncio-fast>=0.16"
   ],
@@ -27,5 +27,5 @@
       "manufacturer": "*enocean*"
     }
   ],
-  "version": "0.1.5"
+  "version": "0.1.6"
 }

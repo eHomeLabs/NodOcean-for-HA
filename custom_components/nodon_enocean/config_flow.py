@@ -28,7 +28,7 @@ from homeassistant.helpers.selector import (
 )
 from homeassistant.helpers.service_info.usb import UsbServiceInfo
 
-from .catalog import PRODUCTS, TEACH_UTE_BIDIR, Product
+from .catalog import GALLERY, PRODUCTS, TEACH_UTE_BIDIR, Product
 from .const import (
     CONF_AREA,
     CONF_NEW_AREA,
@@ -250,6 +250,7 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
         ]
         return self.async_show_form(
             step_id="user",
+            description_placeholders={"gallery": f"![NodOn]({GALLERY})"},
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_MODEL): SelectSelector(

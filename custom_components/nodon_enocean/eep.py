@@ -293,9 +293,39 @@ def decode_a50401(t: RadioTelegram) -> dict[str, Any] | None:
 # R1 : 0 = AI (bas gauche), 1 = A0 (haut gauche), 2 = BI (bas droite), 3 = B0 (haut droite)
 
 ROCKER_NAMES = {0: "left_down", 1: "left_up", 2: "right_down", 3: "right_up"}
+# Soft Remote CRC-2 (Quick User Guide) : 10 haut droite, 30 bas droite, 50 haut gauche, 70 bas gauche
+SOFT_REMOTE_NAMES = {0: "right_up", 1: "right_down", 2: "left_up", 3: "left_down"}
 
 
-def decode_f60201(t: RadioTelegram) -> dict[str, Any] | None:
+def decode_single_button(t: RadioTelegram) -> dict[str, Any] | None:
+    """Interrupteur 1 bouton (CFS-2) : appui / relâchement."""
+    if t.rorg != RORG_RPS or len(t.payload) != 1:
+        return None
+    return {"event": "press" if t.payload[0] & 0x10 else "release"}
+
+
+def decode_f60401(t: RadioTelegram) -> dict[str, Any] | None:
+    """Interrupteur à carte (CCS-2) : 30 (ou 70) = carte insérée, 00 = retirée."""
+    if t.rorg != RORG_RPS or len(t.payload) != 1:
+        return None
+    return {"card": t.payload[0] != 0}
+
+
+def decode_a50703(t: RadioTelegram) -> dict[str, Any] | None:
+    """Détecteur de mouvement PIR-2 : tension pile, luminosité, mouvement."""
+    if t.rorg != RORG_4BS or len(t.payload) != 4 or not t.payload[3] & 0x08:
+        return None
+    supply, lux_hi, lux_lo, db0 = t.payload
+    state: dict[str, Any] = {"motion": bool(db0 & 0x80)}
+    if supply <= 250:
+        state["voltage"] = round(supply * 0.02, 2)
+    lux = (lux_hi << 2) | (lux_lo >> 6)
+    if lux <= 1000:
+        state["illuminance"] = lux
+    return state
+
+
+def decode_f60201(t: RadioTelegram, names: dict[int, str] = ROCKER_NAMES) -> dict[str, Any] | None:
     if t.rorg != RORG_RPS or len(t.payload) != 1:
         return None
     db0 = t.payload[0]
@@ -305,9 +335,9 @@ def decode_f60201(t: RadioTelegram) -> dict[str, Any] | None:
     if t.status and not t.status & 0x10:
         # NU = 0 : appui de 3 boutons ou plus, non géré
         return None
-    first = ROCKER_NAMES[(db0 >> 5) & 0x07 & 0x03]
+    first = names[(db0 >> 5) & 0x07 & 0x03]
     if db0 & 0x01:  # seconde action simultanée
-        second = ROCKER_NAMES[(db0 >> 1) & 0x03]
+        second = names[(db0 >> 1) & 0x03]
         return {"event": "_".join(sorted((first, second)))}
     return {"event": first}
 

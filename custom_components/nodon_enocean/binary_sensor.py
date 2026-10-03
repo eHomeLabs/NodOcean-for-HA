@@ -23,6 +23,10 @@ async def async_setup_entry(
     def factory(device: NodOnDevice) -> list:
         if device.product.eep == "D5-00-01":
             return [NodOnOpening(device)]
+        if device.product.model == "CCS-2":
+            return [NodOnCard(device)]
+        if device.product.model == "PIR-2":
+            return [NodOnMotion(device)]
         return []
 
     add_per_subentry(entry.runtime_data.devices.values(), async_add_entities, factory)
@@ -46,3 +50,39 @@ class NodOnOpening(NodOnEntity, BinarySensorEntity, RestoreEntity):
     @property
     def is_on(self) -> bool | None:
         return self.device.state.get("opening")
+
+
+class NodOnCard(NodOnEntity, BinarySensorEntity, RestoreEntity):
+    """Interrupteur à carte CCS-2 : carte insérée ou non."""
+
+    _attr_translation_key = "card"
+    _state_keys = frozenset({"card"})
+
+    def __init__(self, device: NodOnDevice) -> None:
+        super().__init__(device, "card")
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        # N'émet qu'à l'insertion / au retrait : on restaure le dernier état connu.
+        last = await self.async_get_last_state()
+        if "card" not in self.device.state and last and last.state in ("on", "off"):
+            self.device.state["card"] = last.state == "on"
+
+    @property
+    def is_on(self) -> bool | None:
+        return self.device.state.get("card")
+
+
+class NodOnMotion(NodOnEntity, BinarySensorEntity):
+    """Détecteur de mouvement PIR-2."""
+
+    _attr_name = None
+    _attr_device_class = BinarySensorDeviceClass.MOTION
+    _state_keys = frozenset({"motion"})
+
+    def __init__(self, device: NodOnDevice) -> None:
+        super().__init__(device, "motion")
+
+    @property
+    def is_on(self) -> bool | None:
+        return self.device.state.get("motion")

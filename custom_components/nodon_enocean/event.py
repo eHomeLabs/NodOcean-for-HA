@@ -33,6 +33,8 @@ TWO_BUTTON_MAP = {
     "right_down": "down",
 }
 SOFT_BUTTON_EVENTS = ["single", "double", "long", "long_release"]
+SOFT_REMOTE_EVENTS = [e for e in WALL_SWITCH_EVENTS if e not in ("up", "down")]
+FLOOR_SWITCH_EVENTS = ["press", "release"]
 
 
 async def async_setup_entry(
@@ -45,6 +47,10 @@ async def async_setup_entry(
             return [NodOnButtonEvent(device, WALL_SWITCH_EVENTS, "wall_switch")]
         if device.product.model == "TSB-2":
             return [NodOnButtonEvent(device, SOFT_BUTTON_EVENTS, "soft_button")]
+        if device.product.model == "CRC-2":
+            return [NodOnButtonEvent(device, SOFT_REMOTE_EVENTS, "soft_remote")]
+        if device.product.model == "CFS-2":
+            return [NodOnButtonEvent(device, FLOOR_SWITCH_EVENTS, "floor_switch")]
         return []
 
     add_per_subentry(entry.runtime_data.devices.values(), async_add_entities, factory)

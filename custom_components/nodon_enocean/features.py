@@ -15,5 +15,5 @@ DELAY_OFF = frozenset({"SIN-2-1-01", "SIN-2-2-01"})
 # Options côté Home Assistant
 TEMPERATURE_OFFSET = frozenset({"STP-2", "STPH-2"})
 HUMIDITY_OFFSET = frozenset({"STPH-2"})
-TIMEOUT = frozenset({"SDO-2", "STP-2", "STPH-2"})
+TIMEOUT = frozenset({"SDO-2", "STP-2", "STPH-2", "PIR-2"})
 BUTTON_MODE = frozenset({"CWS-2-1"})

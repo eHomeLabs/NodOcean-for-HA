@@ -117,8 +117,17 @@ class NodOnDevice:
             return eep.decode_a50205(telegram)
         if code == "A5-04-01":
             return eep.decode_a50401(telegram)
+        model = self.product.model
+        if model == "CRC-2":
+            return eep.decode_f60201(telegram, eep.SOFT_REMOTE_NAMES)
+        if model == "CFS-2":
+            return eep.decode_single_button(telegram)
         if code == "F6-02-01":
             return eep.decode_f60201(telegram)
+        if code == "F6-04-01":
+            return eep.decode_f60401(telegram)
+        if code == "A5-07-03":
+            return eep.decode_a50703(telegram)
         if code == "D2-03-0A":
             return eep.decode_d2030a(telegram)
         return None

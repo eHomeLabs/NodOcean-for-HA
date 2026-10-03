@@ -26,7 +26,8 @@ FOUR_BUTTONS = [
 ]
 TWO_BUTTONS = ["up", "down", "release"]
 SOFT_BUTTON = ["single", "double", "long", "long_release"]
-ALL_TYPES = set(FOUR_BUTTONS) | set(TWO_BUTTONS) | set(SOFT_BUTTON)
+FLOOR_SWITCH = ["press", "release"]
+ALL_TYPES = set(FOUR_BUTTONS) | set(TWO_BUTTONS) | set(SOFT_BUTTON) | set(FLOOR_SWITCH)
 
 TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(
     {vol.Required(CONF_TYPE): vol.In(ALL_TYPES)}
@@ -47,6 +48,10 @@ def _trigger_types(hass: HomeAssistant, device_id: str) -> list[str]:
                 continue
             if nodon.product.model == "TSB-2":
                 return SOFT_BUTTON
+            if nodon.product.model == "CRC-2":
+                return FOUR_BUTTONS
+            if nodon.product.model == "CFS-2":
+                return FLOOR_SWITCH
             if nodon.product.model == "CWS-2-1":
                 return (
                     TWO_BUTTONS

@@ -32,6 +32,10 @@ MANUALS = {
     "SWO-2": "150000192084",
     "STP-2": "150000053856",
     "STPH-2": "150000053858",
+    "CRC-2": "150000052270",
+    "CFS-2": "150000052272",
+    "CCS-2": "150000052274",
+    "PIR-2": "150000053859",
 }
 
 
@@ -322,5 +326,70 @@ PRODUCTS: dict[str, Product] = {
                 "solar cell."
             ),
         ),
+        Product(
+            model="CRC-2",
+            name_fr="Soft Remote EnOcean",
+            name_en="EnOcean Soft Remote",
+            eep="F6-02-01",
+            teach_in=TEACH_RPS,
+            variants=("CRC-2-6-0X",),
+            pairing_fr=(
+                "Appuyez sur **un bouton** de la télécommande. "
+                "Les 4 boutons seront ensuite disponibles dans Home Assistant."
+            ),
+            pairing_en=(
+                "Press **any button** of the remote. All 4 buttons will then be "
+                "available in Home Assistant."
+            ),
+        ),
+        Product(
+            model="CFS-2",
+            name_fr="Interrupteur de sol EnOcean",
+            name_en="EnOcean Floor Switch",
+            eep="F6-02-01",
+            teach_in=TEACH_RPS,
+            variants=("CFS-2-1-05",),
+            pairing_fr="Appuyez avec le pied (ou la main) sur **l'interrupteur de sol**.",
+            pairing_en="Press the **floor switch** with your foot (or hand).",
+        ),
+        Product(
+            model="CCS-2",
+            name_fr="Interrupteur à carte EnOcean",
+            name_en="EnOcean Card Switch",
+            eep="F6-04-01",
+            teach_in=TEACH_RPS,
+            variants=("CCS-2-1-01",),
+            pairing_fr="**Insérez une carte** dans l'interrupteur à carte.",
+            pairing_en="**Insert a card** into the card switch.",
+        ),
+        Product(
+            model="PIR-2",
+            name_fr="Détecteur de mouvement EnOcean",
+            name_en="EnOcean Motion Sensor",
+            eep="A5-07-03",
+            teach_in=TEACH_4BS,
+            variants=("PIR-2-1-01",),
+            pairing_fr=(
+                "Faites **un appui simple** sur le bouton **Pairing** du détecteur. "
+                "(Un appui long de 3 s change la temporisation : ne le faites pas ici.)"
+            ),
+            pairing_en=(
+                "Press the detector's **Pairing** button **once**. "
+                "(A 3 s long press changes the time-out: don't do it here.)"
+            ),
+            url="https://nodon.fr/en/products/enocean-motion-sensor",
+        ),
     )
 }
+
+# Ordre d'affichage : actionneurs, commandes, capteurs
+_ORDER = (
+    "SIN-2-1-01", "SIN-2-2-01", "SIN-2-FP-01", "SIN-2-RS-01", "ASP-2", "MSP-2",
+    "CWS-2-1", "CRC-2", "CFS-2", "CCS-2", "TSB-2",
+    "SDO-2", "SWO-2", "PIR-2", "STP-2", "STPH-2",
+)  # fmt: skip
+PRODUCTS = {m: PRODUCTS[m] for m in _ORDER}
+
+# Planche de vignettes affichée au-dessus de la liste des produits
+GALLERY = f"{_IMAGES.rsplit('/products/', 1)[0]}/produits-nodon.png"
+SUPPORT_URL = "https://support.nodon.fr"

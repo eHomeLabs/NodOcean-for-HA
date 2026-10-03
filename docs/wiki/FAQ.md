@@ -13,7 +13,10 @@ Les capteurs et interrupteurs peuvent être appairés à plusieurs récepteurs :
 Oui. Un interrupteur NodOn appairé en direct à un module continue de le piloter. Home Assistant voit les deux produits et remonte le nouvel état du module.
 
 **Que se passe-t-il si je change de clé USB ?**
-Les modules et les prises sont liés à l'identifiant de la clé : il faudra les ré-appairer. Les capteurs et interrupteurs continuent de fonctionner une fois la nouvelle clé déclarée, mais ils doivent être ajoutés à nouveau dans l'intégration.
+Utilisez **Reconfigurer** sur la ligne de la clé (voir [Configuration de la clé](Configuration-de-la-clé#changer-de-port-ou-de-clé-reconfigurer)). Tous les produits restent dans Home Assistant ; les capteurs et interrupteurs continuent de fonctionner, seuls les modules et prises sont à ré-appairer.
+
+**L'intégration est-elle disponible en anglais ou en allemand ?**
+Oui : les écrans suivent la langue de Home Assistant (français, anglais, allemand). La documentation existe aussi [en anglais](English-documentation).
 
 **Les produits sont-ils perdus lors d'une mise à jour de l'intégration ?**
 Non. Les produits, leurs noms, pièces et réglages sont conservés.

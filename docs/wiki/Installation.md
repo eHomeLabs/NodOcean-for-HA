@@ -11,6 +11,8 @@
 
 Pas besoin de broker MQTT ni d'add-on : l'intégration dialogue directement avec la clé.
 
+Langues : français, anglais et allemand (selon la langue de Home Assistant).
+
 > **Attention aux clés USB génériques.** Un adaptateur série USB (FTDI, CH340…) n'est pas une clé EnOcean. Vérifiez que le nom de la clé contient bien « EnOcean » (par exemple `usb-EnOcean_GmbH_EnOcean_USB_300_DB_...`).
 
 ## 2. Libérer la clé

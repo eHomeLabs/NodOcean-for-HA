@@ -22,6 +22,8 @@
 - [Automatisations](Automatisations) : déclencheurs d'appareil des interrupteurs et télécommandes, exemples.
 - [Aide et dépannage](Aide-et-dépannage) : bouton Aide NodOn, journaux, erreurs courantes.
 - [FAQ](FAQ)
+- [Plan de béta-test](Plan-de-béta-test) : les tests à faire pendant la béta.
+- **English:** [English documentation](English-documentation)
 
 ## Produits pris en charge (16)
 

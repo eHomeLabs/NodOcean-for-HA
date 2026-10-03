@@ -27,6 +27,19 @@ La clé apparaît ensuite sous le titre « Clé EnOcean XXXXXXXX » (XXXXXXXX = 
 - **HA OS / Supervised** : **Paramètres → Système → Matériel → ⋮ → Tout le matériel**, puis recherchez « EnOcean ».
 - **Container / Core** : `ls -l /dev/serial/by-id/` sur la machine.
 
+## Changer de port ou de clé (Reconfigurer)
+
+Si le chemin de la clé change (autre port USB, passage de `/dev/ttyUSB0` au chemin `by-id`…) ou si vous remplacez la clé :
+
+1. **Paramètres → Appareils et services → NodOcean for HA**.
+2. Sur la ligne **Clé EnOcean**, ouvrez le menu **⋮** puis **Reconfigurer**.
+3. Choisissez le nouveau port dans la liste, ou tapez son chemin.
+
+<img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/07-menu-cle.png" alt="Menu de la clé : Télécharger les diagnostics, Reconfigurer" width="640">
+
+- **Même clé** : tous les produits sont conservés et continuent de fonctionner.
+- **Nouvelle clé** : un écran vous prévient. Les capteurs et interrupteurs continuent de fonctionner. Les modules et prises sont liés à l'ancienne clé : supprimez-les puis ajoutez-les de nouveau.
+
 ## Une seule clé
 
 Une seule clé EnOcean est gérée par installation. Tous les produits sont rattachés à cette clé (lien « Connecté via Clé EnOcean » sur leur fiche).

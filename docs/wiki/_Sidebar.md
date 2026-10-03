@@ -15,5 +15,12 @@
 - [Aide et dépannage](Aide-et-dépannage)
 - [FAQ](FAQ)
 
+**Béta**
+- [Plan de béta-test](Plan-de-béta-test)
+- [Signaler un bug](https://github.com/eHomeLabs/NodOcean-for-HA/issues/new?template=bug.yml)
+
+**English**
+- [English documentation](English-documentation)
+
 ---
 [Dépôt GitHub](https://github.com/eHomeLabs/NodOcean-for-HA) · [Support NodOn](https://support.nodon.fr)

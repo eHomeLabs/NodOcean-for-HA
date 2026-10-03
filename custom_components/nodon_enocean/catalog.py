@@ -79,14 +79,21 @@ class Product:
         rorg, func, type_ = (int(x, 16) for x in self.eep.split("-"))
         return rorg, func, type_
 
+    def _text(self, field_name: str, lang: str) -> str:
+        if lang.startswith("fr"):
+            return getattr(self, f"{field_name}_fr")
+        if lang.startswith("de") and (german := GERMAN.get(self.model, {}).get(field_name)):
+            return german
+        return getattr(self, f"{field_name}_en")
+
     def name(self, lang: str) -> str:
-        return self.name_fr if lang.startswith("fr") else self.name_en
+        return self._text("name", lang)
 
     def pairing(self, lang: str) -> str:
-        return self.pairing_fr if lang.startswith("fr") else self.pairing_en
+        return self._text("pairing", lang)
 
     def after(self, lang: str) -> str:
-        return self.after_fr if lang.startswith("fr") else self.after_en
+        return self._text("after", lang)
 
 
 _ACT_FR = (
@@ -393,3 +400,100 @@ PRODUCTS = {m: PRODUCTS[m] for m in _ORDER}
 # Planche de vignettes affichée au-dessus de la liste des produits
 GALLERY = f"{_IMAGES.rsplit('/products/', 1)[0]}/produits-nodon.png"
 SUPPORT_URL = "https://support.nodon.fr"
+
+# Textes allemands (références DE : ASP-2-1-10, MSP-2-1-11)
+_DE_ACT = (
+    "Das Modul sendet dann seine Anlernanfrage: Home Assistant antwortet "
+    "automatisch, die LED blinkt 2-mal grün."
+)
+_DE_SIN = (
+    "Das Modul muss mit Strom versorgt sein. Drücken Sie **3-mal schnell** die Taste "
+    "des Moduls: Die LED flackert rot (30 s). "
+)
+_DE_PLUG = (
+    "Stecken Sie den Zwischenstecker ein. Halten Sie die Taste **2 Sekunden** gedrückt, "
+    "bis die LED rot leuchtet, und lassen Sie los: Der Stecker sendet 30 s lang alle 3 s "
+    "eine Anlernanfrage. Home Assistant antwortet automatisch, die LED blinkt grün."
+)
+_DE_SOLAR = (
+    " Ist der Sensor neu, legen Sie ihn einige Minuten ins Licht, um die Solarzelle zu laden."
+)
+GERMAN: dict[str, dict[str, str]] = {
+    "SIN-2-1-01": {"name": "EnOcean Multifunktionsmodul", "pairing": _DE_SIN + _DE_ACT},
+    "SIN-2-2-01": {
+        "name": "EnOcean Licht-Schaltmodul EIN/AUS (2 Kanäle)",
+        "pairing": _DE_SIN + "Beide Kanäle werden auf einmal angelernt. " + _DE_ACT,
+    },
+    "SIN-2-FP-01": {
+        "name": "EnOcean Heizungsmodul Fil Pilote",
+        "pairing": (
+            "Das Modul muss mit Strom versorgt sein. Drücken Sie **3-mal schnell** "
+            "(innerhalb von 2 s) die Taste des Moduls: Die LED flackert rot (30 s). " + _DE_ACT
+        ),
+    },
+    "SIN-2-RS-01": {
+        "name": "EnOcean Rollladenmodul",
+        "pairing": _DE_SIN + _DE_ACT,
+        "after": (
+            "Kalibrieren Sie den Rollladen, falls noch nicht geschehen: 5 kurze Tastendrücke "
+            "am Modul (Zyklus auf / ab / auf)."
+        ),
+    },
+    "ASP-2": {"name": "EnOcean Zwischenstecker", "pairing": _DE_PLUG},
+    "MSP-2": {"name": "EnOcean Micro-Zwischenstecker mit Messung", "pairing": _DE_PLUG},
+    "CWS-2-1": {
+        "name": "EnOcean Wandschalter (batterielos)",
+        "pairing": (
+            "Drücken Sie kräftig **eine Taste** des Schalters. Alle Tasten sind danach in "
+            "Home Assistant verfügbar."
+        ),
+    },
+    "CRC-2": {
+        "name": "EnOcean Soft Remote",
+        "pairing": (
+            "Drücken Sie **eine Taste** der Fernbedienung. Alle 4 Tasten sind danach in "
+            "Home Assistant verfügbar."
+        ),
+    },
+    "CFS-2": {
+        "name": "EnOcean Bodenschalter",
+        "pairing": "Drücken Sie mit dem Fuß (oder der Hand) auf den **Bodenschalter**.",
+    },
+    "CCS-2": {
+        "name": "EnOcean Kartenschalter",
+        "pairing": "**Stecken Sie eine Karte** in den Kartenschalter.",
+    },
+    "TSB-2": {
+        "name": "EnOcean Soft Button",
+        "pairing": (
+            "Drücken Sie den Soft Button **5-mal kurz** hintereinander "
+            "(weniger als eine halbe Sekunde zwischen den Drücken)."
+        ),
+    },
+    "SDO-2": {
+        "name": "EnOcean Tür- und Fensterkontakt",
+        "pairing": "Drücken Sie **einmal** die Anlerntaste auf der Rückseite des Sensors." + _DE_SOLAR,
+    },
+    "SWO-2": {
+        "name": "EnOcean unsichtbarer batterieloser Öffnungssensor",
+        "pairing": (
+            "**Halten Sie die LRN-Taste** gedrückt **und betätigen Sie die Feder** "
+            "(eindrücken oder loslassen). Die LRN-Taste allein sendet nichts."
+        ),
+    },
+    "PIR-2": {
+        "name": "EnOcean Bewegungsmelder",
+        "pairing": (
+            "Drücken Sie **einmal kurz** die **Pairing**-Taste des Melders. "
+            "(Ein langer Druck von 3 s ändert die Nachlaufzeit: hier nicht ausführen.)"
+        ),
+    },
+    "STP-2": {
+        "name": "EnOcean Temperatursensor",
+        "pairing": "Drücken Sie **einmal** die Anlerntaste auf der Rückseite des Sensors." + _DE_SOLAR,
+    },
+    "STPH-2": {
+        "name": "EnOcean Temperatur- und Feuchtesensor",
+        "pairing": "Drücken Sie **einmal** die Anlerntaste auf der Rückseite des Sensors." + _DE_SOLAR,
+    },
+}

@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 import asyncio
+from collections import deque
 import logging
 from dataclasses import dataclass, field
 from datetime import timedelta
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import async_track_time_interval
 
 from .catalog import PRODUCTS
@@ -27,9 +29,11 @@ from .const import (
 )
 from .device import AVAILABILITY_KEY, NodOnDevice
 from .esp3 import id_to_str, str_to_id
-from .gateway import Gateway, GatewayError
+from .gateway import HISTORY_SIZE, Gateway, GatewayError
 
 _LOGGER = logging.getLogger(__name__)
+
+HELP_URL = "https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Aide-et-d%C3%A9pannage"
 
 PLATFORMS = [
     Platform.BINARY_SENSOR,
@@ -55,11 +59,29 @@ type NodOnConfigEntry = ConfigEntry[NodOnRuntime]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> bool:
-    gateway = Gateway(entry.data[CONF_DEVICE_PATH])
+    histories = hass.data.setdefault(DOMAIN, {}).setdefault("history", {})
+    history = histories.setdefault(entry.entry_id, deque(maxlen=HISTORY_SIZE))
+    gateway = Gateway(entry.data[CONF_DEVICE_PATH], history)
+    issue_id = f"gateway_unavailable_{entry.entry_id}"
     try:
         info = await gateway.connect()
     except GatewayError as err:
+        native = any(
+            e.state is ConfigEntryState.LOADED
+            for e in hass.config_entries.async_entries("enocean")
+        )
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            issue_id,
+            is_fixable=False,
+            severity=ir.IssueSeverity.ERROR,
+            translation_key="native_enocean" if native else "gateway_unavailable",
+            translation_placeholders={"port": entry.data[CONF_DEVICE_PATH], "error": str(err)},
+            learn_more_url=HELP_URL,
+        )
         raise ConfigEntryNotReady(str(err)) from err
+    ir.async_delete_issue(hass, DOMAIN, issue_id)
 
     runtime = NodOnRuntime(gateway=gateway)
     entry.runtime_data = runtime
@@ -162,6 +184,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
 
 async def _async_update_listener(hass: HomeAssistant, entry: NodOnConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> None:
+    ir.async_delete_issue(hass, DOMAIN, f"gateway_unavailable_{entry.entry_id}")
+    hass.data.get(DOMAIN, {}).get("history", {}).pop(entry.entry_id, None)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> bool:

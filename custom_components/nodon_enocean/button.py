@@ -57,21 +57,31 @@ class NodOnHelp(NodOnEntity, ButtonEntity):
         product = self.device.product
         lang = self.hass.config.language or "en"
         fr = lang.startswith("fr")
+        de = lang.startswith("de")
         lines = [
             f"**{product.name(lang)}** ({product.references}) — {self.device.title}",
             "",
         ]
+        def t(fr_text: str, en_text: str, de_text: str) -> str:
+            return fr_text if fr else de_text if de else en_text
+
         if product.manual:
-            lines.append(f"- [{'Notice du produit' if fr else 'Product user guide'}]({product.manual})")
-        lines.append(f"- [{'Support NodOn (FAQ, notices)' if fr else 'NodOn support (FAQ, guides)'}]({SUPPORT_URL})")
+            lines.append(
+                f"- [{t('Notice du produit', 'Product user guide', 'Bedienungsanleitung')}]"
+                f"({product.manual})"
+            )
         lines.append(
-            f"- [{'Contacter le support NodOn' if fr else 'Contact NodOn support'}]"
+            f"- [{t('Support NodOn (FAQ, notices)', 'NodOn support (FAQ, guides)', 'NodOn-Support (FAQ, Anleitungen)')}]"
+            f"({SUPPORT_URL})"
+        )
+        lines.append(
+            f"- [{t('Contacter le support NodOn', 'Contact NodOn support', 'NodOn-Support kontaktieren')}]"
             f"({SUPPORT_URL}/support/tickets/new)"
         )
-        lines.append(f"- {'Identifiant EnOcean' if fr else 'EnOcean ID'} : `{self.device.id_str}`")
+        lines.append(f"- {t('Identifiant EnOcean', 'EnOcean ID', 'EnOcean-ID')} : `{self.device.id_str}`")
         persistent_notification.async_create(
             self.hass,
             "\n".join(lines),
-            title="Aide NodOn" if fr else "NodOn help",
+            title=t("Aide NodOn", "NodOn help", "NodOn-Hilfe"),
             notification_id=f"nodon_help_{self.device.id_str}",
         )

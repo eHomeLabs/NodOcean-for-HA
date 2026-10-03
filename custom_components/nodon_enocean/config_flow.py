@@ -87,6 +87,7 @@ class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._usb_path: str | None = None
         self._last_error = ""
+        self._new_key: tuple[str, str] = ("", "")
 
     def _native_enocean_loaded(self) -> bool:
         return any(
@@ -152,6 +153,77 @@ class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({vol.Required(CONF_DEVICE_PATH): str}),
             errors=errors,
             description_placeholders={"error": self._last_error},
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Changer le port de la clé (ou remplacer la clé) sans perdre les produits."""
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            path = user_input[CONF_DEVICE_PATH]
+            # La clé actuelle doit être libérée avant de tester le port.
+            if entry.state is ConfigEntryState.LOADED:
+                await self.hass.config_entries.async_unload(entry.entry_id)
+            try:
+                base_id, _ = await _validate_port(path)
+            except GatewayError as err:
+                errors["base"] = _error_key(err)
+                self._last_error = str(err)
+                await self.hass.config_entries.async_setup(entry.entry_id)
+            else:
+                if base_id == entry.unique_id:
+                    return self.async_update_reload_and_abort(
+                        entry, data_updates={CONF_DEVICE_PATH: path}
+                    )
+                self._new_key = (path, base_id)
+                # On remet l'ancienne configuration en route tant que rien n'est confirmé.
+                await self.hass.config_entries.async_setup(entry.entry_id)
+                return await self.async_step_reconfigure_new_key()
+
+        ports = await self.hass.async_add_executor_job(_list_ports)
+        options = [SelectOptionDict(value=p, label=lbl) for p, lbl in ports]
+        current = entry.data[CONF_DEVICE_PATH]
+        if current not in {p for p, _ in ports}:
+            options.insert(0, SelectOptionDict(value=current, label=current))
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_DEVICE_PATH, default=current): SelectSelector(
+                        SelectSelectorConfig(
+                            options=options,
+                            custom_value=True,
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    )
+                }
+            ),
+            errors=errors,
+            description_placeholders={"error": self._last_error, "current": current},
+        )
+
+    async def async_step_reconfigure_new_key(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Une autre clé a été branchée : prévenir avant de l'adopter."""
+        entry = self._get_reconfigure_entry()
+        path, base_id = self._new_key
+        if user_input is not None:
+            for other in self._async_current_entries(include_ignore=False):
+                if other.entry_id != entry.entry_id and other.unique_id == base_id:
+                    await self.hass.config_entries.async_setup(entry.entry_id)
+                    return self.async_abort(reason="already_configured")
+            return self.async_update_reload_and_abort(
+                entry,
+                unique_id=base_id,
+                title=f"Clé EnOcean {base_id}",
+                data_updates={CONF_DEVICE_PATH: path},
+            )
+        return self.async_show_form(
+            step_id="reconfigure_new_key",
+            description_placeholders={"old": entry.unique_id or "?", "new": base_id},
         )
 
     async def async_step_usb(self, discovery_info: UsbServiceInfo) -> ConfigFlowResult:

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
 import logging
+import time
 
 from .esp3 import (
     CO_RD_IDBASE,
@@ -29,6 +31,10 @@ from .esp3 import (
 _LOGGER = logging.getLogger(__name__)
 
 TelegramCallback = Callable[[RadioTelegram], None]
+
+# Un télégramme répété (par un module en mode répéteur) arrive peu après l'original.
+DUPLICATE_WINDOW = 0.6  # secondes
+HISTORY_SIZE = 100  # télégrammes gardés pour les diagnostics
 
 
 class GatewayError(Exception):
@@ -68,7 +74,7 @@ class _SerialProtocol(asyncio.Protocol):
 class Gateway:
     """Interface asynchrone vers une clé EnOcean ESP3."""
 
-    def __init__(self, port: str) -> None:
+    def __init__(self, port: str, history: deque[dict] | None = None) -> None:
         self.port = port
         self.info: GatewayInfo | None = None
         self._transport: asyncio.Transport | None = None
@@ -78,6 +84,10 @@ class Gateway:
         self._response_waiter: asyncio.Future[Packet] | None = None
         self._lock = asyncio.Lock()
         self.on_disconnect: Callable[[], None] | None = None
+        # Historique partagé entre rechargements (diagnostics)
+        self.history: deque[dict] = history if history is not None else deque(maxlen=HISTORY_SIZE)
+        self.duplicates = 0
+        self._recent: dict[tuple[int, int, bytes], float] = {}
 
     # -- Connexion -----------------------------------------------------------
 
@@ -172,6 +182,9 @@ class Gateway:
 
     async def send_radio(self, rorg: int, payload: bytes, sender: int, destination: int) -> None:
         """Émet un télégramme radio adressé."""
+        self._record(
+            "tx", RadioTelegram(rorg, bytes(payload), sender, destination=destination)
+        )
         resp = await self.command(build_radio(rorg, payload, sender, destination))
         if resp.data and resp.data[0] != RET_OK:
             raise GatewayError(f"La clé a refusé le télégramme (code {resp.data[0]})")
@@ -199,14 +212,55 @@ class Gateway:
                 if telegram is not None:
                     self._dispatch(telegram)
 
+    def _record(self, direction: str, telegram: RadioTelegram, duplicate: bool = False) -> None:
+        self.history.append(
+            {
+                "time": round(time.time(), 3),
+                "dir": direction,
+                "sender": telegram.sender_str,
+                "destination": id_to_str(telegram.destination),
+                "rorg": f"{telegram.rorg:02X}",
+                "data": telegram.payload.hex(" ").upper(),
+                "status": f"{telegram.status:02X}",
+                "dbm": telegram.dbm,
+                "duplicate": duplicate,
+            }
+        )
+
+    def is_duplicate(self, telegram: RadioTelegram) -> bool:
+        """Copie répétée d'un télégramme déjà reçu (mode répéteur des modules).
+
+        Les 4 bits de poids faible du statut comptent les répétitions : seule une
+        copie répétée (compteur > 0) d'un télégramme identique reçu juste avant
+        est ignorée. Deux appuis rapides identiques (compteur 0) sont conservés.
+        """
+        now = time.monotonic()
+        key = (telegram.sender, telegram.rorg, bytes(telegram.payload))
+        previous = self._recent.get(key)
+        self._recent[key] = now
+        if len(self._recent) > 256:
+            self._recent = {k: t for k, t in self._recent.items() if now - t < DUPLICATE_WINDOW}
+        return (
+            telegram.status & 0x0F > 0
+            and previous is not None
+            and now - previous <= DUPLICATE_WINDOW
+        )
+
     def _dispatch(self, telegram: RadioTelegram) -> None:
+        duplicate = self.is_duplicate(telegram)
+        self._record("rx", telegram, duplicate)
         _LOGGER.debug(
-            "RX %s RORG=%02X data=%s dBm=%s",
+            "RX %s RORG=%02X data=%s status=%02X dBm=%s%s",
             telegram.sender_str,
             telegram.rorg,
             telegram.payload.hex(" "),
+            telegram.status,
             telegram.dbm,
+            " (doublon ignoré)" if duplicate else "",
         )
+        if duplicate:
+            self.duplicates += 1
+            return
         for cb in list(self._global_listeners):
             try:
                 cb(telegram)

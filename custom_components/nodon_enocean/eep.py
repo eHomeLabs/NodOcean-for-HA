@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .esp3 import RORG_1BS, RORG_4BS, RORG_RPS, RORG_VLD, RadioTelegram
+from .esp3 import RORG_1BS, RORG_4BS, RORG_MSC, RORG_RPS, RORG_VLD, RadioTelegram
 
 # --- Teach-in ------------------------------------------------------------------
 
@@ -70,6 +70,122 @@ def d201_pilot_wire_set(mode: int) -> bytes:
 def d201_pilot_wire_query() -> bytes:
     """CMD 0x9 Actuator Pilot Wire Mode Query."""
     return bytes([0x09])
+
+
+# Réglages des actionneurs D2-01 ---------------------------------------------------
+
+DEFAULT_STATES = {"off": 0, "on": 1, "previous": 2}
+
+
+def d201_set_local(
+    *,
+    led: bool = True,
+    default_state: str = "previous",
+    power_failure: bool = False,
+    local_control: bool = True,
+    taught_in: bool = True,
+) -> bytes:
+    """CMD 0x2 Actuator Set Local : tous les réglages en une trame, tous canaux.
+
+    Octet 1 : bit 7 = télécommandes appairées actives, CMD = 2.
+    Octet 2 : bit 5 = commande locale, bits 4-0 = canal (0x1E = tous).
+    Octet 3 : rampes de variation (non utilisées par les relais).
+    Octet 4 : bit 7 = mode nuit (LED éteinte), bit 6 = détection de coupure,
+              bits 5-4 = état après coupure (0 OFF, 1 ON, 2 précédent).
+    """
+    return bytes(
+        [
+            (0x80 if taught_in else 0) | 0x02,
+            (0x20 if local_control else 0) | D201_ALL_CHANNELS,
+            0x00,
+            (0 if led else 0x80)
+            | (0x40 if power_failure else 0)
+            | (DEFAULT_STATES[default_state] << 4),
+        ]
+    )
+
+
+def _timer(seconds: float) -> int:
+    return max(0, min(0xFFFE, round(seconds * 10)))
+
+
+def d201_set_ext_interface(
+    channel: int, auto_off: float = 0, delay_off: float = 0, switch_mode: int = 0
+) -> bytes:
+    """CMD 0xB Actuator Set External Interface Settings.
+
+    Temporisations en secondes (pas de 0,1 s, 0 = désactivée).
+    switch_mode : 0 non modifié, 1 interrupteur, 2 poussoir, 3 auto-détection.
+    """
+    return (
+        bytes([0x0B, channel & 0x1F])
+        + _timer(auto_off).to_bytes(2, "big")
+        + _timer(delay_off).to_bytes(2, "big")
+        + bytes([(switch_mode & 0x03) << 6])
+    )
+
+
+def d201_measurement_config(
+    *,
+    power: bool,
+    delta: int,
+    max_interval: int,
+    min_interval: int,
+    reset: bool = False,
+    channel: int = 0,
+) -> bytes:
+    """CMD 0x5 Actuator Set Measurement : rapport automatique (+ remise à zéro).
+
+    delta : variation minimale à signaler (W pour la puissance, Wh pour l'énergie).
+    max_interval : secondes (pas de 10 s) ; min_interval : secondes (pas de 1 s).
+    """
+    delta = max(0, min(4095, int(delta)))
+    unit = 3 if power else 1  # W ou Wh
+    return bytes(
+        [
+            0x05,
+            0x80 | (0x40 if reset else 0) | (0x20 if power else 0) | (channel & 0x1F),
+            ((delta & 0x0F) << 4) | unit,
+            (delta >> 4) & 0xFF,
+            max(0, min(255, max_interval // 10)),
+            max(0, min(255, min_interval)),
+        ]
+    )
+
+
+# Messages fabricant NodOn (MSC, RORG D1, fabricant 0x046) -----------------------
+
+MSC_HEADER = bytes([0x00, 0x46])
+
+
+def msc_set_repeater(level: int) -> bytes:
+    level = max(0, min(2, level))
+    return MSC_HEADER + bytes([0x08, 1 if level else 0, level])
+
+
+def msc_query_repeater() -> bytes:
+    return MSC_HEADER + bytes([0x09])
+
+
+def msc_query_firmware() -> bytes:
+    return MSC_HEADER + bytes([0x02])
+
+
+def decode_msc(t: RadioTelegram) -> dict[str, Any] | None:
+    """Réponses NodOn : niveau du répéteur (0x0A) et version firmware (0x03)."""
+    p = t.payload
+    if t.rorg != RORG_MSC or len(p) < 4 or p[:2] not in (b"\x00\x46", b"\x46\x00"):
+        return None
+    cmd = p[2]
+    if cmd == 0x0A:
+        if len(p) >= 5:
+            level = p[4] if p[3] else 0
+        else:
+            level = p[3]
+        return {"repeater": level if level <= 2 else None}
+    if cmd == 0x03:
+        return {"firmware": ".".join(f"{b:02d}" for b in p[3:])}
+    return None
 
 
 def decode_d201(t: RadioTelegram, channels: int = 1) -> dict[str, Any] | None:

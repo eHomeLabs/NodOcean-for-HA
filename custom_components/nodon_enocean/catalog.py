@@ -16,6 +16,23 @@ TEACH_4BS = "4bs"  # télégramme 4BS avec bit LRN
 TEACH_RPS = "rps"  # premier appui de touche reçu
 
 _IMAGES = "https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/"
+_NOTICES = "https://support.nodon.fr/support/solutions/articles/"
+
+# Notices produits (support.nodon.fr, rubrique « Notices Produits »)
+MANUALS = {
+    "SIN-2-1-01": "150000052176",
+    "SIN-2-2-01": "150000052164",
+    "SIN-2-FP-01": "150000052161",
+    "SIN-2-RS-01": "150000052163",
+    "ASP-2": "150000052200",
+    "MSP-2": "150000052208",
+    "CWS-2-1": "150000052269",
+    "TSB-2": "150000052273",
+    "SDO-2": "150000053854",
+    "SWO-2": "150000192084",
+    "STP-2": "150000053856",
+    "STPH-2": "150000053858",
+}
 
 
 @dataclass(frozen=True)
@@ -37,6 +54,12 @@ class Product:
     @property
     def image(self) -> str:
         return f"{_IMAGES}{self.model}.png"
+
+    @property
+    def manual(self) -> str | None:
+        """Lien vers la notice du produit sur support.nodon.fr."""
+        article = MANUALS.get(self.model)
+        return f"{_NOTICES}{article}" if article else None
 
     @property
     def references(self) -> str:

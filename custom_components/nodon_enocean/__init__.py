@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass, field
 from datetime import timedelta
-import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -25,7 +25,7 @@ from .const import (
     POLL_INTERVAL,
     SUBENTRY_DEVICE,
 )
-from .device import NodOnDevice
+from .device import AVAILABILITY_KEY, NodOnDevice
 from .esp3 import id_to_str, str_to_id
 from .gateway import Gateway, GatewayError
 
@@ -33,9 +33,12 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [
     Platform.BINARY_SENSOR,
+    Platform.BUTTON,
     Platform.COVER,
     Platform.EVENT,
+    Platform.IMAGE,
     Platform.LIGHT,
+    Platform.NUMBER,
     Platform.SELECT,
     Platform.SENSOR,
     Platform.SWITCH,
@@ -72,7 +75,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
         serial_number=id_to_str(info.chip_id) if info.chip_id else None,
     )
 
-    pending_areas: dict[str, str] = hass.data.setdefault(DOMAIN, {}).setdefault("pending_areas", {})
+    pending_areas: dict[str, str] = hass.data.setdefault(DOMAIN, {}).setdefault(
+        "pending_areas", {}
+    )
     for subentry_id, subentry in entry.subentries.items():
         if subentry.subentry_type != SUBENTRY_DEVICE:
             continue
@@ -95,16 +100,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
             config_subentry_id=subentry_id,
             identifiers={(DOMAIN, device.id_str)},
             manufacturer="NodOn",
-            model=product.name_fr if hass.config.language.startswith("fr") else product.name_en,
+            model=product.name_fr
+            if hass.config.language.startswith("fr")
+            else product.name_en,
             model_id=product.references,
             name=subentry.title,
             serial_number=device.id_str,
             via_device=(DOMAIN, f"gateway_{id_to_str(info.base_id)}"),
-            configuration_url=product.url,
+            configuration_url=product.manual or product.url,
         )
         # Pièce choisie lors de l'ajout : appliquée une seule fois, à la création.
         area_id = pending_areas.pop(device.id_str, None)
-        if area_id and dev_entry.area_id is None and ar.async_get(hass).async_get_area(area_id):
+        if (
+            area_id
+            and dev_entry.area_id is None
+            and ar.async_get(hass).async_get_area(area_id)
+        ):
             dev_reg.async_update_device(dev_entry.id, area_id=area_id)
     del hub
 
@@ -123,8 +134,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
                 await device.refresh()
                 await asyncio.sleep(0.2)
 
-    entry.async_on_unload(async_track_time_interval(hass, _poll, timedelta(seconds=POLL_INTERVAL)))
-    entry.async_create_background_task(hass, _poll(), "nodon_enocean_initial_poll")
+    async def _startup() -> None:
+        for device in list(runtime.devices.values()):
+            if device.product.is_actuator:
+                await device.query_info()
+                if device.product.metering:
+                    await device.configure_reporting()
+                await asyncio.sleep(0.2)
+        await _poll()
+
+    @callback
+    def _check_availability(_now=None) -> None:
+        for device in runtime.devices.values():
+            if device.settings.get("timeout"):
+                device.notify({AVAILABILITY_KEY})
+
+    entry.async_on_unload(
+        async_track_time_interval(hass, _poll, timedelta(seconds=POLL_INTERVAL))
+    )
+    entry.async_on_unload(
+        async_track_time_interval(hass, _check_availability, timedelta(seconds=60))
+    )
+    entry.async_create_background_task(hass, _startup(), "nodon_enocean_initial_poll")
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     return True
 

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from homeassistant.components.event import EventDeviceClass, EventEntity
+from homeassistant.const import CONF_DEVICE_ID, CONF_TYPE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import NodOnConfigEntry
+from .const import EVENT_BUTTON
 from .device import NodOnDevice
 from .entity import NodOnEntity, add_per_subentry
 
@@ -20,7 +22,16 @@ WALL_SWITCH_EVENTS = [
     "left_up_right_down",
     "left_down_right_up",
     "release",
+    # Façade 2 boutons : une seule touche haut / bas
+    "up",
+    "down",
 ]
+TWO_BUTTON_MAP = {
+    "left_up": "up",
+    "right_up": "up",
+    "left_down": "down",
+    "right_down": "down",
+}
 SOFT_BUTTON_EVENTS = ["single", "double", "long", "long_release"]
 
 
@@ -51,5 +62,16 @@ class NodOnButtonEvent(NodOnEntity, EventEntity):
     @callback
     def _on_state(self, keys: set[str]) -> None:
         event = self.device.state.pop("event", None)
+        if (
+            self.device.product.model == "CWS-2-1"
+            and self.device.settings.get("buttons") == "2"
+        ):
+            if event != "release":
+                event = TWO_BUTTON_MAP.get(event)
         if event in self._attr_event_types:
             self._trigger_event(event)
+            if self.registry_entry and self.registry_entry.device_id:
+                self.hass.bus.async_fire(
+                    EVENT_BUTTON,
+                    {CONF_DEVICE_ID: self.registry_entry.device_id, CONF_TYPE: event},
+                )

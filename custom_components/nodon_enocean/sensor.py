@@ -72,6 +72,9 @@ SENSORS: tuple[NodOnSensorDescription, ...] = (
     ),
 )
 
+# Mesure -> réglage de correction (number.py)
+OFFSETS = {"temperature": "temperature_offset", "humidity": "humidity_offset"}
+
 RSSI = SensorEntityDescription(
     key="rssi",
     translation_key="rssi",
@@ -92,9 +95,12 @@ async def async_setup_entry(
         entities: list[SensorEntity] = [
             NodOnSensor(device, desc)
             for desc in SENSORS
-            if device.product.model in desc.models or (desc.metering and device.product.metering)
+            if device.product.model in desc.models
+            or (desc.metering and device.product.metering)
         ]
         entities.append(NodOnRssiSensor(device))
+        if device.product.is_actuator:
+            entities.append(NodOnFirmwareSensor(device))
         return entities
 
     add_per_subentry(entry.runtime_data.devices.values(), async_add_entities, factory)
@@ -103,14 +109,20 @@ async def async_setup_entry(
 class NodOnSensor(NodOnEntity, SensorEntity):
     entity_description: SensorEntityDescription
 
-    def __init__(self, device: NodOnDevice, description: SensorEntityDescription) -> None:
+    def __init__(
+        self, device: NodOnDevice, description: SensorEntityDescription
+    ) -> None:
         super().__init__(device, description.key)
         self.entity_description = description
-        self._state_keys = frozenset({description.key})
+        self._offset_key = OFFSETS.get(description.key)
+        self._state_keys = frozenset({description.key, self._offset_key} - {None})
 
     @property
     def native_value(self):
-        return self.device.state.get(self.entity_description.key)
+        value = self.device.state.get(self.entity_description.key)
+        if value is not None and self._offset_key:
+            value = round(value + (self.device.settings.get(self._offset_key) or 0), 1)
+        return value
 
 
 class NodOnRssiSensor(NodOnEntity, SensorEntity):
@@ -123,3 +135,19 @@ class NodOnRssiSensor(NodOnEntity, SensorEntity):
     @property
     def native_value(self) -> int | None:
         return self.device.last_dbm
+
+
+class NodOnFirmwareSensor(NodOnEntity, SensorEntity):
+    """Version firmware renvoyée par le produit (message fabricant NodOn)."""
+
+    _attr_translation_key = "firmware"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _state_keys = frozenset({"firmware"})
+    _follows_availability = False
+
+    def __init__(self, device: NodOnDevice) -> None:
+        super().__init__(device, "firmware")
+
+    @property
+    def native_value(self) -> str | None:
+        return self.device.state.get("firmware")

@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 from homeassistant.components.select import SelectEntity
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.restore_state import RestoreEntity
 
-from . import NodOnConfigEntry
-from .device import PILOT_WIRE_MODES, NodOnDevice
-from .entity import NodOnEntity, add_per_subentry
+from . import NodOnConfigEntry, features
+from .device import PILOT_WIRE_MODES, REPEATER_LEVELS, NodOnDevice
+from .entity import NodOnConfigEntity, NodOnEntity, add_per_subentry
+
+POWER_ON_STATES = ["previous", "on", "off"]
+BUTTON_MODES = ["4", "2"]
 
 
 async def async_setup_entry(
@@ -17,9 +22,19 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     def factory(device: NodOnDevice) -> list:
-        if device.product.model == "SIN-2-FP-01":
-            return [NodOnPilotWire(device)]
-        return []
+        model = device.product.model
+        entities: list[SelectEntity] = []
+        if model == "SIN-2-FP-01":
+            entities.append(NodOnPilotWire(device))
+        if model in features.POWER_ON_STATE:
+            entities.append(
+                NodOnSettingSelect(device, "default_state", POWER_ON_STATES)
+            )
+        if model in features.BUTTON_MODE:
+            entities.append(NodOnButtonModeSelect(device, "buttons", BUTTON_MODES))
+        if device.product.is_actuator:
+            entities.append(NodOnRepeater(device))
+        return entities
 
     add_per_subentry(entry.runtime_data.devices.values(), async_add_entities, factory)
 
@@ -42,4 +57,63 @@ class NodOnPilotWire(NodOnEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         await self.device.set_pilot_wire(option)
         self.device.state["pilot_wire_mode"] = PILOT_WIRE_MODES.index(option)
+        self.async_write_ha_state()
+
+
+class NodOnSettingSelect(NodOnConfigEntity, SelectEntity):
+    """État après coupure de courant (CMD 0x2)."""
+
+    def __init__(self, device: NodOnDevice, setting: str, options: list[str]) -> None:
+        super().__init__(device, setting)
+        self._attr_options = options
+
+    def _restore(self, state: str):
+        return state if state in self._attr_options else None
+
+    @property
+    def current_option(self) -> str | None:
+        return self.device.settings.get(self._setting)
+
+    async def async_select_option(self, option: str) -> None:
+        await self.device.apply_local_settings(**{self._setting: option})
+        self.async_write_ha_state()
+
+
+class NodOnButtonModeSelect(NodOnSettingSelect):
+    """Interrupteur mural : façade 2 ou 4 boutons (réglage côté Home Assistant)."""
+
+    async def async_select_option(self, option: str) -> None:
+        self.device.settings[self._setting] = option
+        self.async_write_ha_state()
+
+
+class NodOnRepeater(NodOnEntity, SelectEntity, RestoreEntity):
+    """Niveau du répéteur EnOcean intégré (message fabricant NodOn)."""
+
+    _attr_translation_key = "repeater"
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_options = REPEATER_LEVELS
+    _state_keys = frozenset({"repeater"})
+    _follows_availability = False
+
+    def __init__(self, device: NodOnDevice) -> None:
+        super().__init__(device, "repeater")
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        last = await self.async_get_last_state()
+        if (
+            "repeater" not in self.device.state
+            and last
+            and last.state in REPEATER_LEVELS
+        ):
+            self.device.state["repeater"] = REPEATER_LEVELS.index(last.state)
+
+    @property
+    def current_option(self) -> str | None:
+        level = self.device.state.get("repeater")
+        return REPEATER_LEVELS[level] if level is not None else None
+
+    async def async_select_option(self, option: str) -> None:
+        await self.device.set_repeater(option)
         self.async_write_ha_state()

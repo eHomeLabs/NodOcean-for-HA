@@ -14,3 +14,5 @@ SUBENTRY_DEVICE = "device"
 
 PAIRING_TIMEOUT = 60  # secondes
 POLL_INTERVAL = 60  # secondes, interrogation des actionneurs
+
+EVENT_BUTTON = f"{DOMAIN}_button"  # événement bus pour les déclencheurs d'appareil

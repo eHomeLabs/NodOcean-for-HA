@@ -39,7 +39,7 @@
       "step": {
         "user": {
           "title": "Add a NodOn product",
-          "description": "Choose the NodOn product to add. Everything is preconfigured: nothing else to fill in.",
+          "description": "{gallery}\n\nChoose the NodOn product to add. Everything is preconfigured: nothing else to fill in.",
           "data": {
             "model": "Product"
           }
@@ -145,6 +145,9 @@
       },
       "firmware": {
         "name": "Firmware version"
+      },
+      "battery_voltage": {
+        "name": "Battery voltage"
       }
     },
     "event": {
@@ -177,6 +180,35 @@
               "double": "Double press",
               "long": "Long press",
               "long_release": "Long press released"
+            }
+          }
+        }
+      },
+      "soft_remote": {
+        "name": "Buttons",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "left_up": "Top left",
+              "left_down": "Bottom left",
+              "right_up": "Top right",
+              "right_down": "Bottom right",
+              "left_up_right_up": "Top left + top right",
+              "left_down_right_down": "Bottom left + bottom right",
+              "left_up_right_down": "Top left + bottom right",
+              "left_down_right_up": "Bottom left + top right",
+              "release": "Release"
+            }
+          }
+        }
+      },
+      "floor_switch": {
+        "name": "Switch",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Press",
+              "release": "Release"
             }
           }
         }
@@ -219,11 +251,19 @@
     "button": {
       "reset_energy": {
         "name": "Reset energy"
+      },
+      "help": {
+        "name": "NodOn help"
       }
     },
     "image": {
       "product_image": {
         "name": "Product picture"
+      }
+    },
+    "binary_sensor": {
+      "card": {
+        "name": "Card inserted"
       }
     }
   },
@@ -243,7 +283,8 @@
       "single": "Single press",
       "double": "Double press",
       "long": "Long press",
-      "long_release": "Long press released"
+      "long_release": "Long press released",
+      "press": "Pressed"
     }
   }
 }

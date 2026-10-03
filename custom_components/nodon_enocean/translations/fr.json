@@ -39,7 +39,7 @@
       "step": {
         "user": {
           "title": "Ajouter un produit NodOn",
-          "description": "Choisissez le produit NodOn à ajouter. Tout est préconfiguré : il n'y a rien d'autre à renseigner.",
+          "description": "{gallery}\n\nChoisissez le produit NodOn à ajouter. Tout est préconfiguré : il n'y a rien d'autre à renseigner.",
           "data": {
             "model": "Produit"
           }
@@ -145,6 +145,9 @@
       },
       "firmware": {
         "name": "Version firmware"
+      },
+      "battery_voltage": {
+        "name": "Tension de la pile"
       }
     },
     "event": {
@@ -177,6 +180,35 @@
               "double": "Double appui",
               "long": "Appui long",
               "long_release": "Fin d'appui long"
+            }
+          }
+        }
+      },
+      "soft_remote": {
+        "name": "Boutons",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "left_up": "Haut gauche",
+              "left_down": "Bas gauche",
+              "right_up": "Haut droite",
+              "right_down": "Bas droite",
+              "left_up_right_up": "Haut gauche + haut droite",
+              "left_down_right_down": "Bas gauche + bas droite",
+              "left_up_right_down": "Haut gauche + bas droite",
+              "left_down_right_up": "Bas gauche + haut droite",
+              "release": "Relâchement"
+            }
+          }
+        }
+      },
+      "floor_switch": {
+        "name": "Interrupteur",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Appui",
+              "release": "Relâchement"
             }
           }
         }
@@ -219,11 +251,19 @@
     "button": {
       "reset_energy": {
         "name": "Remise à zéro de l'énergie"
+      },
+      "help": {
+        "name": "Aide NodOn"
       }
     },
     "image": {
       "product_image": {
         "name": "Visuel du produit"
+      }
+    },
+    "binary_sensor": {
+      "card": {
+        "name": "Carte insérée"
       }
     }
   },
@@ -243,7 +283,8 @@
       "single": "Appui simple",
       "double": "Double appui",
       "long": "Appui long",
-      "long_release": "Fin d'appui long"
+      "long_release": "Fin d'appui long",
+      "press": "Appui"
     }
   }
 }

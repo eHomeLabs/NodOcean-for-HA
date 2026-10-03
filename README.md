@@ -26,9 +26,13 @@ Pas de profil EEP à chercher, pas d'identifiant à recopier, pas de fichier YAM
 | <img src="docs/images/products/ASP-2.png" alt="ASP-2" width="64"> | **ASP-2-1-00 (FR)<br>ASP-2-1-10 (DE)** | Prise intelligente | Prise |
 | <img src="docs/images/products/MSP-2.png" alt="MSP-2" width="64"> | **MSP-2-1-01 (FR)<br>MSP-2-1-11 (DE)** | Micro Smart Plug + Mesure | Prise + puissance + énergie |
 | <img src="docs/images/products/CWS-2-1.png" alt="CWS-2-1" width="64"> | **CWS-2-1-01** | Interrupteur mural sans pile | Événements par touche (haut/bas, gauche/droite, combinaisons) |
+| <img src="docs/images/products/CRC-2.png" alt="CRC-2" width="64"> | **CRC-2-6-0x** | Soft Remote | Événements par bouton (4 boutons, combinaisons) |
+| <img src="docs/images/products/CFS-2.png" alt="CFS-2" width="64"> | **CFS-2-1-05** | Interrupteur de sol | Événements appui / relâchement |
+| <img src="docs/images/products/CCS-2.png" alt="CCS-2" width="64"> | **CCS-2-1-01** | Interrupteur à carte | Carte insérée (oui / non) |
 | <img src="docs/images/products/TSB-2.png" alt="TSB-2" width="64"> | **TSB-2-2-02** | Soft Button | Événements simple / double / long + batterie |
 | <img src="docs/images/products/SDO-2.png" alt="SDO-2" width="64"> | **SDO-2-1-05** | Détecteur d'ouverture portes et fenêtres | Capteur d'ouverture |
 | <img src="docs/images/products/SWO-2.png" alt="SWO-2" width="64"> | **SWO-2-1-00** | Capteur d'ouverture invisible sans pile | Capteur d'ouverture |
+| <img src="docs/images/products/PIR-2.png" alt="PIR-2" width="64"> | **PIR-2-1-01** | Détecteur de mouvement | Mouvement + luminosité + tension pile |
 | <img src="docs/images/products/STP-2.png" alt="STP-2" width="64"> | **STP-2-1-05** | Capteur de température | Température |
 | <img src="docs/images/products/STPH-2.png" alt="STPH-2" width="64"> | **STPH-2-1-05** | Capteur de température et d'humidité | Température + humidité |
 
@@ -39,8 +43,10 @@ Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut
 | 1. Choix du produit | 2. Consigne d'appairage |
 |:---:|:---:|
 | <img src="docs/images/screenshots/01-choix-produit.png" alt="Choix du produit NodOn" width="320"> | <img src="docs/images/screenshots/02-appairage.png" alt="Consigne d'appairage" width="320"> |
-| **3. Nom et pièce** | **4. Produit ajouté** |
-| <img src="docs/images/screenshots/04-nom-et-piece.png" alt="Nom et pièce du produit" width="320"> | <img src="docs/images/screenshots/03-appareil.png" alt="Fiche de la Micro Smart Plug" width="380"> |
+| **3. Nom et pièce** | **4. Fiche du produit et réglages** |
+| <img src="docs/images/screenshots/04-nom-et-piece.png" alt="Nom et pièce du produit" width="320"> | <img src="docs/images/screenshots/03-appareil.png" alt="Fiche du Module Multifonction avec ses réglages" width="380"> |
+| **5. Aide NodOn** | |
+| <img src="docs/images/screenshots/05-aide.png" alt="Notification Aide NodOn" width="320"> | |
 
 ## Prérequis
 
@@ -71,8 +77,8 @@ Pour les capteurs et les interrupteurs, si l'appairage échoue, vous pouvez auss
 ### Comment ça marche
 
 - **Modules SIN-2, prises ASP-2 / MSP-2.** Ils envoient une requête *UTE teach-in*, et l'intégration y répond automatiquement. Chaque actionneur reçoit son propre identifiant d'émission : le Base ID de la clé + un décalage de 1 à 127. Les commandes lui sont adressées directement.
-- **Capteurs SDO-2 / SWO-2 / STP-2 / STPH-2.** L'intégration détecte leur télégramme d'apprentissage (bit LRN).
-- **Interrupteur CWS-2-1.** Le premier appui de touche reçu pendant l'écoute est retenu.
+- **Capteurs SDO-2 / SWO-2 / PIR-2 / STP-2 / STPH-2.** L'intégration détecte leur télégramme d'apprentissage (bit LRN).
+- **Interrupteurs CWS-2-1 / CFS-2, Soft Remote, interrupteur à carte.** Le premier appui (ou la première insertion de carte) reçu pendant l'écoute est retenu.
 - **Soft Button.** Il est reconnu grâce à sa requête UTE (5 appuis).
 - **Interrogation.** Toutes les 60 s, l'intégration demande aux actionneurs leur état, leur puissance et leur énergie.
 
@@ -91,12 +97,13 @@ Depuis la v0.2, chaque produit a ses réglages dans la carte **Configuration** d
 | Répéteur EnOcean | Tous les modules et prises | Désactivé / niveau 1 / niveau 2 |
 | Remise à zéro de l'énergie | MSP-2, SIN-2-FP-01 | Bouton |
 | Correction de température / d'humidité | STP-2, STPH-2 | ± 5 °C / ± 20 % |
-| Indisponible après | SDO-2, STP-2, STPH-2 | 0 à 1440 min sans message (0 = jamais) |
+| Indisponible après | SDO-2, STP-2, STPH-2, PIR-2 | 0 à 1440 min sans message (0 = jamais) |
 | Façade | CWS-2-1 | 4 boutons / 2 boutons |
+| Aide NodOn | Tous | Bouton (carte Diagnostic) : notice, FAQ et contact du support NodOn |
 
 - Les produits ne permettent pas de relire leurs réglages : Home Assistant affiche la dernière valeur envoyée. Les valeurs par défaut sont celles d'un produit neuf.
 - Pour la MSP-2 et le SIN-2-FP-01, l'intégration règle elle-même le rapport automatique des mesures : toutes les 10 min au plus tard, ou dès 5 W / 10 Wh d'écart.
-- L'interrupteur CWS-2-1 et le Soft Button proposent des **déclencheurs d'appareil** dans l'éditeur d'automatisations (« Haut gauche appuyé », « Double appui »…).
+- Les interrupteurs CWS-2-1 et CFS-2, la Soft Remote et le Soft Button proposent des **déclencheurs d'appareil** dans l'éditeur d'automatisations (« Haut gauche appuyé », « Double appui »…).
 
 ## Supprimer un produit
 
@@ -140,4 +147,4 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 
 **Add a product:** open the integration, click **Add a NodOn product**, choose the model, follow the on-screen pairing instructions and give it a name.
 
-Supported: SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, SIN-2-RS-01, ASP-2, MSP-2, CWS-2-1, TSB-2, SDO-2, SWO-2, STP-2, STPH-2.
+Supported: SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, SIN-2-RS-01, ASP-2, MSP-2, CWS-2-1, CRC-2, CFS-2, CCS-2, TSB-2, SDO-2, SWO-2, PIR-2, STP-2, STPH-2.

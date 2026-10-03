@@ -13,7 +13,7 @@ Intégration Home Assistant **officieuse** dédiée aux produits **EnOcean NodOn
 Le principe : on choisit son produit dans une liste et Home Assistant fait le reste.
 Pas de profil EEP à chercher, pas d'identifiant à recopier, pas de fichier YAML.
 
-**Documentation complète : [wiki NodOcean for HA](https://github.com/eHomeLabs/NodOcean-for-HA/wiki)** (installation, appairage produit par produit, réglages, automatisations, FAQ).
+**Documentation complète : [wiki NodOcean for HA](https://github.com/eHomeLabs/NodOcean-for-HA/wiki)** (installation, appairage produit par produit, réglages, automatisations, FAQ). Béta en cours : [plan de béta-test](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Plan-de-b%C3%A9ta-test).
 
 [English version below](#english)
 
@@ -57,6 +57,7 @@ Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut
 - Home Assistant **2025.3** ou plus récent (toutes les installations : OS, Container, Core).
 - Une clé USB EnOcean **USB300**, ou une clé compatible ESP3 (TCM310, USB500…).
 - Pas de broker MQTT, pas d'add-on : l'intégration parle directement à la clé.
+- Interface en français, anglais et allemand (selon la langue de Home Assistant).
 
 > ⚠️ Si l'intégration EnOcean native de Home Assistant utilise déjà la clé, supprimez-la d'abord : une clé ne peut servir qu'à une seule intégration à la fois.
 
@@ -115,7 +116,12 @@ Dans la liste des produits de l'intégration, faites **⋮ → Supprimer**. Pens
 
 ## Dépannage
 
-Activez les journaux détaillés dans `configuration.yaml` :
+- **Diagnostics** : ⋮ de la ligne **Clé EnOcean** (ou d'une fiche appareil) → **Télécharger les diagnostics**. Joignez ce fichier à tout [rapport de bug](https://github.com/eHomeLabs/NodOcean-for-HA/issues/new?template=bug.yml).
+- **Clé débranchée ou occupée** : une alerte s'affiche dans **Paramètres → Système → Corrections**.
+- **Port ou clé changé** : ⋮ de la ligne **Clé EnOcean** → **Reconfigurer** (les produits sont conservés).
+- **Doublons** : les messages répétés par les modules en mode répéteur sont filtrés automatiquement.
+
+Journaux détaillés, dans `configuration.yaml` :
 
 ```yaml
 logger:
@@ -137,7 +143,7 @@ La fiche technique de chaque produit (EEP, trames, appairage, sources) est dans 
 
 ## Licence
 
-MIT. Projet indépendant non affilié
+MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, ni approuvé par eux.
 
 ---
 
@@ -145,7 +151,9 @@ MIT. Projet indépendant non affilié
 
 **NodOcean for HA** is an unofficial Home Assistant integration for **NodOn EnOcean** products. Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
 
-**Requirements:** Home Assistant 2025.3 or newer and an EnOcean USB300 (or ESP3-compatible) stick. No MQTT needed.
+**Requirements:** Home Assistant 2025.3 or newer and an EnOcean USB300 (or ESP3-compatible) stick. No MQTT needed. UI in English, French and German.
+
+**Full documentation:** [English documentation (wiki)](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/English-documentation).
 
 **Install:** add this repository to HACS as a custom repository (category *Integration*), install **NodOcean for HA**, restart, then add the integration from *Settings → Devices & services*.
 

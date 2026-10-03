@@ -137,7 +137,7 @@ La fiche technique de chaque produit (EEP, trames, appairage, sources) est dans 
 
 ## Licence
 
-MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, ni approuvé par eux.
+MIT. Projet indépendant non affilié
 
 ---
 

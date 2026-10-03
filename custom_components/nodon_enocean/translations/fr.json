@@ -114,11 +114,37 @@
           "comfort_1": "Confort -1",
           "comfort_2": "Confort -2"
         }
+      },
+      "default_state": {
+        "name": "État après coupure de courant",
+        "state": {
+          "previous": "État précédent",
+          "on": "Allumé",
+          "off": "Éteint"
+        }
+      },
+      "repeater": {
+        "name": "Répéteur EnOcean",
+        "state": {
+          "off": "Désactivé",
+          "level_1": "Niveau 1",
+          "level_2": "Niveau 2"
+        }
+      },
+      "buttons": {
+        "name": "Façade",
+        "state": {
+          "4": "4 boutons (double touche)",
+          "2": "2 boutons (simple touche)"
+        }
       }
     },
     "sensor": {
       "rssi": {
         "name": "Signal"
+      },
+      "firmware": {
+        "name": "Version firmware"
       }
     },
     "event": {
@@ -135,7 +161,9 @@
               "left_down_right_down": "Bas gauche + bas droite",
               "left_up_right_down": "Haut gauche + bas droite",
               "left_down_right_up": "Bas gauche + haut droite",
-              "release": "Relâchement"
+              "release": "Relâchement",
+              "up": "Haut",
+              "down": "Bas"
             }
           }
         }
@@ -153,6 +181,69 @@
           }
         }
       }
+    },
+    "switch": {
+      "led": {
+        "name": "LED de statut"
+      },
+      "local_control": {
+        "name": "Bouton local"
+      },
+      "power_failure": {
+        "name": "Détection de coupure secteur"
+      }
+    },
+    "number": {
+      "auto_off": {
+        "name": "Extinction automatique"
+      },
+      "auto_off_channel": {
+        "name": "Extinction automatique canal {channel}"
+      },
+      "delay_off": {
+        "name": "Extinction radio retardée"
+      },
+      "delay_off_channel": {
+        "name": "Extinction radio retardée canal {channel}"
+      },
+      "temperature_offset": {
+        "name": "Correction de température"
+      },
+      "humidity_offset": {
+        "name": "Correction d'humidité"
+      },
+      "timeout": {
+        "name": "Indisponible après"
+      }
+    },
+    "button": {
+      "reset_energy": {
+        "name": "Remise à zéro de l'énergie"
+      }
+    },
+    "image": {
+      "product_image": {
+        "name": "Visuel du produit"
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "left_up": "Haut gauche appuyé",
+      "left_down": "Bas gauche appuyé",
+      "right_up": "Haut droite appuyé",
+      "right_down": "Bas droite appuyé",
+      "left_up_right_up": "Haut gauche + haut droite",
+      "left_down_right_down": "Bas gauche + bas droite",
+      "left_up_right_down": "Haut gauche + bas droite",
+      "left_down_right_up": "Bas gauche + haut droite",
+      "release": "Touche relâchée",
+      "up": "Haut appuyé",
+      "down": "Bas appuyé",
+      "single": "Appui simple",
+      "double": "Double appui",
+      "long": "Appui long",
+      "long_release": "Fin d'appui long"
     }
   }
 }

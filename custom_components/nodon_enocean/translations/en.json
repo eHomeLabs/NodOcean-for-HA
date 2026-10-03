@@ -114,11 +114,37 @@
           "comfort_1": "Comfort -1",
           "comfort_2": "Comfort -2"
         }
+      },
+      "default_state": {
+        "name": "State after power failure",
+        "state": {
+          "previous": "Previous state",
+          "on": "On",
+          "off": "Off"
+        }
+      },
+      "repeater": {
+        "name": "EnOcean repeater",
+        "state": {
+          "off": "Off",
+          "level_1": "Level 1",
+          "level_2": "Level 2"
+        }
+      },
+      "buttons": {
+        "name": "Faceplate",
+        "state": {
+          "4": "4 buttons (double rocker)",
+          "2": "2 buttons (single rocker)"
+        }
       }
     },
     "sensor": {
       "rssi": {
         "name": "Signal"
+      },
+      "firmware": {
+        "name": "Firmware version"
       }
     },
     "event": {
@@ -135,7 +161,9 @@
               "left_down_right_down": "Bottom left + bottom right",
               "left_up_right_down": "Top left + bottom right",
               "left_down_right_up": "Bottom left + top right",
-              "release": "Release"
+              "release": "Release",
+              "up": "Up",
+              "down": "Down"
             }
           }
         }
@@ -153,6 +181,69 @@
           }
         }
       }
+    },
+    "switch": {
+      "led": {
+        "name": "Status LED"
+      },
+      "local_control": {
+        "name": "Local button"
+      },
+      "power_failure": {
+        "name": "Power failure detection"
+      }
+    },
+    "number": {
+      "auto_off": {
+        "name": "Auto off timer"
+      },
+      "auto_off_channel": {
+        "name": "Auto off timer channel {channel}"
+      },
+      "delay_off": {
+        "name": "Delayed radio off"
+      },
+      "delay_off_channel": {
+        "name": "Delayed radio off channel {channel}"
+      },
+      "temperature_offset": {
+        "name": "Temperature offset"
+      },
+      "humidity_offset": {
+        "name": "Humidity offset"
+      },
+      "timeout": {
+        "name": "Unavailable after"
+      }
+    },
+    "button": {
+      "reset_energy": {
+        "name": "Reset energy"
+      }
+    },
+    "image": {
+      "product_image": {
+        "name": "Product picture"
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "left_up": "Top left pressed",
+      "left_down": "Bottom left pressed",
+      "right_up": "Top right pressed",
+      "right_down": "Bottom right pressed",
+      "left_up_right_up": "Top left + top right",
+      "left_down_right_down": "Bottom left + bottom right",
+      "left_up_right_down": "Top left + bottom right",
+      "left_down_right_up": "Bottom left + top right",
+      "release": "Button released",
+      "up": "Up pressed",
+      "down": "Down pressed",
+      "single": "Single press",
+      "double": "Double press",
+      "long": "Long press",
+      "long_release": "Long press released"
     }
   }
 }

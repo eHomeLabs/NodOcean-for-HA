@@ -330,3 +330,83 @@ async def test_wall_switch_triggers(hass: HomeAssistant, dongle) -> None:
     dongle.inject(0xF6, bytes.fromhex("30"), CWS)
     await hass.async_block_till_done()
     assert fired == [1]
+
+
+# --- v0.3 : nouveaux produits, aide ------------------------------------------------
+
+CRC = 0xFEF00002
+CFS = 0xFEF00003
+CCS = 0xFEF00004
+PIR = 0x0199AA01
+
+
+def test_new_product_decoders() -> None:
+    from custom_components.nodon_enocean.esp3 import RadioTelegram  # noqa: PLC0415
+
+    def rps(b: int) -> RadioTelegram:
+        return RadioTelegram(0xF6, bytes([b]), 1, 0x30)
+
+    # Soft Remote : 50 = haut gauche, 10 = haut droite, 35 = haut gauche + bas droite
+    remote = eep.SOFT_REMOTE_NAMES
+    assert eep.decode_f60201(rps(0x50), remote) == {"event": "left_up"}
+    assert eep.decode_f60201(rps(0x10), remote) == {"event": "right_up"}
+    assert eep.decode_f60201(rps(0x35), remote) == {"event": "left_up_right_down"}
+    assert eep.decode_single_button(rps(0x30)) == {"event": "press"}
+    assert eep.decode_f60401(rps(0x30)) == {"card": True}
+    assert eep.decode_f60401(rps(0x00)) == {"card": False}
+    # PIR : C8 = 4,0 V ; 69 00 -> 420 lx ; 88 = mouvement
+    pir = RadioTelegram(0xA5, bytes.fromhex("C8 69 00 88"), 1, 0)
+    assert eep.decode_a50703(pir) == {"motion": True, "voltage": 4.0, "illuminance": 420}
+
+
+async def test_new_products(hass: HomeAssistant, dongle) -> None:
+    entry = await _setup_gateway(hass)
+    entry = await _pair(
+        hass, entry, dongle, "CRC-2", lambda: dongle.inject(0xF6, bytes.fromhex("50"), CRC), "Télécommande"
+    )
+    entry = await _pair(
+        hass, entry, dongle, "CFS-2", lambda: dongle.inject(0xF6, bytes.fromhex("30"), CFS), "Sol"
+    )
+    entry = await _pair(
+        hass, entry, dongle, "CCS-2", lambda: dongle.inject(0xF6, bytes.fromhex("30"), CCS), "Carte"
+    )
+    entry = await _pair(
+        hass,
+        entry,
+        dongle,
+        "PIR-2",
+        lambda: dongle.inject(0xA5, bytes.fromhex("1C 18 46 80"), PIR),
+        "Couloir",
+    )
+    ent = er.async_get(hass)
+    remote = ent.async_get_entity_id("event", DOMAIN, "FEF00002_soft_remote")
+    floor = ent.async_get_entity_id("event", DOMAIN, "FEF00003_floor_switch")
+    card = ent.async_get_entity_id("binary_sensor", DOMAIN, "FEF00004_card")
+    motion = ent.async_get_entity_id("binary_sensor", DOMAIN, "0199AA01_motion")
+    lux = ent.async_get_entity_id("sensor", DOMAIN, "0199AA01_illuminance")
+    assert all([remote, floor, card, motion, lux])
+
+    dongle.inject(0xF6, bytes.fromhex("70"), CRC)
+    dongle.inject(0xF6, bytes.fromhex("30"), CFS)
+    dongle.inject(0xF6, bytes.fromhex("00"), CCS)
+    dongle.inject(0xA5, bytes.fromhex("C8 69 00 88"), PIR)
+    await hass.async_block_till_done()
+    assert hass.states.get(remote).attributes["event_type"] == "left_down"
+    assert hass.states.get(floor).attributes["event_type"] == "press"
+    assert hass.states.get(card).state == "off"
+    assert hass.states.get(motion).state == "on"
+    assert float(hass.states.get(lux).state) == 420
+
+    dev = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "FEF00003")})
+    triggers = await async_get_device_automations(hass, DeviceAutomationType.TRIGGER, dev.id)
+    assert {t["type"] for t in triggers if t["domain"] == DOMAIN} == {"press", "release"}
+
+    # Bouton Aide : notification avec la notice et le support NodOn
+    help_btn = ent.async_get_entity_id("button", DOMAIN, "0199AA01_help")
+    await hass.services.async_call("button", "press", {"entity_id": help_btn}, blocking=True)
+    from homeassistant.components import persistent_notification  # noqa: PLC0415
+
+    notes = persistent_notification._async_get_or_create_notifications(hass)
+    note = notes["nodon_help_0199AA01"]
+    assert PRODUCTS["PIR-2"].manual in note["message"]
+    assert "support.nodon.fr" in note["message"]

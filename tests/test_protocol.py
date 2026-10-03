@@ -218,6 +218,10 @@ def test_catalog_complete() -> None:
         "MSP-2",
         "TSB-2",
         "SWO-2",
+        "CRC-2",
+        "CFS-2",
+        "CCS-2",
+        "PIR-2",
     }
     for p in PRODUCTS.values():
         assert p.pairing_fr and p.pairing_en

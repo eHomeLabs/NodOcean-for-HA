@@ -7,7 +7,7 @@
 
 # NodOcean for HA
 
-**Les produits EnOcean NodOn dans Home Assistant.**
+**Les produits EnOcean by NodOn dans Home Assistant.**
 
 Intégration Home Assistant **officieuse** dédiée aux produits **EnOcean NodOn**.
 Le principe : on choisit son produit dans une liste et Home Assistant fait le reste.

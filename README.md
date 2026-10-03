@@ -76,6 +76,28 @@ Pour les capteurs et les interrupteurs, si l'appairage échoue, vous pouvez auss
 - **Soft Button.** Il est reconnu grâce à sa requête UTE (5 appuis).
 - **Interrogation.** Toutes les 60 s, l'intégration demande aux actionneurs leur état, leur puissance et leur énergie.
 
+## Réglages des produits
+
+Depuis la v0.2, chaque produit a ses réglages dans la carte **Configuration** de sa fiche appareil. Le lien **Visiter** de la fiche ouvre la notice du produit sur support.nodon.fr, et la carte **Diagnostic** affiche son visuel.
+
+| Réglage | Produits | Valeurs |
+|---|---|---|
+| LED de statut (mode jour / nuit) | SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, ASP-2, MSP-2 | Allumée / éteinte |
+| État après coupure de courant | SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, ASP-2, MSP-2 | Précédent / allumé / éteint |
+| Bouton local | SIN-2-FP-01, ASP-2, MSP-2 | Actif / inactif |
+| Détection de coupure secteur | ASP-2, MSP-2 | Active / inactive |
+| Extinction automatique | SIN-2-1-01, SIN-2-2-01 (par canal), ASP-2, MSP-2 | 0 à 3600 s (0 = désactivée) |
+| Extinction radio retardée | SIN-2-1-01, SIN-2-2-01 (par canal) | 0 à 3600 s |
+| Répéteur EnOcean | Tous les modules et prises | Désactivé / niveau 1 / niveau 2 |
+| Remise à zéro de l'énergie | MSP-2, SIN-2-FP-01 | Bouton |
+| Correction de température / d'humidité | STP-2, STPH-2 | ± 5 °C / ± 20 % |
+| Indisponible après | SDO-2, STP-2, STPH-2 | 0 à 1440 min sans message (0 = jamais) |
+| Façade | CWS-2-1 | 4 boutons / 2 boutons |
+
+- Les produits ne permettent pas de relire leurs réglages : Home Assistant affiche la dernière valeur envoyée. Les valeurs par défaut sont celles d'un produit neuf.
+- Pour la MSP-2 et le SIN-2-FP-01, l'intégration règle elle-même le rapport automatique des mesures : toutes les 10 min au plus tard, ou dès 5 W / 10 Wh d'écart.
+- L'interrupteur CWS-2-1 et le Soft Button proposent des **déclencheurs d'appareil** dans l'éditeur d'automatisations (« Haut gauche appuyé », « Double appui »…).
+
 ## Supprimer un produit
 
 Dans la liste des produits de l'intégration, faites **⋮ → Supprimer**. Pensez aussi à effacer l'appairage côté produit si besoin : réinitialisation usine, par exemple un appui de plus de 5 s sur le bouton des modules SIN-2.

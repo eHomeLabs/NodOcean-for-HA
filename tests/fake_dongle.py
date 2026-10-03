@@ -28,6 +28,7 @@ class FakeDongle(asyncio.Transport):
         self._parser = ESP3Parser()
         self.closed = False
         self.on_send = None
+        self.base_id = BASE_ID
 
     def attach(self, gateway) -> None:
         self.gateway = gateway
@@ -40,7 +41,7 @@ class FakeDongle(asyncio.Transport):
         for packet in self._parser.feed(data):
             if packet.packet_type == PACKET_COMMON_COMMAND:
                 if packet.data[0] == CO_RD_IDBASE:
-                    self._reply(b"\x00" + BASE_ID.to_bytes(4, "big") + b"\x0a")
+                    self._reply(b"\x00" + self.base_id.to_bytes(4, "big") + b"\x0a")
                 elif packet.data[0] == CO_RD_VERSION:
                     desc = b"GATEWAYCTRL".ljust(16, b"\x00")
                     self._reply(
@@ -58,9 +59,11 @@ class FakeDongle(asyncio.Transport):
                 if self.on_send:
                     self.on_send(telegram)
 
-    def inject(self, rorg: int, payload: bytes, sender: int, dbm: int = 60) -> None:
-        """Simule la réception d'un télégramme radio."""
-        data = bytes([rorg]) + payload + sender.to_bytes(4, "big") + b"\x00"
+    def inject(
+        self, rorg: int, payload: bytes, sender: int, dbm: int = 60, status: int = 0
+    ) -> None:
+        """Simule la réception d'un télégramme radio (status : compteur de répétitions)."""
+        data = bytes([rorg]) + payload + sender.to_bytes(4, "big") + bytes([status])
         opt = b"\x01\xff\xff\xff\xff" + bytes([dbm]) + b"\x00"
         self.gateway._data_received(Packet(PACKET_RADIO_ERP1, data, opt).encode())
 

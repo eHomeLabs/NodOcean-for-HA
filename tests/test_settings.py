@@ -410,3 +410,132 @@ async def test_new_products(hass: HomeAssistant, dongle) -> None:
     note = notes["nodon_help_0199AA01"]
     assert PRODUCTS["PIR-2"].manual in note["message"]
     assert "support.nodon.fr" in note["message"]
+
+
+# --- v0.4 : doublons, diagnostics, reconfiguration, réparations --------------------
+
+
+async def test_duplicates_ignored(hass: HomeAssistant, dongle) -> None:
+    entry = await _setup_gateway(hass)
+    await _pair(
+        hass, entry, dongle, "CWS-2-1", lambda: dongle.inject(0xF6, bytes.fromhex("30"), CWS), "Inter"
+    )
+    calls: list = []
+    hass.bus.async_listen(f"{DOMAIN}_button", lambda e: calls.append(e.data["type"]))
+    # Original + copie répétée par un module (compteur de répétitions = 1)
+    dongle.inject(0xF6, bytes.fromhex("70"), CWS)
+    dongle.inject(0xF6, bytes.fromhex("70"), CWS, status=0x31)
+    await hass.async_block_till_done()
+    assert calls == ["right_up"]
+    # Deux vrais appuis rapides (non répétés) : tous deux pris en compte
+    dongle.inject(0xF6, bytes.fromhex("00"), CWS)
+    dongle.inject(0xF6, bytes.fromhex("70"), CWS)
+    await hass.async_block_till_done()
+    assert calls.count("right_up") == 2
+    assert entry.runtime_data.gateway.duplicates == 1
+
+
+async def test_diagnostics(hass: HomeAssistant, dongle) -> None:
+    from custom_components.nodon_enocean.diagnostics import (  # noqa: PLC0415
+        async_get_config_entry_diagnostics,
+        async_get_device_diagnostics,
+    )
+
+    entry = await _setup_gateway(hass)
+    entry = await _pair(
+        hass,
+        entry,
+        dongle,
+        "SIN-2-1-01",
+        lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0F 01 D2"), SIN21),
+        "Lampe",
+    )
+    diag = await async_get_config_entry_diagnostics(hass, entry)
+    assert diag["gateway"]["base_id"] == "FF8A2C00"
+    assert diag["products"][0]["model"] == "SIN-2-1-01"
+    assert any(t["dir"] == "tx" and t["rorg"] == "D4" for t in diag["last_telegrams"])
+    dev = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "0512AB34")})
+    ddiag = await async_get_device_diagnostics(hass, entry, dev)
+    assert ddiag["product"]["enocean_id"] == "0512AB34"
+    assert all("0512AB34" in (t["sender"], t["destination"]) for t in ddiag["last_telegrams"])
+
+
+async def test_reconfigure_port(hass: HomeAssistant, dongle) -> None:
+    from homeassistant.data_entry_flow import FlowResultType  # noqa: PLC0415
+
+    entry = await _setup_gateway(hass)
+    entry = await _pair(
+        hass, entry, dongle, "STPH-2", lambda: dongle.inject(0xA5, bytes(4), STPH), "Chambre"
+    )
+    # Même clé, nouveau chemin : produits conservés
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "reconfigure", "entry_id": entry.entry_id}
+    )
+    assert result["step_id"] == "reconfigure"
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"device": "/dev/serial/by-id/usb-EnOcean_USB_300"}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    await hass.async_block_till_done()
+    entry = hass.config_entries.async_get_entry(entry.entry_id)
+    assert entry.data["device"] == "/dev/serial/by-id/usb-EnOcean_USB_300"
+    assert len(entry.subentries) == 1
+
+    # Autre clé : avertissement puis adoption
+    dongle.base_id = 0xFFAA0000
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "reconfigure", "entry_id": entry.entry_id}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"device": "/dev/ttyUSB1"}
+    )
+    assert result["step_id"] == "reconfigure_new_key"
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    assert result["reason"] == "reconfigure_successful"
+    await hass.async_block_till_done()
+    entry = hass.config_entries.async_get_entry(entry.entry_id)
+    assert entry.unique_id == "FFAA0000" and entry.title == "Clé EnOcean FFAA0000"
+    assert len(entry.subentries) == 1
+
+
+async def test_repair_issue_when_stick_missing(hass: HomeAssistant) -> None:
+    from unittest.mock import patch  # noqa: PLC0415
+
+    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
+    from pytest_homeassistant_custom_component.common import MockConfigEntry  # noqa: PLC0415
+
+    from custom_components.nodon_enocean.gateway import (  # noqa: PLC0415
+        Gateway,
+        GatewayOpenError,
+    )
+
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="FF8A2C00", data={"device": "/dev/absent"})
+    entry.add_to_hass(hass)
+    with patch.object(Gateway, "connect", side_effect=GatewayOpenError("No such file")):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    issue = ir.async_get(hass).async_get_issue(DOMAIN, f"gateway_unavailable_{entry.entry_id}")
+    assert issue is not None and issue.translation_key == "gateway_unavailable"
+    assert issue.translation_placeholders["port"] == "/dev/absent"
+
+
+def test_translations_complete() -> None:
+    import json  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+
+    base = Path(__file__).parent.parent / "custom_components" / "nodon_enocean"
+
+    def keys(obj, prefix=""):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                yield from keys(v, f"{prefix}/{k}")
+        else:
+            yield prefix
+
+    ref = set(keys(json.loads((base / "strings.json").read_text())))
+    for lang in ("en", "fr", "de"):
+        data = json.loads((base / "translations" / f"{lang}.json").read_text())
+        assert set(keys(data)) == ref, lang
+    for product in PRODUCTS.values():
+        assert product.pairing("de") != product.pairing_en

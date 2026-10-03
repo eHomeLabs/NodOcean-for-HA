@@ -29,6 +29,10 @@ Fabricant EnOcean NodOn : **0x046**.
 | STP-2 Température | A5-02-05 | 1 appui sur le bouton arrière (teach-in 4BS) | DB1 : 255 → 0 °C … 0 → 40 °C (spécification EEP) |
 | STPH-2 Température + humidité | A5-04-01 | 1 appui sur le bouton arrière (teach-in 4BS) | DB2 × 0,4 = % HR ; DB1 × 0,16 = °C |
 | CWS-2-1 Interrupteur mural | F6-02-01 | 1 appui sur une touche | `30` haut gauche, `10` bas gauche, `70` haut droite, `50` bas droite, `00` relâchement, combinaisons `35`/`17`/`37`/`15` |
+| CRC-2 Soft Remote | F6-02-01 | 1 appui sur un bouton | `50` haut gauche, `70` bas gauche, `10` haut droite, `30` bas droite, `00` relâchement ; combinaisons `35`/`17`/`37`/`15` |
+| CFS-2 Interrupteur de sol | F6-02-01 | 1 appui | appui (bit 0x10) / `00` relâchement |
+| CCS-2 Interrupteur à carte | F6-04-01 | insertion d'une carte | `30` carte insérée, `00` carte retirée |
+| PIR-2 Détecteur de mouvement | A5-07-03 | 1 appui sur le bouton Pairing (teach-in 4BS) | DB3 × 0,02 = tension pile (V) ; DB2/DB1 10 bits = luminosité 0 à 1000 lx ; DB0 bit 7 = mouvement ; émission toutes les 15 à 21 min ou au changement |
 | TSB-2 Soft Button | D2-03-0A | 5 appuis brefs (UTE unidirectionnel `60 01 46 00 0A 03 D2`) | `BB YY` : BB = batterie en %, YY 1 simple / 2 double / 3 long / 4 fin d'appui long |
 
 ## Points à valider sur produits réels

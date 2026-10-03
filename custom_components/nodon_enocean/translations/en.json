@@ -19,6 +19,17 @@
       "usb_confirm": {
         "title": "EnOcean stick detected",
         "description": "An EnOcean stick was detected on {path}. Do you want to use it?"
+      },
+      "reconfigure": {
+        "title": "Reconfigure the EnOcean stick",
+        "description": "Current port: `{current}`.\n\nChoose the new port of the stick, or type its path (e.g. /dev/serial/by-id/usb-EnOcean_GmbH_EnOcean_USB_300_...). Paired products are kept.",
+        "data": {
+          "device": "Serial port"
+        }
+      },
+      "reconfigure_new_key": {
+        "title": "New EnOcean stick detected",
+        "description": "This port belongs to **another stick** (ID {new} instead of {old}).\n\n- **Sensors and switches** will keep working.\n- **Relay modules and plugs** are bound to the old stick: remove them and add them again (pairing).\n\nSubmit to adopt the new stick?"
       }
     },
     "error": {
@@ -27,7 +38,8 @@
       "native_enocean": "The native Home Assistant EnOcean integration is active: remove it first, otherwise the stick stays busy."
     },
     "abort": {
-      "already_configured": "This EnOcean stick is already configured."
+      "already_configured": "This EnOcean stick is already configured.",
+      "reconfigure_successful": "The EnOcean stick has been reconfigured."
     }
   },
   "config_subentries": {
@@ -285,6 +297,16 @@
       "long": "Long press",
       "long_release": "Long press released",
       "press": "Pressed"
+    }
+  },
+  "issues": {
+    "gateway_unavailable": {
+      "title": "EnOcean stick unreachable",
+      "description": "NodOcean for HA cannot use the EnOcean stick on `{port}` ({error}).\n\n- Check that the stick is plugged in.\n- Check that no other integration or add-on uses it.\n- If the port changed, use **Reconfigure** on the NodOcean for HA integration.\n\nHome Assistant retries automatically; this message disappears as soon as the stick answers."
+    },
+    "native_enocean": {
+      "title": "The EnOcean stick is used by the native EnOcean integration",
+      "description": "NodOcean for HA cannot open `{port}` ({error}) and Home Assistant's native **EnOcean** integration is active.\n\nA stick can only serve one integration: remove the native EnOcean integration (Settings → Devices & services), then restart Home Assistant."
     }
   }
 }

@@ -19,6 +19,17 @@
       "usb_confirm": {
         "title": "Clé EnOcean détectée",
         "description": "Une clé EnOcean a été détectée sur {path}. Voulez-vous l'utiliser ?"
+      },
+      "reconfigure": {
+        "title": "Reconfigurer la clé EnOcean",
+        "description": "Port actuel : `{current}`.\n\nChoisissez le nouveau port de la clé, ou saisissez son chemin (ex. /dev/serial/by-id/usb-EnOcean_GmbH_EnOcean_USB_300_...). Les produits ajoutés sont conservés.",
+        "data": {
+          "device": "Port série"
+        }
+      },
+      "reconfigure_new_key": {
+        "title": "Nouvelle clé EnOcean détectée",
+        "description": "Ce port correspond à une **autre clé** (identifiant {new}, au lieu de {old}).\n\n- Les **capteurs et interrupteurs** continueront de fonctionner.\n- Les **modules et prises** sont liés à l'ancienne clé : il faudra les supprimer puis les ajouter de nouveau (appairage).\n\nValider pour adopter la nouvelle clé ?"
       }
     },
     "error": {
@@ -27,7 +38,8 @@
       "native_enocean": "L'intégration EnOcean native de Home Assistant est active : supprimez-la d'abord, sinon la clé reste occupée."
     },
     "abort": {
-      "already_configured": "Cette clé EnOcean est déjà configurée."
+      "already_configured": "Cette clé EnOcean est déjà configurée.",
+      "reconfigure_successful": "La clé EnOcean a été reconfigurée."
     }
   },
   "config_subentries": {
@@ -285,6 +297,16 @@
       "long": "Appui long",
       "long_release": "Fin d'appui long",
       "press": "Appui"
+    }
+  },
+  "issues": {
+    "gateway_unavailable": {
+      "title": "Clé EnOcean injoignable",
+      "description": "NodOcean for HA n'arrive pas à utiliser la clé EnOcean sur `{port}` ({error}).\n\n- Vérifiez que la clé est bien branchée.\n- Vérifiez qu'aucune autre intégration ni aucun add-on ne l'utilise.\n- Si le port a changé, utilisez **Reconfigurer** sur l'intégration NodOcean for HA.\n\nHome Assistant réessaie automatiquement ; ce message disparaît dès que la clé répond."
+    },
+    "native_enocean": {
+      "title": "La clé EnOcean est occupée par l'intégration EnOcean native",
+      "description": "NodOcean for HA n'arrive pas à ouvrir `{port}` ({error}) et l'intégration **EnOcean** native de Home Assistant est active.\n\nUne clé ne peut servir qu'à une seule intégration : supprimez l'intégration EnOcean native (Paramètres → Appareils et services), puis redémarrez Home Assistant."
     }
   }
 }

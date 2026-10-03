@@ -1,0 +1,312 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "EnOcean-Stick",
+        "description": "Wählen Sie den EnOcean-USB-Stick (USB300 oder kompatibel), der an Home Assistant angeschlossen ist.",
+        "data": {
+          "device": "Serieller Port"
+        }
+      },
+      "manual": {
+        "title": "EnOcean-Stick",
+        "description": "Geben Sie den Pfad des seriellen Ports ein (z. B. /dev/serial/by-id/usb-EnOcean_GmbH_EnOcean_USB_300_...).",
+        "data": {
+          "device": "Port-Pfad"
+        }
+      },
+      "usb_confirm": {
+        "title": "EnOcean-Stick erkannt",
+        "description": "An {path} wurde ein EnOcean-Stick erkannt. Möchten Sie ihn verwenden?"
+      },
+      "reconfigure": {
+        "title": "EnOcean-Stick neu konfigurieren",
+        "description": "Aktueller Port: `{current}`.\n\nWählen Sie den neuen Port des Sticks oder geben Sie seinen Pfad ein (z. B. /dev/serial/by-id/usb-EnOcean_GmbH_EnOcean_USB_300_...). Die angelernten Produkte bleiben erhalten.",
+        "data": {
+          "device": "Serieller Port"
+        }
+      },
+      "reconfigure_new_key": {
+        "title": "Neuer EnOcean-Stick erkannt",
+        "description": "Dieser Port gehört zu einem **anderen Stick** (ID {new} statt {old}).\n\n- **Sensoren und Schalter** funktionieren weiter.\n- **Aktoren und Zwischenstecker** sind an den alten Stick gebunden: entfernen Sie sie und fügen Sie sie erneut hinzu (Anlernen).\n\nNeuen Stick übernehmen?"
+      }
+    },
+    "error": {
+      "cannot_open": "Der serielle Port kann nicht geöffnet werden ({error}). Er wird vermutlich bereits von einer anderen Integration oder einem Add-on verwendet (native EnOcean-Integration, EnOcean-MQTT-Add-on…).",
+      "no_response": "Der Port lässt sich öffnen, aber der Stick antwortet nicht (EnOcean-ESP3-Protokoll). Prüfen Sie, ob es der EnOcean-Stick ist und kein Add-on ihn verwendet.",
+      "native_enocean": "Die native EnOcean-Integration von Home Assistant ist aktiv: Entfernen Sie sie zuerst, sonst bleibt der Stick belegt."
+    },
+    "abort": {
+      "already_configured": "Dieser EnOcean-Stick ist bereits eingerichtet.",
+      "reconfigure_successful": "Der EnOcean-Stick wurde neu konfiguriert."
+    }
+  },
+  "config_subentries": {
+    "device": {
+      "initiate_flow": {
+        "user": "NodOn-Produkt hinzufügen"
+      },
+      "entry_type": "NodOn-Produkt",
+      "step": {
+        "user": {
+          "title": "NodOn-Produkt hinzufügen",
+          "description": "{gallery}\n\nWählen Sie das NodOn-Produkt aus. Alles ist vorkonfiguriert: Sie müssen nichts weiter eingeben.",
+          "data": {
+            "model": "Produkt"
+          }
+        },
+        "instructions": {
+          "title": "{model} — {name}",
+          "description": "{image}**Anlernen vorbereiten:**\n\n{instructions}\n\nKlicken Sie auf **Absenden**, um das Lauschen zu starten ({timeout} s), und führen Sie dann die obigen Schritte aus."
+        },
+        "timeout": {
+          "title": "Kein Produkt erkannt",
+          "description": "Es wurde keine Anlernanfrage des **{model}** empfangen.\n\n- Bringen Sie das Produkt näher an den EnOcean-Stick (weniger als 10 m beim Anlernen).\n- Prüfen Sie die Stromversorgung (bzw. Licht für Solarsensoren).\n- Wiederholen Sie die Schritte: {instructions}",
+          "data": {
+            "action": "Was möchten Sie tun?"
+          }
+        },
+        "manual": {
+          "title": "Manuelle Eingabe",
+          "description": "Geben Sie die 8-stellige EnOcean-ID ein, die auf dem Produkt oder der Verpackung steht (z. B. 0512AB34).",
+          "data": {
+            "device_id": "EnOcean-ID"
+          }
+        },
+        "confirm": {
+          "title": "Produkt erkannt!",
+          "description": "**{model}** erkannt — ID `{device_id}`, Signal {rssi}.\n\n{after}\n\nGeben Sie ihm einen Namen und wählen Sie den Bereich, in dem es installiert ist.",
+          "data": {
+            "name": "Name",
+            "area_id": "Bereich",
+            "new_area": "Oder neuer Bereich"
+          },
+          "data_description": {
+            "name": "Zum Beispiel „EnOcean Zwischenstecker NodOn“.",
+            "area_id": "Vorhandener Bereich, in dem das Produkt installiert ist (optional).",
+            "new_area": "Falls der Bereich noch nicht existiert, geben Sie seinen Namen ein (z. B. „Garage“): Er wird angelegt."
+          }
+        }
+      },
+      "progress": {
+        "pairing": "{image}**Warten auf {model}…**\n\n{instructions}\n\nDas Lauschen dauert {timeout} Sekunden."
+      },
+      "error": {
+        "invalid_id": "Ungültige ID: 8 hexadezimale Zeichen erwartet."
+      },
+      "abort": {
+        "already_configured": "Dieses Produkt ist bereits eingerichtet.",
+        "gateway_not_ready": "Der EnOcean-Stick ist nicht bereit. Prüfen Sie die Verbindung und versuchen Sie es erneut."
+      }
+    }
+  },
+  "selector": {
+    "timeout_action": {
+      "options": {
+        "retry": "Anlernen wiederholen",
+        "manual": "ID manuell eingeben"
+      }
+    }
+  },
+  "entity": {
+    "light": {
+      "channel": {
+        "name": "Kanal {channel}"
+      }
+    },
+    "select": {
+      "pilot_wire_mode": {
+        "name": "Fil-Pilote-Modus",
+        "state": {
+          "off": "Aus",
+          "comfort": "Komfort",
+          "eco": "Eco",
+          "frost_protection": "Frostschutz",
+          "comfort_1": "Komfort -1",
+          "comfort_2": "Komfort -2"
+        }
+      },
+      "default_state": {
+        "name": "Zustand nach Stromausfall",
+        "state": {
+          "previous": "Vorheriger Zustand",
+          "on": "Ein",
+          "off": "Aus"
+        }
+      },
+      "repeater": {
+        "name": "EnOcean-Repeater",
+        "state": {
+          "off": "Aus",
+          "level_1": "Stufe 1",
+          "level_2": "Stufe 2"
+        }
+      },
+      "buttons": {
+        "name": "Wippe",
+        "state": {
+          "4": "4 Tasten (Doppelwippe)",
+          "2": "2 Tasten (Einfachwippe)"
+        }
+      }
+    },
+    "sensor": {
+      "rssi": {
+        "name": "Signal"
+      },
+      "firmware": {
+        "name": "Firmware-Version"
+      },
+      "battery_voltage": {
+        "name": "Batteriespannung"
+      }
+    },
+    "event": {
+      "wall_switch": {
+        "name": "Tasten",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "left_up": "Oben links",
+              "left_down": "Unten links",
+              "right_up": "Oben rechts",
+              "right_down": "Unten rechts",
+              "left_up_right_up": "Oben links + oben rechts",
+              "left_down_right_down": "Unten links + unten rechts",
+              "left_up_right_down": "Oben links + unten rechts",
+              "left_down_right_up": "Unten links + oben rechts",
+              "release": "Losgelassen",
+              "up": "Oben",
+              "down": "Unten"
+            }
+          }
+        }
+      },
+      "soft_button": {
+        "name": "Taste",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "single": "Einfacher Druck",
+              "double": "Doppelter Druck",
+              "long": "Langer Druck",
+              "long_release": "Langer Druck beendet"
+            }
+          }
+        }
+      },
+      "soft_remote": {
+        "name": "Tasten",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "left_up": "Oben links",
+              "left_down": "Unten links",
+              "right_up": "Oben rechts",
+              "right_down": "Unten rechts",
+              "left_up_right_up": "Oben links + oben rechts",
+              "left_down_right_down": "Unten links + unten rechts",
+              "left_up_right_down": "Oben links + unten rechts",
+              "left_down_right_up": "Unten links + oben rechts",
+              "release": "Losgelassen"
+            }
+          }
+        }
+      },
+      "floor_switch": {
+        "name": "Schalter",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Gedrückt",
+              "release": "Losgelassen"
+            }
+          }
+        }
+      }
+    },
+    "switch": {
+      "led": {
+        "name": "Status-LED"
+      },
+      "local_control": {
+        "name": "Lokale Taste"
+      },
+      "power_failure": {
+        "name": "Stromausfallerkennung"
+      }
+    },
+    "number": {
+      "auto_off": {
+        "name": "Automatisches Ausschalten"
+      },
+      "auto_off_channel": {
+        "name": "Automatisches Ausschalten Kanal {channel}"
+      },
+      "delay_off": {
+        "name": "Verzögertes Funk-Ausschalten"
+      },
+      "delay_off_channel": {
+        "name": "Verzögertes Funk-Ausschalten Kanal {channel}"
+      },
+      "temperature_offset": {
+        "name": "Temperaturkorrektur"
+      },
+      "humidity_offset": {
+        "name": "Feuchtekorrektur"
+      },
+      "timeout": {
+        "name": "Nicht verfügbar nach"
+      }
+    },
+    "button": {
+      "reset_energy": {
+        "name": "Energiezähler zurücksetzen"
+      },
+      "help": {
+        "name": "NodOn-Hilfe"
+      }
+    },
+    "image": {
+      "product_image": {
+        "name": "Produktbild"
+      }
+    },
+    "binary_sensor": {
+      "card": {
+        "name": "Karte eingesteckt"
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "left_up": "Oben links gedrückt",
+      "left_down": "Unten links gedrückt",
+      "right_up": "Oben rechts gedrückt",
+      "right_down": "Unten rechts gedrückt",
+      "left_up_right_up": "Oben links + oben rechts",
+      "left_down_right_down": "Unten links + unten rechts",
+      "left_up_right_down": "Oben links + unten rechts",
+      "left_down_right_up": "Unten links + oben rechts",
+      "release": "Taste losgelassen",
+      "up": "Oben gedrückt",
+      "down": "Unten gedrückt",
+      "single": "Einfacher Druck",
+      "double": "Doppelter Druck",
+      "long": "Langer Druck",
+      "long_release": "Langer Druck beendet",
+      "press": "Gedrückt"
+    }
+  },
+  "issues": {
+    "gateway_unavailable": {
+      "title": "EnOcean-Stick nicht erreichbar",
+      "description": "NodOcean for HA kann den EnOcean-Stick an `{port}` nicht verwenden ({error}).\n\n- Prüfen Sie, ob der Stick eingesteckt ist.\n- Prüfen Sie, ob keine andere Integration und kein Add-on ihn verwendet.\n- Falls sich der Port geändert hat, verwenden Sie **Neu konfigurieren** in der Integration NodOcean for HA.\n\nHome Assistant versucht es automatisch erneut; diese Meldung verschwindet, sobald der Stick antwortet."
+    },
+    "native_enocean": {
+      "title": "Der EnOcean-Stick wird von der nativen EnOcean-Integration belegt",
+      "description": "NodOcean for HA kann `{port}` nicht öffnen ({error}) und die native **EnOcean**-Integration von Home Assistant ist aktiv.\n\nEin Stick kann nur von einer Integration genutzt werden: Entfernen Sie die native EnOcean-Integration (Einstellungen → Geräte & Dienste) und starten Sie Home Assistant neu."
+    }
+  }
+}

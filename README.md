@@ -13,6 +13,8 @@ Intégration Home Assistant **officieuse** dédiée aux produits **EnOcean NodOn
 Le principe : on choisit son produit dans une liste et Home Assistant fait le reste.
 Pas de profil EEP à chercher, pas d'identifiant à recopier, pas de fichier YAML.
 
+**Documentation complète : [wiki NodOcean for HA](https://github.com/eHomeLabs/NodOcean-for-HA/wiki)** (installation, appairage produit par produit, réglages, automatisations, FAQ).
+
 [English version below](#english)
 
 ## Produits pris en charge
@@ -45,8 +47,10 @@ Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut
 | <img src="docs/images/screenshots/01-choix-produit.png" alt="Choix du produit NodOn" width="320"> | <img src="docs/images/screenshots/02-appairage.png" alt="Consigne d'appairage" width="320"> |
 | **3. Nom et pièce** | **4. Fiche du produit et réglages** |
 | <img src="docs/images/screenshots/04-nom-et-piece.png" alt="Nom et pièce du produit" width="320"> | <img src="docs/images/screenshots/03-appareil.png" alt="Fiche du Module Multifonction avec ses réglages" width="380"> |
-| **5. Aide NodOn** | |
-| <img src="docs/images/screenshots/05-aide.png" alt="Notification Aide NodOn" width="320"> | |
+
+**5. Aide NodOn** : sur la fiche d'un produit, carte **Diagnostic** → **Aide NodOn** → **Appuyer**. La réponse s'affiche dans **Notifications** (en bas du menu de gauche) : notice du produit, support NodOn, contact et identifiant EnOcean.
+
+<img src="docs/images/screenshots/05-aide.png" alt="Aide NodOn : la réponse s'affiche dans Notifications" width="760">
 
 ## Prérequis
 
@@ -99,7 +103,7 @@ Depuis la v0.2, chaque produit a ses réglages dans la carte **Configuration** d
 | Correction de température / d'humidité | STP-2, STPH-2 | ± 5 °C / ± 20 % |
 | Indisponible après | SDO-2, STP-2, STPH-2, PIR-2 | 0 à 1440 min sans message (0 = jamais) |
 | Façade | CWS-2-1 | 4 boutons / 2 boutons |
-| Aide NodOn | Tous | Bouton (carte Diagnostic) : notice, FAQ et contact du support NodOn |
+| Aide NodOn | Tous | Bouton (carte Diagnostic) : appuyez sur **Appuyer**, puis ouvrez **Notifications** pour la notice, la FAQ et le contact du support NodOn |
 
 - Les produits ne permettent pas de relire leurs réglages : Home Assistant affiche la dernière valeur envoyée. Les valeurs par défaut sont celles d'un produit neuf.
 - Pour la MSP-2 et le SIN-2-FP-01, l'intégration règle elle-même le rapport automatique des mesures : toutes les 10 min au plus tard, ou dès 5 W / 10 Wh d'écart.

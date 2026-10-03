@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation (wiki)
+    url: https://github.com/eHomeLabs/NodOcean-for-HA/wiki
+    about: Installation, appairage produit par produit, réglages, FAQ.
+  - name: Support des produits NodOn
+    url: https://support.nodon.fr
+    about: Questions sur les produits eux-mêmes (installation électrique, réinitialisation, garantie).

@@ -1,0 +1,86 @@
+name: Signaler un bug
+description: Un produit ou une fonction ne marche pas comme prévu.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler ce problème. Le **fichier de diagnostics** est la pièce la plus utile :
+        Paramètres → Appareils et services → NodOcean for HA → **⋮** de la clé (ou de l'appareil) → **Télécharger les diagnostics**.
+  - type: input
+    id: version
+    attributes:
+      label: Version de NodOcean for HA
+      placeholder: "ex. 0.4.0"
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Version de Home Assistant
+      placeholder: "ex. 2026.10.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Type d'installation
+      options:
+        - Home Assistant OS
+        - Supervised
+        - Container (Docker)
+        - Core
+    validations:
+      required: true
+  - type: dropdown
+    id: products
+    attributes:
+      label: Produit(s) concerné(s)
+      multiple: true
+      options:
+        - Clé USB / installation
+        - SIN-2-1-01 Module Multifonction
+        - SIN-2-2-01 Module Éclairage 2 canaux
+        - SIN-2-FP-01 Module Fil Pilote
+        - SIN-2-RS-01 Module Volet Roulant
+        - ASP-2 Prise intelligente
+        - MSP-2 Micro Smart Plug
+        - CWS-2-1 Interrupteur mural
+        - CRC-2 Soft Remote
+        - CFS-2 Interrupteur de sol
+        - CCS-2 Interrupteur à carte
+        - TSB-2 Soft Button
+        - SDO-2 Détecteur d'ouverture
+        - SWO-2 Ouverture invisible
+        - PIR-2 Détecteur de mouvement
+        - STP-2 Température
+        - STPH-2 Température + humidité
+    validations:
+      required: true
+  - type: input
+    id: test_id
+    attributes:
+      label: Identifiant du test (béta-test)
+      description: Voir le [plan de béta-test](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Plan-de-b%C3%A9ta-test).
+      placeholder: "ex. SIN1-05"
+  - type: textarea
+    id: what
+    attributes:
+      label: Que se passe-t-il ?
+      description: Ce que vous avez fait, ce qui s'est passé et ce que vous attendiez.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Fichier de diagnostics
+      description: Glissez-déposez ici le fichier .json téléchargé.
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Extrait du journal (facultatif)
+      description: Avec les journaux détaillés activés (voir le wiki, page Aide et dépannage).
+      render: text

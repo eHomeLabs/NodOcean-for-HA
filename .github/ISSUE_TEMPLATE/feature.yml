@@ -1,0 +1,16 @@
+name: Suggestion
+description: Proposer une amélioration ou un nouveau produit.
+title: "[Idée] "
+labels: ["amélioration"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Votre idée
+      description: Ce que vous aimeriez pouvoir faire, et pourquoi.
+    validations:
+      required: true
+  - type: input
+    id: product
+    attributes:
+      label: Produit concerné (facultatif)

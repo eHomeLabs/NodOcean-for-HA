@@ -1,0 +1,74 @@
+name: Retour de béta-test
+description: Votre bilan de la béta (même si tout est OK).
+title: "[Béta] Retour de "
+labels: ["béta-test"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de participer à la béta ! Les tests sont décrits dans le [plan de béta-test](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Plan-de-b%C3%A9ta-test).
+        Pour un test en échec, ouvrez plutôt un **rapport de bug** avec le fichier de diagnostics.
+  - type: input
+    id: version
+    attributes:
+      label: Version de NodOcean for HA testée
+      placeholder: "ex. 0.4.0"
+    validations:
+      required: true
+  - type: input
+    id: setup
+    attributes:
+      label: Votre installation
+      placeholder: "ex. HA OS 2026.10 sur Raspberry Pi 5, clé USB300"
+    validations:
+      required: true
+  - type: dropdown
+    id: products
+    attributes:
+      label: Produits testés
+      multiple: true
+      options:
+        - Clé USB / installation
+        - SIN-2-1-01 Module Multifonction
+        - SIN-2-2-01 Module Éclairage 2 canaux
+        - SIN-2-FP-01 Module Fil Pilote
+        - SIN-2-RS-01 Module Volet Roulant
+        - ASP-2 Prise intelligente
+        - MSP-2 Micro Smart Plug
+        - CWS-2-1 Interrupteur mural
+        - CRC-2 Soft Remote
+        - CFS-2 Interrupteur de sol
+        - CCS-2 Interrupteur à carte
+        - TSB-2 Soft Button
+        - SDO-2 Détecteur d'ouverture
+        - SWO-2 Ouverture invisible
+        - PIR-2 Détecteur de mouvement
+        - STP-2 Température
+        - STPH-2 Température + humidité
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Bilan global
+      options:
+        - Tout fonctionne
+        - Fonctionne avec quelques défauts
+        - Problèmes bloquants
+    validations:
+      required: true
+  - type: textarea
+    id: ko
+    attributes:
+      label: Tests en échec (KO)
+      description: Identifiants des tests et lien vers les rapports de bug.
+      placeholder: "ex. SIN1-05 → #12"
+  - type: textarea
+    id: ux
+    attributes:
+      label: Facilité d'utilisation
+      description: Installation, ajout des produits, réglages, documentation… Qu'est-ce qui était clair ou confus ?
+  - type: textarea
+    id: ideas
+    attributes:
+      label: Idées et suggestions

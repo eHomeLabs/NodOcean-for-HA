@@ -52,6 +52,10 @@ Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut
 
 <img src="docs/images/screenshots/05-aide.png" alt="Aide NodOn : la réponse s'affiche dans Notifications" width="760">
 
+**6. Tous les produits EnOcean NodOn** : Cartes Image + Entités sur un Dashboard.
+
+<img src="docs/images/screenshots/06-NodOcean Card.png" alt="Dashboard NodOn EnOcean" width="760">
+
 ## Prérequis
 
 - Home Assistant **2025.3** ou plus récent (toutes les installations : OS, Container, Core).

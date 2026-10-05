@@ -75,6 +75,7 @@ from .pairing import PairingResult, wait_for_teach_in
 _LOGGER = logging.getLogger(__name__)
 
 MANUAL_PATH = "manual"
+MQTT_WIKI = "https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT"
 
 
 def _list_ports() -> list[tuple[str, str]]:
@@ -393,7 +394,7 @@ class NodOnOptionsFlow(OptionsFlow):
             step_id="init",
             data_schema=_mqtt_schema(current),
             errors=errors,
-            description_placeholders={"broker": self._error},
+            description_placeholders={"broker": self._error, "wiki": MQTT_WIKI},
         )
 
 

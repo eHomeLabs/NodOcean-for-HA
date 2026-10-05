@@ -168,4 +168,22 @@ Merci de participer à la béta de **NodOcean for HA** ! Cette page liste les te
 | `STPH-01` | Appairage (1 appui) | Détecté |
 | `STPH-02` | Comparer température et humidité à une référence | Écarts < 1 °C et < 5 % |
 
+### Remote Commissioning et nouveaux réglages (v0.7)
+
+| ID | Test | Résultat attendu |
+|---|---|---|
+| `RC-01` | SIN-2-1-01 : **Lire les télécommandes appairées** (carte Diagnostic) | Le nombre correspond aux télécommandes appairées en direct ; la liste est dans les attributs |
+| `RC-02` | SIN-2-1-01 : **⋮ → Reconfigurer**, ajouter un interrupteur CWS-2-1 par son identifiant (bascule A) | « C'est fait » ; la bascule A de l'interrupteur pilote le module |
+| `RC-03` | Même menu : supprimer cette télécommande | L'interrupteur ne pilote plus le module |
+| `RC-04` | SIN-2-1-01 : **Type d'interrupteur filaire** = Interrupteur 2 états | Interrupteur fermé = allumé, ouvert = éteint |
+| `RC-05` | SIN-2-1-01 : **Télécommandes appairées en direct** désactivé | Les télécommandes appairées en direct n'ont plus d'effet ; Home Assistant pilote toujours |
+| `RC-06` | SIN-2-1-01 : **Bouton local** désactivé | Le bouton et l'interrupteur filaire n'ont plus d'effet |
+| `RC-07` | SIN-2-RS-01 : redémarrer Home Assistant, ouvrir la carte Diagnostic | Type de calibration et temps de montée / descente renseignés |
+| `RC-08` | SIN-2-RS-01 : **Lancer la calibration** puis **Arrêter la calibration** | Le volet monte / descend puis s'arrête ; l'ancienne calibration est conservée |
+| `RC-09` | SIN-2-RS-01 : **Lancer la calibration complète** jusqu'au bout | Le volet fait les arrêts de mesure ; positions correctes ensuite |
+| `RC-10` | SIN-2-RS-01 : **Type d'interrupteur filaire** = Type 4 avec des poussoirs | Comportement poussoir conforme à la notice |
+| `RC-11` | SIN-2-RS-01 : volet en haut, **Temps de course** = temps réel mesuré | Les positions intermédiaires (50 %) sont correctes |
+| `RC-12` | SIN-2-RS-01 : **⋮ → Reconfigurer → Régler la position**, bouton AI à 50 % | Un appui sur AI amène le volet à mi-hauteur |
+| `RC-13` | ASP-2 ou MSP-2 : **Lire les télécommandes appairées** | Liste correcte (ou message « Le produit n'a pas répondu » : noter le firmware) |
+
 Merci ! Chaque retour, même « tout est OK », aide à valider l'intégration avant sa publication.

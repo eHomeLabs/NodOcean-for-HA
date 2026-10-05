@@ -101,7 +101,12 @@ Settings are in the **Configuration** card of each device page.
 |---|---|---|
 | Status LED (day/night mode) | SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, ASP-2, MSP-2 | On / off |
 | State after power failure | same | Previous / on / off |
-| Local button | SIN-2-FP-01, ASP-2, MSP-2 | Enabled / disabled |
+| Local button | SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, ASP-2, MSP-2 | Enabled / disabled |
+| Wired switch type (v0.7) | SIN-2-1-01, SIN-2-2-01 | Auto-detect / switch / 2-state switch (closed = on) / push button |
+| Directly paired remotes (v0.7) | SIN-2-1-01, SIN-2-2-01 | Active / ignored |
+| Wired switch type (v0.7, Remote Commissioning) | SIN-2-RS-01 | Type 1 (bistable/tristable) / 2 / 3 / 4 (push buttons) |
+| Start calibration / full calibration / stop (v0.7) | SIN-2-RS-01 | Buttons |
+| Travel time (v0.7) | SIN-2-RS-01 | 5–300 s, replaces calibration; the module then assumes the shutter is open: move it to the top first |
 | Power failure detection | ASP-2, MSP-2 | Enabled / disabled |
 | Auto off timer | SIN-2-1-01, SIN-2-2-01 (per channel), ASP-2, MSP-2 | 0–3600 s (0 = off) |
 | Delayed radio off | SIN-2-1-01, SIN-2-2-01 (per channel) | 0–3600 s |
@@ -112,6 +117,13 @@ Settings are in the **Configuration** card of each device page.
 | Faceplate | CWS-2-1 | 4 buttons / 2 buttons |
 
 Products cannot report their settings back: Home Assistant shows the last value it sent and restores it after a restart. Metering reports (MSP-2, SIN-2-FP-01) are set up automatically: every 10 min at the latest, or on a 5 W / 10 Wh change.
+
+**Remote Commissioning (v0.7).** SIN-2 modules and ASP-2 / MSP-2 plugs are read and configured over the air with the EnOcean Remote Commissioning protocol:
+
+- **Paired remotes** sensor (Diagnostic card): remotes, switches and sensors paired *directly* in the product; the list is in the attributes. Press **Read paired remotes** to refresh it.
+- **Manage them**: **Settings → Devices & services → NodOcean for HA**, then **⋮ → Reconfigure** on the product row: add a remote by its 8-character ID (no button press needed), remove paired remotes, or (calibrated SIN-2-RS-01) set the opening reached by a remote button.
+- SIN-2-RS-01: switch type, calibration type and calibrated opening / closing times are read at startup.
+- The product must be powered and in range. The default security code `00000000` is sent first (new NodOn products have no code set).
 
 ## 7. Automations
 

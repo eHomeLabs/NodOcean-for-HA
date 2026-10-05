@@ -46,5 +46,6 @@ Le **Remote Commissioning** (ReCom) est le protocole EnOcean qui permet de lire 
 Bon à savoir :
 
 - Le produit doit être alimenté et à portée de la clé. Sans code de sécurité défini (cas des produits NodOn neufs), il accepte le ReCom ; l'intégration envoie le code par défaut `00000000` avant chaque série d'échanges.
+- **Produits protégés par un code** (v0.7.1) : si vos produits ont reçu un code formé de 4 caractères suivis des 4 derniers caractères de leur identifiant EnOcean (ex. `1234E662` pour l'ID `0512E662`), indiquez le préfixe (`1234`) dans **Paramètres → Appareils et services → NodOcean for HA → ⚙ (ligne de la clé) → Remote Commissioning**. L'intégration essaie `00000000`, puis le code calculé pour chaque produit.
 - Si le produit ne répond pas, Home Assistant affiche « Le produit n'a pas répondu » : rapprochez-le de la clé ou coupez puis remettez son alimentation, et réessayez.
 - Les diagnostics téléchargeables (fiche de la clé) contiennent les derniers échanges ReCom (télégrammes `C5`) pour l'analyse.

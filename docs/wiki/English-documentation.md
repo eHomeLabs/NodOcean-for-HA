@@ -123,7 +123,7 @@ Products cannot report their settings back: Home Assistant shows the last value 
 - **Paired remotes** sensor (Diagnostic card): remotes, switches and sensors paired *directly* in the product; the list is in the attributes. Press **Read paired remotes** to refresh it.
 - **Manage them**: **Settings → Devices & services → NodOcean for HA**, then **⋮ → Reconfigure** on the product row: add a remote by its 8-character ID (no button press needed), remove paired remotes, or (calibrated SIN-2-RS-01) set the opening reached by a remote button.
 - SIN-2-RS-01: switch type, calibration type and calibrated opening / closing times are read at startup.
-- The product must be powered and in range. The default security code `00000000` is sent first (new NodOn products have no code set).
+- The product must be powered and in range. The default security code `00000000` is sent first (new NodOn products have no code set). If your products were given a code made of 4 characters followed by the last 4 characters of their EnOcean ID (e.g. `1234E662` for ID `0512E662`), enter the prefix (`1234`) in the stick options (**⚙ → Remote Commissioning**, v0.7.1): the derived code is tried next.
 
 ## 7. Automations
 

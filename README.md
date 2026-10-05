@@ -110,6 +110,18 @@ Depuis la v0.2, chaque produit a ses réglages dans la carte **Configuration** d
 - Pour la MSP-2 et le SIN-2-FP-01, l'intégration règle elle-même le rapport automatique des mesures : toutes les 10 min au plus tard, ou dès 5 W / 10 Wh d'écart.
 - Les interrupteurs CWS-2-1 et CFS-2, la Soft Remote et le Soft Button proposent des **déclencheurs d'appareil** dans l'éditeur d'automatisations (« Haut gauche appuyé », « Double appui »…).
 
+## Pont MQTT (NodOcean to MQTT)
+
+Depuis la v0.5.0, l'intégration peut aussi envoyer l'état des produits vers un **broker MQTT** local ou distant (Jeedom, Node-RED, serveur distant…) et recevoir des commandes, comme Zigbee2MQTT. Le pont est facultatif et désactivé par défaut.
+
+- **Activer** : ligne **Clé EnOcean** → **Configurer** → adresse du broker, port, identifiant, mot de passe, TLS, topic de base. Vous pouvez aussi reprendre le broker de l'intégration MQTT de Home Assistant.
+- **États** : `nodocean/<produit>` en JSON, par exemple `{"state": "ON", "power": 12.5, "energy": 3.2, "rssi": -68}`.
+- **Boutons** : `nodocean/<produit>/action` (`left_up`, `single`…).
+- **Commandes** : `nodocean/<produit>/set`, par exemple `{"state": "ON"}`, `{"position": 50}` ou `{"mode": "eco"}`.
+- **Statut** : `nodocean/bridge/state` (`online` / `offline`) et `nodocean/bridge/info` (liste des produits).
+
+Tous les détails sont dans le wiki : [Pont MQTT](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).
+
 ## Supprimer un produit
 
 Dans la liste des produits de l'intégration, faites **⋮ → Supprimer**. Pensez aussi à effacer l'appairage côté produit si besoin : réinitialisation usine, par exemple un appui de plus de 5 s sur le bouton des modules SIN-2.
@@ -134,7 +146,7 @@ Chaque télégramme reçu est alors journalisé (identifiant, RORG, données, RS
 ## Développement
 
 ```bash
-pip install pytest-homeassistant-custom-component pyserial-asyncio-fast
+pip install pytest-homeassistant-custom-component pyserial-asyncio-fast paho-mqtt
 pytest
 ```
 
@@ -151,7 +163,7 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 
 **NodOcean for HA** is an unofficial Home Assistant integration for **NodOn EnOcean** products. Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
 
-**Requirements:** Home Assistant 2025.3 or newer and an EnOcean USB300 (or ESP3-compatible) stick. No MQTT needed. UI in English, French and German.
+**Requirements:** Home Assistant 2025.3 or newer and an EnOcean USB300 (or ESP3-compatible) stick. No MQTT needed. An optional MQTT bridge (v0.5.0+) can also publish product states to a local or remote broker and accept commands, like Zigbee2MQTT. UI in English, French and German.
 
 **Full documentation:** [English documentation (wiki)](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/English-documentation).
 

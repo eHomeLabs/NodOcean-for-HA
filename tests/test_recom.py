@@ -347,3 +347,68 @@ async def test_sin_switch_type(hass: HomeAssistant, dongle) -> None:
     assert er.async_get(hass).async_get_entity_id(
         "button", DOMAIN, f"{SIN21:08X}_calibration_classic"
     ) is None
+
+
+# --- Code de sécurité (préfixe + 4 derniers caractères de l'ID) ---------------------
+
+
+def test_recom_prefix() -> None:
+    assert recom.parse_prefix("") is None
+    assert recom.parse_prefix(" 1234 ") == 0x1234
+    assert recom.parse_prefix("0xab12") == 0xAB12
+    for bad in ("123", "12345", "12G4"):
+        try:
+            recom.parse_prefix(bad)
+        except ValueError:
+            continue
+        raise AssertionError(bad)
+    assert recom.derived_code(0x1234, 0x0512E662) == 0x1234E662
+
+
+async def test_unlock_with_prefix(hass: HomeAssistant, dongle) -> None:
+    """Code 00000000 refusé : l'intégration essaie le code dérivé 1234 + ID."""
+    fake = FakeReComDevice(dongle, SIN21)
+    code = recom.derived_code(0x1234, SIN21)
+    original = fake._handle
+
+    def _handle(message):
+        if message.function == recom.FN_UNLOCK:
+            fake.received.append((message.function, message.data))
+            if int.from_bytes(message.data, "big") == code:
+                fake._reply(recom.FN_ACK)
+            return
+        original(message)
+
+    fake._handle = _handle
+    entry = await _setup_gateway(hass)
+
+    # Option de la clé : préfixe invalide refusé, puis 1234 accepté
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"mqtt_enabled": False, "advanced": {}, "recom": {"recom_prefix": "12G4"}}
+    )
+    assert result["errors"] == {"base": "invalid_recom_prefix"}
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"mqtt_enabled": False, "advanced": {}, "recom": {"recom_prefix": "1234"}}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    entry = hass.config_entries.async_get_entry(entry.entry_id)
+    assert entry.options["recom"] == {"recom_prefix": "1234"}
+    assert entry.runtime_data.gateway.recom_prefix == 0x1234
+
+    entry = await _pair(
+        hass,
+        entry,
+        dongle,
+        "SIN-2-1-01",
+        lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0F 01 D2"), SIN21),
+        "Lampe",
+    )
+    await hass.services.async_call(
+        "button", "press", {"entity_id": _entity(hass, "button", "recom_read", SIN21)},
+        blocking=True,
+    )
+    unlocks = [int.from_bytes(d, "big") for fn, d in fake.received if fn == recom.FN_UNLOCK]
+    assert unlocks == [0, code]
+    assert hass.states.get(_entity(hass, "sensor", "paired_devices", SIN21)).state == "2"

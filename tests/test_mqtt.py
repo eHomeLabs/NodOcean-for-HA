@@ -138,7 +138,7 @@ async def test_mqtt_bridge(hass: HomeAssistant, dongle) -> None:
         assert ("nodocean/+/set", 0) in client.subscribed
 
         info = json.loads(client.last("nodocean/bridge/info"))
-        assert info["version"] == "0.5.0" and info["gateway"] == "FF8A2C00"
+        assert info["version"] == "0.6.0" and info["gateway"] == "FF8A2C00"
         topics = {d["name"]: d["topic"] for d in info["devices"]}
         assert topics["Lampe salon"] == "nodocean/lampe_salon"
         assert topics["Capteur chambre"] == "nodocean/capteur_chambre"
@@ -259,3 +259,102 @@ async def test_mqtt_payload_and_commands(hass: HomeAssistant, dongle) -> None:
     duo = NodOnDevice(gateway, PRODUCTS["SIN-2-2-01"], 0x0500AA04, 5, "c", "Éclairage")
     assert await apply_command(duo, {"state_l2": "ON", "state_l3": "ON"}) == ["state_l3"]
     assert device_payload(duo) == {"state_l2": "ON"}
+
+
+async def test_mqtt_discovery_and_telegrams(hass: HomeAssistant, dongle) -> None:
+    """Auto-découverte HA (validée contre les schémas MQTT de HA) et télégrammes bruts."""
+    import importlib  # noqa: PLC0415
+
+    from homeassistant.helpers.template import Template  # noqa: PLC0415
+
+    FakeClient.instances.clear()
+    entry = await _setup_gateway(hass)
+    entry = await _pair(
+        hass, entry, dongle, "SIN-2-1-01",
+        lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0F 01 D2"), SIN21),
+        "Lampe salon",
+    )
+    entry = await _pair(
+        hass, entry, dongle, "STPH-2",
+        lambda: dongle.inject(0xA5, bytes.fromhex("00 00 00 00"), STPH),
+        "Capteur chambre",
+    )
+    entry = await _pair(
+        hass, entry, dongle, "CWS-2-1",
+        lambda: dongle.inject(0xF6, bytes.fromhex("30"), CWS),
+        "Interrupteur entrée",
+    )
+    opts = {
+        **OPTIONS,
+        "advanced": {
+            **OPTIONS["advanced"],
+            "mqtt_discovery": True,
+            "mqtt_discovery_prefix": "homeassistant",
+            "mqtt_telegrams": True,
+        },
+    }
+    with patch("custom_components.nodon_enocean.mqtt_bridge._new_client", FakeClient):
+        result, _ = await _configure(hass, entry, opts)
+        assert result["type"] is FlowResultType.CREATE_ENTRY
+        client = FakeClient.instances[-1]
+        node = "homeassistant/{}/nodocean_ff8a2c00/{}/config"
+        configs = {
+            t: json.loads(p) for t, p, r in client.published if t.endswith("/config") and p
+        }
+        assert ("homeassistant/+/nodocean_ff8a2c00/+/config", 1) in client.subscribed
+
+        switch = configs[node.format("switch", "0512AB34_switch")]
+        assert switch["command_topic"] == "nodocean/lampe_salon/set"
+        assert switch["unique_id"] == "nodocean_0512AB34_switch"
+        assert switch["device"]["via_device"] == "nodocean_gateway_FF8A2C00"
+        assert node.format("binary_sensor", "bridge") in configs
+        assert node.format("sensor", "01A2B3C4_temperature") in configs
+        assert node.format("sensor", "01A2B3C4_humidity") in configs
+        event = configs[node.format("event", "FEF00001_action")]
+        assert event["state_topic"] == "nodocean/interrupteur_entree/action"
+        assert "right_up" in event["event_types"]
+
+        # Chaque configuration est acceptée telle quelle par l'intégration MQTT de HA
+        for topic, cfg in configs.items():
+            component = topic.split("/")[1]
+            module = importlib.import_module(f"homeassistant.components.mqtt.{component}")
+            validated = module.DISCOVERY_SCHEMA({k: v for k, v in cfg.items() if k != "origin"})
+            dropped = set(cfg) - set(validated) - {"origin"}
+            assert not dropped, (topic, dropped)
+
+        # Modèles Jinja : valeur présente / absente (vide = ignoré par HA)
+        def render(tpl: str, payload: dict) -> str:
+            return Template(tpl, hass).async_render(
+                {"value_json": payload}, parse_result=False
+            )
+
+        assert render(switch["value_template"], {"state": "ON"}) == "ON"
+        assert render(switch["value_template"], {"rssi": -60}) == ""
+        temp = configs[node.format("sensor", "01A2B3C4_temperature")]
+        assert render(temp["value_template"], {"temperature": 19.5}) == "19.5"
+        assert Template(event["value_template"], hass).async_render(
+            {"value": "left_up"}, parse_result=False
+        ) == '{"event_type": "left_up"}'
+
+        # Télégrammes bruts (reçus et émis)
+        dongle.inject(0xA5, bytes.fromhex("00 96 7D 0A"), STPH)
+        await hass.async_block_till_done()
+        raw = [json.loads(p) for t, p, _ in client.published if t == "nodocean/bridge/telegrams"]
+        assert any(r["dir"] == "rx" and r["product"] == "capteur_chambre" for r in raw)
+        client.receive(hass, "nodocean/lampe_salon/set", "ON")
+        await hass.async_block_till_done()
+        raw = [json.loads(p) for t, p, _ in client.published if t == "nodocean/bridge/telegrams"]
+        assert any(r["dir"] == "tx" and r["product"] == "lampe_salon" for r in raw)
+
+        # Configuration orpheline (produit supprimé) : effacée
+        stale = node.format("sensor", "DEADBEEF_rssi")
+        client.receive(hass, stale, '{"name": "x"}')
+        assert (stale, "", True) in client.published
+        client.receive(hass, node.format("switch", "0512AB34_switch"), json.dumps(switch))
+        assert (node.format("switch", "0512AB34_switch"), "", True) not in client.published
+
+        # Découverte désactivée : les produits sont retirés du HA distant
+        off = {**opts, "advanced": {**opts["advanced"], "mqtt_discovery": False}}
+        result, _ = await _configure(hass, entry, off)
+        assert (node.format("switch", "0512AB34_switch"), "", True) in client.published
+        assert (node.format("binary_sensor", "bridge"), "", True) in client.published

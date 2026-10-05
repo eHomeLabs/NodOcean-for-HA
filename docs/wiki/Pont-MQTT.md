@@ -1,6 +1,6 @@
 # Pont MQTT (NodOcean to MQTT)
 
-Depuis la **v0.5.0**, NodOcean for HA peut envoyer l'état de vos produits NodOn vers un **broker MQTT**, local ou distant, et recevoir des commandes. Le principe est le même que Zigbee2MQTT. Vous pouvez ainsi utiliser vos produits depuis un autre système : Jeedom, Node-RED, un serveur domotique distant, un script…
+Depuis la **v0.5.0** (auto-découverte et télégrammes bruts depuis la **v0.6.0**), NodOcean for HA peut envoyer l'état de vos produits NodOn vers un **broker MQTT**, local ou distant, et recevoir des commandes. Le principe est le même que Zigbee2MQTT. Vous pouvez ainsi utiliser vos produits depuis un autre système : Jeedom, Node-RED, un serveur domotique distant, un script…
 
 - Le pont est **facultatif** et **désactivé par défaut**.
 - Il **s'ajoute** à l'intégration : les produits restent dans Home Assistant comme avant.
@@ -9,8 +9,12 @@ Depuis la **v0.5.0**, NodOcean for HA peut envoyer l'état de vos produits NodOn
 ## Activer le pont
 
 1. **Paramètres → Appareils et services → NodOcean for HA**.
-2. Sur la ligne **Clé EnOcean**, cliquez sur **Configurer**.
+2. Sur la ligne **Clé EnOcean**, cliquez sur l'icône **⚙ Configurer** (engrenage).
 3. Remplissez les champs, puis **Valider**. La connexion au broker est testée avant l'enregistrement.
+
+<img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/08-mqtt-bouton.png" alt="Icône Configurer sur la ligne de la clé EnOcean" width="600">
+
+<img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/09-mqtt-broker.png" alt="Réglages du broker" width="290"> <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/10-mqtt-topics.png" alt="Topics et nom des produits" width="290">
 
 | Champ | Rôle |
 |---|---|
@@ -32,6 +36,11 @@ Depuis la **v0.5.0**, NodOcean for HA peut envoyer l'état de vos produits NodOn
 | Client ID | Vide : `nodocean-<ID de la clé>` |
 | Certificat de l'autorité (CA) | Chemin d'un fichier sur Home Assistant (ex. `/ssl/ca.crt`). Vide : certificats du système |
 | Ne pas vérifier le certificat du broker | À éviter, sauf pour un certificat auto-signé de test |
+| Publier les télégrammes EnOcean bruts | Pour le debug, voir plus bas |
+| Auto-découverte MQTT de Home Assistant | Pour un **autre** Home Assistant, voir plus bas |
+| Préfixe de découverte | `homeassistant` par défaut |
+
+<img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/11-mqtt-avance.png" alt="Options avancées" width="290">
 
 > **Nom du produit** : le nom est converti en minuscules sans accents ni espaces (« Prise Salon » → `prise_salon`). Si vous renommez le produit, son topic change. Choisissez **ID EnOcean** pour des topics qui ne changent jamais.
 
@@ -44,6 +53,7 @@ Depuis la **v0.5.0**, NodOcean for HA peut envoyer l'état de vos produits NodOn
 | `nodocean/<produit>` | État du produit (JSON), à chaque message reçu | selon l'option retain |
 | `nodocean/<produit>/availability` | `online` / `offline`, suivant le réglage « Indisponible après » | oui |
 | `nodocean/<produit>/action` | Appui de bouton : `left_up`, `single`, `press`… | non |
+| `nodocean/bridge/telegrams` | Télégrammes EnOcean bruts (option) | non |
 
 Exemples d'état :
 
@@ -93,16 +103,38 @@ mosquitto_pub -h 192.168.1.20 -u nodon -P motdepasse -t nodocean/prise_salon/set
 mosquitto_sub -h 192.168.1.20 -u nodon -P motdepasse -t 'nodocean/#' -v
 ```
 
+## Télégrammes EnOcean bruts (v0.6.0)
+
+Option avancée **Publier les télégrammes EnOcean bruts**. Chaque télégramme reçu ou émis par la clé est publié sur `nodocean/bridge/telegrams`, y compris ceux des produits non ajoutés et les doublons du mode répéteur :
+
+```json
+{"time": 1791210000.123, "dir": "rx", "sender": "01A2B3C4", "destination": "FFFFFFFF", "rorg": "A5", "data": "00 96 7D 0A", "status": "00", "dbm": -72, "duplicate": false, "product": "capteur_chambre"}
+```
+
+- `dir` : `rx` (reçu) ou `tx` (émis par Home Assistant).
+- `product` : topic du produit concerné, absent pour un émetteur inconnu.
+- Utile pour analyser un produit avec le support NodOn. Laissez l'option désactivée en temps normal : elle publie beaucoup de messages.
+
+## Auto-découverte MQTT de Home Assistant (v0.6.0)
+
+Option avancée **Auto-découverte MQTT de Home Assistant**. Le pont publie la description de chaque produit (préfixe `homeassistant` par défaut). Un **autre** Home Assistant branché sur le même broker crée alors automatiquement les appareils et entités : interrupteurs, éclairage, volet, mode fil pilote, capteurs, ouverture, mouvement, boutons (entité événement), signal (désactivé par défaut) et l'état du pont.
+
+> ⚠️ Sur le Home Assistant qui fait tourner NodOcean for HA, avec l'intégration MQTT activée, chaque produit apparaîtrait **en double**. N'activez cette option que pour un autre Home Assistant (ex. une maison secondaire, un serveur distant) ou un logiciel compatible avec la découverte Home Assistant (openHAB, Domoticz…).
+
+- Les commandes passent par les topics `/set` : le Home Assistant distant pilote les produits à travers le pont.
+- Les noms des entités sont en français si votre Home Assistant est en français, sinon en anglais.
+- **Désactiver l'option** (ou le pont) retire les produits du Home Assistant distant. Un produit supprimé de NodOcean for HA disparaît aussi au prochain démarrage du pont.
+- Si vous **supprimez l'intégration** alors que l'option est active, les produits restent sur le Home Assistant distant : désactivez d'abord l'option, ou supprimez les appareils côté Home Assistant distant.
+
 ## Dépannage
 
 - **« Impossible de joindre le broker »** : vérifiez l'adresse, le port, le TLS et le pare-feu. Sur Home Assistant OS avec l'add-on Mosquitto, l'adresse est `core-mosquitto`.
 - **« Le broker refuse l'identifiant ou le mot de passe »** : avec l'add-on Mosquitto, utilisez un utilisateur Home Assistant ou un login déclaré dans l'add-on.
 - **Alerte « Pont MQTT » dans Corrections** : l'option « Utiliser le broker de l'intégration MQTT » est cochée mais l'intégration MQTT n'existe plus. Ouvrez **Configurer** sur la clé.
+- **Les produits apparaissent en double** : l'auto-découverte est active sur le même Home Assistant. Désactivez-la dans les options avancées.
 - **Diagnostics** : le fichier de diagnostics de la clé contient une partie `mqtt` (connecté ou non, broker, dernière erreur). Le mot de passe y est masqué.
 - **Journaux** : les messages du pont commencent par « Pont MQTT ».
 
 ## Pas encore disponible
 
-- L'auto-découverte MQTT de Home Assistant (elle ferait apparaître chaque produit en double dans Home Assistant).
-- La publication des télégrammes EnOcean bruts.
 - Le changement des réglages des produits (LED, répéteur…) par MQTT.

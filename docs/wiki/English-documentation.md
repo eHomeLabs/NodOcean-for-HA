@@ -170,7 +170,9 @@ Report problems with the [bug report form](https://github.com/eHomeLabs/NodOcean
 
 Since **v0.5.0**, NodOcean for HA can also publish the state of your NodOn products to an **MQTT broker** (local or remote) and accept commands, like Zigbee2MQTT. Use it to reach your products from another system: Jeedom, Node-RED, a remote server, a script… The bridge is optional and off by default. It comes on top of the integration: products stay in Home Assistant, and Home Assistant keeps working if the broker is down (the bridge reconnects by itself).
 
-**Enable it:** **Settings → Devices & services → NodOcean for HA**, then **Configure** on the **EnOcean stick** row. Fill in broker address, port (1883, or 8883 with TLS), username, password, TLS and base topic (`nodocean` by default), or tick **Use the broker of the Home Assistant MQTT integration**. The connection is tested when you submit. Products appear in topics by **name** (`nodocean/living_room_plug`, changes if you rename the product) or by **EnOcean ID** (`nodocean/0194A3F2`). Advanced options: retain (on by default), QoS, client ID, CA certificate file, skip certificate check.
+**Enable it:** **Settings → Devices & services → NodOcean for HA**, then the **⚙ Configure** (gear) icon on the **EnOcean stick** row. Fill in broker address, port (1883, or 8883 with TLS), username, password, TLS and base topic (`nodocean` by default), or tick **Use the broker of the Home Assistant MQTT integration**. The connection is tested when you submit. Products appear in topics by **name** (`nodocean/living_room_plug`, changes if you rename the product) or by **EnOcean ID** (`nodocean/0194A3F2`). Advanced options: retain (on by default), QoS, client ID, CA certificate file, skip certificate check, raw telegrams, Home Assistant MQTT discovery and its prefix (v0.6.0).
+
+<img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/09-mqtt-broker.png" alt="Broker settings (French UI)" width="290"> <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/11-mqtt-avance.png" alt="Advanced options (French UI)" width="290">
 
 **Published topics:**
 
@@ -181,6 +183,7 @@ Since **v0.5.0**, NodOcean for HA can also publish the state of your NodOn produ
 | `nodocean/<product>` | Product state (JSON) | retain option |
 | `nodocean/<product>/availability` | `online` / `offline` (from the "Unavailable after" setting) | yes |
 | `nodocean/<product>/action` | Button press: `left_up`, `single`, `press`… | no |
+| `nodocean/bridge/telegrams` | Raw EnOcean telegrams (option) | no |
 
 **State fields:** `state` (ON / OFF) for SIN-2-1-01, ASP-2, MSP-2; `state_l1` / `state_l2` for SIN-2-2-01; `position` (0 closed – 100 open) and `state` (OPEN / CLOSED) for SIN-2-RS-01; `mode` (`off`, `comfort`, `eco`, `frost_protection`, `comfort_1`, `comfort_2`) for SIN-2-FP-01; `power` (W), `energy` (kWh); `temperature`, `humidity` (offsets applied); `open` (SDO-2, SWO-2); `motion`, `illuminance`, `voltage` (PIR-2); `card` (CCS-2); `battery` (TSB-2); for all: `rssi`, `last_seen`, `available`; modules and plugs: `firmware`, `repeater`.
 
@@ -195,4 +198,8 @@ Since **v0.5.0**, NodOcean for HA can also publish the state of your NodOn produ
 
 Publish anything to `nodocean/<product>/get` to read a module or plug's state again. Sensors ignore commands. A command received over MQTT also updates the Home Assistant entity, and the other way round.
 
-**Not available yet:** Home Assistant MQTT discovery (products would show up twice in Home Assistant), raw EnOcean telegrams, changing product settings over MQTT.
+**Raw telegrams (v0.6.0):** advanced option. Every telegram received or sent by the stick is published to `nodocean/bridge/telegrams` as JSON (`time`, `dir` rx/tx, `sender`, `destination`, `rorg`, `data`, `status`, `dbm`, `duplicate`, `product`), including unknown senders and repeater duplicates. Meant for debugging: keep it off otherwise.
+
+**Home Assistant MQTT discovery (v0.6.0):** advanced option (prefix `homeassistant` by default). The bridge publishes a description of each product, so **another** Home Assistant on the same broker creates the devices and entities automatically (switches, lights, cover, pilot wire mode, sensors, opening, motion, buttons as an event entity, signal, bridge status) and controls them through `/set`. ⚠️ On the Home Assistant running NodOcean for HA, with the MQTT integration enabled, every product would show up twice: only enable it for another Home Assistant or a discovery-compatible software. Turning the option (or the bridge) off removes the products from the remote Home Assistant; a product removed from NodOcean for HA disappears there at the next bridge start. If you delete the integration while the option is on, remove the devices on the remote side.
+
+**Not available yet:** changing product settings over MQTT.

@@ -107,6 +107,12 @@
         "retry": "Anlernen wiederholen",
         "manual": "ID manuell eingeben"
       }
+    },
+    "topic_name": {
+      "options": {
+        "name": "Produktname (z. B. nodocean/steckdose_wohnzimmer)",
+        "id": "EnOcean-ID (z. B. nodocean/0194A3F2)"
+      }
     }
   },
   "entity": {
@@ -307,6 +313,65 @@
     "native_enocean": {
       "title": "Der EnOcean-Stick wird von der nativen EnOcean-Integration belegt",
       "description": "NodOcean for HA kann `{port}` nicht öffnen ({error}) und die native **EnOcean**-Integration von Home Assistant ist aktiv.\n\nEin Stick kann nur von einer Integration genutzt werden: Entfernen Sie die native EnOcean-Integration (Einstellungen → Geräte & Dienste) und starten Sie Home Assistant neu."
+    },
+    "mqtt_no_ha_mqtt": {
+      "title": "MQTT-Brücke: MQTT-Integration fehlt",
+      "description": "Die MQTT-Brücke von NodOcean for HA soll den Broker der MQTT-Integration von Home Assistant nutzen, diese ist aber nicht eingerichtet.\n\nRichte die MQTT-Integration ein oder gib die Broker-Adresse unter **Konfigurieren** am EnOcean-Stick ein."
+    },
+    "mqtt_no_host": {
+      "title": "MQTT-Brücke: Broker-Adresse fehlt",
+      "description": "Die MQTT-Brücke ist aktiviert, aber keine Broker-Adresse ist angegeben. Öffne **Konfigurieren** am EnOcean-Stick."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "MQTT-Brücke (NodOcean to MQTT)",
+        "description": "Sendet den Zustand der NodOn-Produkte an einen MQTT-Broker (lokal oder entfernt) und ermöglicht deren Steuerung, wie Zigbee2MQTT.\n\nTopics: `<Basis-Topic>/<Produkt>` (JSON-Zustand), `…/set` (Befehle), `…/action` (Tasten), `<Basis-Topic>/bridge/state`. Details im [Wiki](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).\n\nDie Verbindung wird beim Speichern getestet.",
+        "data": {
+          "mqtt_enabled": "MQTT-Brücke aktivieren",
+          "mqtt_use_ha": "Broker der Home-Assistant-MQTT-Integration verwenden",
+          "mqtt_host": "Broker-Adresse",
+          "mqtt_port": "Port",
+          "mqtt_username": "Benutzername",
+          "mqtt_password": "Passwort",
+          "mqtt_tls": "Verschlüsselte Verbindung (TLS)",
+          "mqtt_base_topic": "Basis-Topic",
+          "mqtt_topic_name": "Produktname in Topics"
+        },
+        "data_description": {
+          "mqtt_use_ha": "Übernimmt Adresse, Port und Zugangsdaten der bereits eingerichteten MQTT-Integration. Die folgenden Felder werden dann ignoriert.",
+          "mqtt_host": "Z. B. 192.168.1.20, core-mosquitto oder mqtt.example.com",
+          "mqtt_port": "Meist 1883, 8883 mit TLS",
+          "mqtt_password": "Leer lassen, um das gespeicherte Passwort zu behalten.",
+          "mqtt_tls": "Empfohlen für einen entfernten Broker (Internet).",
+          "mqtt_base_topic": "Präfix aller Topics (Standard nodocean)."
+        },
+        "sections": {
+          "advanced": {
+            "name": "Erweiterte Optionen",
+            "data": {
+              "mqtt_retain": "Zustandsnachrichten speichern (retain)",
+              "mqtt_qos": "QoS",
+              "mqtt_client_id": "Client-ID",
+              "mqtt_ca": "Zertifizierungsstelle (CA)",
+              "mqtt_tls_insecure": "Broker-Zertifikat nicht prüfen"
+            },
+            "data_description": {
+              "mqtt_client_id": "Leer lassen: nodocean-<Stick-ID>.",
+              "mqtt_ca": "Dateipfad auf Home Assistant (z. B. /ssl/ca.crt). Leer: Systemzertifikate.",
+              "mqtt_tls_insecure": "Vermeiden: nur für ein selbstsigniertes Testzertifikat."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Broker {broker} nicht erreichbar. Adresse, Port und TLS prüfen.",
+      "invalid_auth": "Der Broker {broker} lehnt Benutzername oder Passwort ab.",
+      "tls_error": "TLS-Fehler: Zertifikat unlesbar oder abgelehnt.",
+      "no_host": "Broker-Adresse eingeben.",
+      "no_ha_mqtt": "Die MQTT-Integration von Home Assistant ist nicht eingerichtet."
     }
   }
 }

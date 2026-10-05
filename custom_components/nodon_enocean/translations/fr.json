@@ -107,6 +107,12 @@
         "retry": "Réessayer l'appairage",
         "manual": "Saisir l'identifiant manuellement"
       }
+    },
+    "topic_name": {
+      "options": {
+        "name": "Nom du produit (ex. nodocean/prise_salon)",
+        "id": "ID EnOcean (ex. nodocean/0194A3F2)"
+      }
     }
   },
   "entity": {
@@ -307,6 +313,65 @@
     "native_enocean": {
       "title": "La clé EnOcean est occupée par l'intégration EnOcean native",
       "description": "NodOcean for HA n'arrive pas à ouvrir `{port}` ({error}) et l'intégration **EnOcean** native de Home Assistant est active.\n\nUne clé ne peut servir qu'à une seule intégration : supprimez l'intégration EnOcean native (Paramètres → Appareils et services), puis redémarrez Home Assistant."
+    },
+    "mqtt_no_ha_mqtt": {
+      "title": "Pont MQTT : intégration MQTT absente",
+      "description": "Le pont MQTT de NodOcean for HA doit utiliser le broker de l'intégration MQTT de Home Assistant, mais celle-ci n'est pas configurée.\n\nConfigurez l'intégration MQTT, ou saisissez l'adresse du broker dans **Configurer** sur la clé EnOcean."
+    },
+    "mqtt_no_host": {
+      "title": "Pont MQTT : adresse du broker manquante",
+      "description": "Le pont MQTT est activé mais aucune adresse de broker n'est renseignée. Ouvrez **Configurer** sur la clé EnOcean."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Pont MQTT (NodOcean to MQTT)",
+        "description": "Envoie l'état des produits NodOn vers un broker MQTT (local ou distant) et permet de les piloter, comme Zigbee2MQTT.\n\nTopics : `<topic de base>/<produit>` (état JSON), `…/set` (commandes), `…/action` (boutons), `<topic de base>/bridge/state`. Détails dans le [wiki](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).\n\nLa connexion est testée à l'enregistrement.",
+        "data": {
+          "mqtt_enabled": "Activer le pont MQTT",
+          "mqtt_use_ha": "Utiliser le broker de l'intégration MQTT de Home Assistant",
+          "mqtt_host": "Adresse du broker",
+          "mqtt_port": "Port",
+          "mqtt_username": "Identifiant",
+          "mqtt_password": "Mot de passe",
+          "mqtt_tls": "Connexion chiffrée (TLS)",
+          "mqtt_base_topic": "Topic de base",
+          "mqtt_topic_name": "Nom des produits dans les topics"
+        },
+        "data_description": {
+          "mqtt_use_ha": "Reprend l'adresse, le port et l'identifiant de l'intégration MQTT déjà configurée. Les champs ci-dessous sont alors ignorés.",
+          "mqtt_host": "Ex. 192.168.1.20, core-mosquitto ou mqtt.mondomaine.fr",
+          "mqtt_port": "1883 en général, 8883 en TLS",
+          "mqtt_password": "Laissez vide pour conserver le mot de passe enregistré.",
+          "mqtt_tls": "Recommandé pour un broker distant (sur Internet).",
+          "mqtt_base_topic": "Préfixe de tous les topics (par défaut nodocean)."
+        },
+        "sections": {
+          "advanced": {
+            "name": "Options avancées",
+            "data": {
+              "mqtt_retain": "Conserver les messages d'état (retain)",
+              "mqtt_qos": "QoS",
+              "mqtt_client_id": "Client ID",
+              "mqtt_ca": "Certificat de l'autorité (CA)",
+              "mqtt_tls_insecure": "Ne pas vérifier le certificat du broker"
+            },
+            "data_description": {
+              "mqtt_client_id": "Laissez vide : nodocean-<ID de la clé>.",
+              "mqtt_ca": "Chemin du fichier sur Home Assistant (ex. /ssl/ca.crt). Vide : certificats du système.",
+              "mqtt_tls_insecure": "À éviter : uniquement pour un certificat auto-signé de test."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de joindre le broker {broker}. Vérifiez l'adresse, le port et le TLS.",
+      "invalid_auth": "Le broker {broker} refuse l'identifiant ou le mot de passe.",
+      "tls_error": "Erreur TLS : certificat illisible ou refusé.",
+      "no_host": "Indiquez l'adresse du broker.",
+      "no_ha_mqtt": "L'intégration MQTT de Home Assistant n'est pas configurée."
     }
   }
 }

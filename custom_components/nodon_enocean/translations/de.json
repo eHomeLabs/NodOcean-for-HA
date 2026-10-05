@@ -327,7 +327,7 @@
     "step": {
       "init": {
         "title": "MQTT-Brücke (NodOcean to MQTT)",
-        "description": "Sendet den Zustand der NodOn-Produkte an einen MQTT-Broker (lokal oder entfernt) und ermöglicht deren Steuerung, wie Zigbee2MQTT.\n\nTopics: `<Basis-Topic>/<Produkt>` (JSON-Zustand), `…/set` (Befehle), `…/action` (Tasten), `<Basis-Topic>/bridge/state`. Details im [Wiki](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).\n\nDie Verbindung wird beim Speichern getestet.",
+        "description": "Sendet den Zustand der NodOn-Produkte an einen MQTT-Broker (lokal oder entfernt) und ermöglicht deren Steuerung, wie Zigbee2MQTT.\n\nTopics: `nodocean/produktname` (JSON-Zustand), `…/set` (Befehle), `…/action` (Tasten), `nodocean/bridge/state`. Details im [Wiki](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).\n\nDie Verbindung wird beim Speichern getestet.",
         "data": {
           "mqtt_enabled": "MQTT-Brücke aktivieren",
           "mqtt_use_ha": "Broker der Home-Assistant-MQTT-Integration verwenden",
@@ -358,7 +358,7 @@
               "mqtt_tls_insecure": "Broker-Zertifikat nicht prüfen"
             },
             "data_description": {
-              "mqtt_client_id": "Leer lassen: nodocean-<Stick-ID>.",
+              "mqtt_client_id": "Leer lassen: nodocean- gefolgt von der Stick-ID.",
               "mqtt_ca": "Dateipfad auf Home Assistant (z. B. /ssl/ca.crt). Leer: Systemzertifikate.",
               "mqtt_tls_insecure": "Vermeiden: nur für ein selbstsigniertes Testzertifikat."
             }

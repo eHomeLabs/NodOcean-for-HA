@@ -327,7 +327,7 @@
     "step": {
       "init": {
         "title": "MQTT bridge (NodOcean to MQTT)",
-        "description": "Sends the state of NodOn products to an MQTT broker (local or remote) and lets you control them, like Zigbee2MQTT.\n\nTopics: `<base topic>/<product>` (JSON state), `…/set` (commands), `…/action` (buttons), `<base topic>/bridge/state`. Details in the [wiki](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).\n\nThe connection is tested when you submit.",
+        "description": "Sends the state of NodOn products to an MQTT broker (local or remote) and lets you control them, like Zigbee2MQTT.\n\nTopics: `nodocean/product_name` (JSON state), `…/set` (commands), `…/action` (buttons), `nodocean/bridge/state`. Details in the [wiki](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).\n\nThe connection is tested when you submit.",
         "data": {
           "mqtt_enabled": "Enable the MQTT bridge",
           "mqtt_use_ha": "Use the broker of the Home Assistant MQTT integration",
@@ -358,7 +358,7 @@
               "mqtt_tls_insecure": "Do not verify the broker certificate"
             },
             "data_description": {
-              "mqtt_client_id": "Leave empty: nodocean-<stick ID>.",
+              "mqtt_client_id": "Leave empty: nodocean- followed by the stick ID.",
               "mqtt_ca": "File path on Home Assistant (e.g. /ssl/ca.crt). Empty: system certificates.",
               "mqtt_tls_insecure": "Avoid: only for a self-signed test certificate."
             }

@@ -327,7 +327,7 @@
     "step": {
       "init": {
         "title": "Pont MQTT (NodOcean to MQTT)",
-        "description": "Envoie l'état des produits NodOn vers un broker MQTT (local ou distant) et permet de les piloter, comme Zigbee2MQTT.\n\nTopics : `<topic de base>/<produit>` (état JSON), `…/set` (commandes), `…/action` (boutons), `<topic de base>/bridge/state`. Détails dans le [wiki](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).\n\nLa connexion est testée à l'enregistrement.",
+        "description": "Envoie l'état des produits NodOn vers un broker MQTT (local ou distant) et permet de les piloter, comme Zigbee2MQTT.\n\nTopics : `nodocean/nom_du_produit` (état JSON), `…/set` (commandes), `…/action` (boutons), `nodocean/bridge/state`. Détails dans le [wiki](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).\n\nLa connexion est testée à l'enregistrement.",
         "data": {
           "mqtt_enabled": "Activer le pont MQTT",
           "mqtt_use_ha": "Utiliser le broker de l'intégration MQTT de Home Assistant",
@@ -358,7 +358,7 @@
               "mqtt_tls_insecure": "Ne pas vérifier le certificat du broker"
             },
             "data_description": {
-              "mqtt_client_id": "Laissez vide : nodocean-<ID de la clé>.",
+              "mqtt_client_id": "Laissez vide : nodocean- suivi de l'ID de la clé.",
               "mqtt_ca": "Chemin du fichier sur Home Assistant (ex. /ssl/ca.crt). Vide : certificats du système.",
               "mqtt_tls_insecure": "À éviter : uniquement pour un certificat auto-signé de test."
             }

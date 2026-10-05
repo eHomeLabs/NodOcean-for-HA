@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -16,6 +17,11 @@ from custom_components.nodon_enocean.const import DOMAIN
 from .test_integration import CWS, SIN21, STPH, _pair, _setup_gateway
 
 OK = SimpleNamespace(is_failure=False, value=0)
+MANIFEST_VERSION = json.loads(
+    (
+        Path(__file__).parents[1] / "custom_components/nodon_enocean/manifest.json"
+    ).read_text()
+)["version"]
 
 
 class FakeClient:
@@ -138,7 +144,7 @@ async def test_mqtt_bridge(hass: HomeAssistant, dongle) -> None:
         assert ("nodocean/+/set", 0) in client.subscribed
 
         info = json.loads(client.last("nodocean/bridge/info"))
-        assert info["version"] == "0.6.0" and info["gateway"] == "FF8A2C00"
+        assert info["version"] == MANIFEST_VERSION and info["gateway"] == "FF8A2C00"
         topics = {d["name"]: d["topic"] for d in info["devices"]}
         assert topics["Lampe salon"] == "nodocean/lampe_salon"
         assert topics["Capteur chambre"] == "nodocean/capteur_chambre"

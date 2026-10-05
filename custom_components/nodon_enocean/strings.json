@@ -45,7 +45,8 @@
   "config_subentries": {
     "device": {
       "initiate_flow": {
-        "user": "Add a NodOn product"
+        "user": "Add a NodOn product",
+        "reconfigure": "Paired remotes"
       },
       "entry_type": "NodOn product",
       "step": {
@@ -87,17 +88,56 @@
             "area_id": "Existing area where the product is installed (optional).",
             "new_area": "If the area does not exist yet, type its name (e.g. “Garage”): it will be created."
           }
+        },
+        "recom_menu": {
+          "title": "Paired remotes — {name}",
+          "description": "Remotes and sensors paired directly in the product ({count}/{capacity}):\n\n{links}\n\nThese devices act on the product without Home Assistant.",
+          "menu_options": {
+            "links_add": "Add a remote by its ID",
+            "links_remove": "Remove paired remotes",
+            "rs_position": "Set the position reached by a remote"
+          }
+        },
+        "links_remove": {
+          "title": "Remove paired remotes",
+          "description": "Select the remotes to remove from **{name}**. They will no longer control the product.",
+          "data": {
+            "links": "Paired remotes"
+          }
+        },
+        "links_add": {
+          "title": "Add a remote",
+          "description": "Pair a remote directly in **{name}**, without pressing any button. Enter its 8-character EnOcean ID (printed on the product, e.g. 0512AB34).",
+          "data": {
+            "device_id": "EnOcean ID",
+            "link_type": "Remote type"
+          }
+        },
+        "rs_position": {
+          "title": "Remote position",
+          "description": "Choose the remote, the button (or card action) and the opening reached when it is pressed. The roller shutter must be calibrated.",
+          "data": {
+            "link": "Remote",
+            "trigger": "Button / action",
+            "position": "Opening reached"
+          }
         }
       },
       "progress": {
-        "pairing": "{image}**Waiting for the {model}…**\n\n{instructions}\n\nListening lasts {timeout} seconds."
+        "pairing": "{image}**Waiting for the {model}…**\n\n{instructions}\n\nListening lasts {timeout} seconds.",
+        "recom_read": "**Reading the paired remotes of {name}…**\n\nRemote Commissioning exchange in progress (a few seconds)."
       },
       "error": {
-        "invalid_id": "Invalid ID: 8 hexadecimal characters expected."
+        "invalid_id": "Invalid ID: 8 hexadecimal characters expected.",
+        "recom_failed": "The product did not apply the change: {error}",
+        "table_full": "The product's table is full (remove a remote first)."
       },
       "abort": {
         "already_configured": "This product is already configured.",
-        "gateway_not_ready": "The EnOcean stick is not ready. Check its connection and try again."
+        "gateway_not_ready": "The EnOcean stick is not ready. Check its connection and try again.",
+        "recom_not_supported": "This product does not support Remote Commissioning.",
+        "recom_no_answer": "The product did not answer the Remote Commissioning request ({error}). Move it closer to the stick or power it off and on again, then retry.",
+        "links_updated": "Done: the product has been updated."
       }
     }
   },
@@ -112,6 +152,27 @@
       "options": {
         "name": "Product name (e.g. nodocean/living_room_plug)",
         "id": "EnOcean ID (e.g. nodocean/0194A3F2)"
+      }
+    },
+    "link_type": {
+      "options": {
+        "rocker_a": "Switch / remote — rocker A (left)",
+        "rocker_b": "Switch / remote — rocker B (right)",
+        "key_card": "Card switch",
+        "window_handle": "Window handle",
+        "contact": "Door / window contact",
+        "motion": "Motion detector",
+        "soft_button": "Soft Button"
+      }
+    },
+    "rs_trigger": {
+      "options": {
+        "ai": "Button AI (top left)",
+        "ao": "Button A0 (bottom left)",
+        "bi": "Button BI (top right)",
+        "bo": "Button B0 (bottom right)",
+        "card_in": "Card inserted",
+        "card_out": "Card removed"
       }
     }
   },
@@ -155,6 +216,24 @@
           "4": "4 buttons (double rocker)",
           "2": "2 buttons (single rocker)"
         }
+      },
+      "switch_type": {
+        "name": "Wired switch type",
+        "state": {
+          "auto": "Auto-detect",
+          "switch": "Switch (toggle)",
+          "switch_2_state": "Switch (closed = on, open = off)",
+          "push_button": "Push button"
+        }
+      },
+      "rs_switch_type": {
+        "name": "Wired switch type",
+        "state": {
+          "type_1": "Type 1 — bistable / tristable",
+          "type_2": "Type 2 — bistable",
+          "type_3": "Type 3 — bistable",
+          "type_4": "Type 4 — push buttons"
+        }
       }
     },
     "sensor": {
@@ -166,6 +245,22 @@
       },
       "battery_voltage": {
         "name": "Battery voltage"
+      },
+      "paired_devices": {
+        "name": "Paired remotes"
+      },
+      "rs_time_down": {
+        "name": "Calibrated closing time"
+      },
+      "rs_time_up": {
+        "name": "Calibrated opening time"
+      },
+      "rs_calibration_type": {
+        "name": "Calibration type",
+        "state": {
+          "classic": "Classic",
+          "complex": "Full"
+        }
       }
     },
     "event": {
@@ -241,6 +336,9 @@
       },
       "power_failure": {
         "name": "Power failure detection"
+      },
+      "taught_in": {
+        "name": "Directly paired remotes"
       }
     },
     "number": {
@@ -264,6 +362,9 @@
       },
       "timeout": {
         "name": "Unavailable after"
+      },
+      "travel_time": {
+        "name": "Travel time"
       }
     },
     "button": {
@@ -272,6 +373,18 @@
       },
       "help": {
         "name": "NodOn help"
+      },
+      "recom_read": {
+        "name": "Read paired remotes"
+      },
+      "calibration_classic": {
+        "name": "Start calibration"
+      },
+      "calibration_complex": {
+        "name": "Start full calibration"
+      },
+      "calibration_stop": {
+        "name": "Stop calibration"
       }
     },
     "image": {

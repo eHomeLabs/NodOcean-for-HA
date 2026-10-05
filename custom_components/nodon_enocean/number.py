@@ -7,7 +7,7 @@ from homeassistant.const import PERCENTAGE, UnitOfTemperature, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import NodOnConfigEntry, features
+from . import NodOnConfigEntry, eep, features
 from .device import NodOnDevice
 from .entity import NodOnConfigEntity, add_per_subentry
 
@@ -37,6 +37,8 @@ async def async_setup_entry(
             entities.append(NodOnOffset(device, "humidity_offset", PERCENTAGE, 20))
         if model in features.TIMEOUT:
             entities.append(NodOnTimeout(device))
+        if model in features.ROLLER_SHUTTER:
+            entities.append(NodOnTravelTime(device))
         return entities
 
     add_per_subentry(entry.runtime_data.devices.values(), async_add_entities, factory)
@@ -117,3 +119,28 @@ class NodOnTimeout(_NodOnNumber):
         self.device.settings[self._setting] = int(value)
         self.async_write_ha_state()
         self.device.notify({self._setting})
+
+
+class NodOnTravelTime(_NodOnNumber):
+    """Temps de course du volet (D2-05 CMD 0x5), montée = descente.
+
+    Remplace la calibration automatique ; le module considère ensuite le volet
+    ouvert (0 %) : le mettre en haut avant de régler.
+    """
+
+    _attr_native_min_value = eep.TRAVEL_TIME_MIN
+    _attr_native_max_value = eep.TRAVEL_TIME_MAX
+    _attr_native_step = 0.1
+    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
+
+    def __init__(self, device: NodOnDevice) -> None:
+        super().__init__(device, "travel_time")
+
+    @property
+    def native_value(self) -> float | None:
+        value = self.device.settings.get("travel_time") or 0
+        return value or None
+
+    async def async_set_native_value(self, value: float) -> None:
+        await self.device.set_travel_time(value)
+        self.async_write_ha_state()

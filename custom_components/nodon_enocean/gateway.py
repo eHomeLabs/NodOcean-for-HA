@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import logging
 import time
 
+from . import recom
 from .esp3 import (
     CO_RD_IDBASE,
     CO_RD_VERSION,
@@ -31,6 +32,10 @@ from .esp3 import (
 _LOGGER = logging.getLogger(__name__)
 
 TelegramCallback = Callable[[RadioTelegram], None]
+ReManCallback = Callable[[recom.ReManMessage], None]
+
+# ESP3 : paquet REMOTE_MAN_COMMAND (la clé peut remonter les messages ReMan ainsi)
+PACKET_REMOTE_MAN_COMMAND = 0x07
 
 # Un télégramme répété (par un module en mode répéteur) arrive peu après l'original.
 DUPLICATE_WINDOW = 0.6  # secondes
@@ -39,6 +44,14 @@ HISTORY_SIZE = 100  # télégrammes gardés pour les diagnostics
 
 class GatewayError(Exception):
     """Erreur de communication avec la clé."""
+
+
+class ReComError(GatewayError):
+    """Le produit n'a pas répondu ou a refusé une commande Remote Commissioning."""
+
+    def __init__(self, message: str, status: str | None = None) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 class GatewayOpenError(GatewayError):
@@ -89,6 +102,13 @@ class Gateway:
         self._record_listeners: list[Callable[[dict], None]] = []
         self.duplicates = 0
         self._recent: dict[tuple[int, int, bytes], float] = {}
+        # Remote Management / Remote Commissioning
+        self._assembler = recom.SysExAssembler()
+        self._reman_listeners: list[ReManCallback] = []
+        self._reman_lock = asyncio.Lock()
+        self._reman_seq = 0
+        self._unlocked: dict[int, float] = {}
+        self.recom_code = 0x00000000
 
     # -- Connexion -----------------------------------------------------------
 
@@ -212,6 +232,8 @@ class Gateway:
                 telegram = parse_radio(packet)
                 if telegram is not None:
                     self._dispatch(telegram)
+            elif packet.packet_type == PACKET_REMOTE_MAN_COMMAND:
+                self._on_remote_man_packet(packet)
 
     def add_record_listener(self, cb: Callable[[dict], None]) -> Callable[[], None]:
         """Abonne cb à chaque télégramme journalisé (émis, reçus, doublons)."""
@@ -272,6 +294,13 @@ class Gateway:
         if duplicate:
             self.duplicates += 1
             return
+        if telegram.rorg == recom.RORG_SYS_EX:
+            message = self._assembler.feed(
+                telegram.sender, telegram.payload, telegram.destination
+            )
+            if message is not None:
+                self._dispatch_reman(message)
+            return
         for cb in list(self._global_listeners):
             try:
                 cb(telegram)
@@ -299,6 +328,172 @@ class Gateway:
 
     def is_known(self, device_id: int) -> bool:
         return bool(self._listeners.get(device_id))
+
+
+    # -- Remote Management / Remote Commissioning ---------------------------
+
+    def _on_remote_man_packet(self, packet: Packet) -> None:
+        """Message ReMan déjà réassemblé par la clé (ESP3 type 7)."""
+        d, opt = packet.data, packet.optional
+        if len(d) < 4:
+            return
+        sender = int.from_bytes(opt[4:8], "big") if len(opt) >= 8 else 0
+        destination = int.from_bytes(opt[0:4], "big") if len(opt) >= 4 else 0xFFFFFFFF
+        message = recom.ReManMessage(
+            function=int.from_bytes(d[0:2], "big") & 0xFFF,
+            manufacturer=int.from_bytes(d[2:4], "big") & 0x7FF,
+            data=bytes(d[4:]),
+            sender=sender,
+            destination=destination,
+        )
+        self.history.append(
+            {
+                "time": round(time.time(), 3),
+                "dir": "rx",
+                "sender": id_to_str(sender),
+                "destination": id_to_str(destination),
+                "rorg": "ReMan",
+                "data": f"{message.function:03X} {message.data.hex(' ').upper()}".strip(),
+                "status": "",
+                "dbm": -opt[8] if len(opt) >= 9 else None,
+                "duplicate": False,
+            }
+        )
+        self._dispatch_reman(message)
+
+    def _dispatch_reman(self, message: recom.ReManMessage) -> None:
+        _LOGGER.debug(
+            "ReMan reçu de %s : fonction %03X, données %s",
+            id_to_str(message.sender),
+            message.function,
+            message.data.hex(" "),
+        )
+        for cb in list(self._reman_listeners):
+            try:
+                cb(message)
+            except Exception:  # noqa: BLE001
+                _LOGGER.exception("Erreur dans un écouteur ReMan")
+
+    def subscribe_reman(self, cb: ReManCallback) -> Callable[[], None]:
+        self._reman_listeners.append(cb)
+        return lambda: self._reman_listeners.remove(cb)
+
+    async def send_reman(
+        self, function: int, data: bytes, sender: int, destination: int
+    ) -> None:
+        """Émet un message ReMan (télégrammes SYS_EX chaînés, adressés)."""
+        self._reman_seq = self._reman_seq % 3 + 1
+        for chunk in recom.encode_message(function, data, self._reman_seq):
+            await self.send_radio(recom.RORG_SYS_EX, chunk, sender, destination)
+
+    async def reman_request(
+        self,
+        device_id: int,
+        sender: int,
+        command: tuple[int, bytes],
+        expect: int | None = None,
+        timeout: float = 3.0,
+        until: Callable[[list[recom.ReManMessage]], bool] | None = None,
+    ) -> list[recom.ReManMessage]:
+        """Envoie une commande ReCom et attend la ou les réponses.
+
+        expect : fonction de la réponse attendue (None = acquittement 0x240).
+        until : pour les réponses en plusieurs messages, renvoie True quand tout
+        est reçu (sinon on rend ce qui est arrivé à l'expiration du délai).
+        Le produit est déverrouillé au besoin (code par défaut 0x00000000).
+        """
+        async with self._reman_lock:
+            await self._ensure_unlocked(device_id, sender)
+            try:
+                return await self._exchange(
+                    device_id, sender, command, expect, timeout, until
+                )
+            except ReComError:
+                # Produit redémarré (reverrouillé) ? On redéverrouillera la prochaine fois.
+                self.forget_unlock(device_id)
+                raise
+
+    async def _exchange(
+        self,
+        device_id: int,
+        sender: int,
+        command: tuple[int, bytes],
+        expect: int | None,
+        timeout: float,
+        until: Callable[[list[recom.ReManMessage]], bool] | None = None,
+        check_status: bool = True,
+    ) -> list[recom.ReManMessage]:
+        function, data = command
+        wanted = expect if expect is not None else recom.FN_ACK
+        loop = asyncio.get_running_loop()
+        received: list[recom.ReManMessage] = []
+        done: asyncio.Future[None] = loop.create_future()
+
+        def _cb(message: recom.ReManMessage) -> None:
+            if message.sender != device_id or message.function != wanted:
+                return
+            received.append(message)
+            if not done.done() and (until is None or until(received)):
+                done.set_result(None)
+
+        unsub = self.subscribe_reman(_cb)
+        try:
+            await self.send_reman(function, data, sender, device_id)
+            try:
+                await asyncio.wait_for(asyncio.shield(done), timeout)
+            except TimeoutError:
+                if not received:
+                    status = (
+                        await self._query_status(device_id, sender) if check_status else None
+                    )
+                    if (
+                        expect is None
+                        and status
+                        and status["return_code"] == 0
+                        and status["last_function"] == function
+                    ):
+                        # Commande exécutée, acquittement perdu.
+                        return received
+                    raise ReComError(
+                        f"Pas de réponse ReCom de {id_to_str(device_id)} "
+                        f"(fonction {function:03X})",
+                        status["status"] if status else None,
+                    ) from None
+        finally:
+            unsub()
+        return received
+
+    async def _query_status(self, device_id: int, sender: int) -> dict | None:
+        """État de la dernière commande (None si le produit reste muet)."""
+        try:
+            answer = await self._exchange(
+                device_id,
+                sender,
+                recom.query_status(),
+                recom.FN_QUERY_STATUS_ANSWER,
+                2.0,
+                check_status=False,
+            )
+        except ReComError:
+            return None
+        return recom.parse_query_status(answer[0].data)
+
+    async def _ensure_unlocked(self, device_id: int, sender: int) -> None:
+        """Déverrouille le produit (valable 30 min côté NodOn, renouvelé à 20 min)."""
+        last = self._unlocked.get(device_id)
+        if last is not None and time.monotonic() - last < 20 * 60:
+            return
+        try:
+            await self._exchange(
+                device_id, sender, recom.unlock(self.recom_code), None, 1.5, check_status=False
+            )
+        except ReComError as err:
+            # Sans code défini, certains firmwares ne répondent pas : on continue.
+            _LOGGER.debug("Déverrouillage ReCom de %s : %s", id_to_str(device_id), err)
+        self._unlocked[device_id] = time.monotonic()
+
+    def forget_unlock(self, device_id: int) -> None:
+        self._unlocked.pop(device_id, None)
 
 
 def is_ute(telegram: RadioTelegram) -> UteRequest | None:

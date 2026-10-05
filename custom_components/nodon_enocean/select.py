@@ -5,11 +5,13 @@ from __future__ import annotations
 from homeassistant.components.select import SelectEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from . import NodOnConfigEntry, features
-from .device import PILOT_WIRE_MODES, REPEATER_LEVELS, NodOnDevice
+from . import NodOnConfigEntry, eep, features
+from .device import PILOT_WIRE_MODES, REPEATER_LEVELS, RS_SWITCH_TYPES, NodOnDevice
+from .gateway import GatewayError
 from .entity import NodOnConfigEntity, NodOnEntity, add_per_subentry
 
 POWER_ON_STATES = ["previous", "on", "off"]
@@ -30,6 +32,10 @@ async def async_setup_entry(
             entities.append(
                 NodOnSettingSelect(device, "default_state", POWER_ON_STATES)
             )
+        if model in features.SWITCH_TYPE:
+            entities.append(NodOnSwitchTypeSelect(device))
+        if model in features.ROLLER_SHUTTER:
+            entities.append(NodOnRsSwitchTypeSelect(device))
         if model in features.BUTTON_MODE:
             entities.append(NodOnButtonModeSelect(device, "buttons", BUTTON_MODES))
         if device.product.is_actuator:
@@ -116,4 +122,45 @@ class NodOnRepeater(NodOnEntity, SelectEntity, RestoreEntity):
 
     async def async_select_option(self, option: str) -> None:
         await self.device.set_repeater(option)
+        self.async_write_ha_state()
+
+
+class NodOnSwitchTypeSelect(NodOnSettingSelect):
+    """Type d'entrée filaire des modules SIN-2-1/2 (CMD 0xB)."""
+
+    def __init__(self, device: NodOnDevice) -> None:
+        super().__init__(device, "switch_type", list(eep.SWITCH_TYPES))
+
+    async def async_select_option(self, option: str) -> None:
+        await self.device.set_switch_type(option)
+        self.async_write_ha_state()
+
+
+class NodOnRsSwitchTypeSelect(NodOnEntity, SelectEntity, RestoreEntity):
+    """Type d'interrupteur filaire du volet SIN-2-RS-01 (Remote Commissioning)."""
+
+    _attr_translation_key = "rs_switch_type"
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_options = RS_SWITCH_TYPES
+    _state_keys = frozenset({"rs_switch_type"})
+    _follows_availability = False
+
+    def __init__(self, device: NodOnDevice) -> None:
+        super().__init__(device, "rs_switch_type")
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        last = await self.async_get_last_state()
+        if "rs_switch_type" not in self.device.state and last and last.state in RS_SWITCH_TYPES:
+            self.device.state["rs_switch_type"] = last.state
+
+    @property
+    def current_option(self) -> str | None:
+        return self.device.state.get("rs_switch_type")
+
+    async def async_select_option(self, option: str) -> None:
+        try:
+            await self.device.rs_set_switch_type(option)
+        except GatewayError as err:
+            raise HomeAssistantError(f"Réglage non appliqué : {err}") from err
         self.async_write_ha_state()

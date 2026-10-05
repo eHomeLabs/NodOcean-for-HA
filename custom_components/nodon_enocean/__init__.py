@@ -18,6 +18,7 @@ from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.loader import async_get_integration
 
+from . import features
 from .catalog import PRODUCTS
 from .const import (
     CONF_DEVICE_ID,
@@ -170,6 +171,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
                     await device.configure_reporting()
                 await asyncio.sleep(0.2)
         await _poll()
+        # Volet : type d'interrupteur et temps calibrés (Remote Commissioning)
+        for device in list(runtime.devices.values()):
+            if device.product.model in features.ROLLER_SHUTTER:
+                try:
+                    await device.rs_read_config()
+                except GatewayError as err:
+                    _LOGGER.debug("Lecture ReCom de %s impossible : %s", device.title, err)
 
     @callback
     def _check_availability(_now=None) -> None:

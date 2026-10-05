@@ -37,6 +37,7 @@ from homeassistant.helpers.selector import (
 )
 from homeassistant.helpers.service_info.usb import UsbServiceInfo
 
+from . import features, recom
 from .catalog import GALLERY, PRODUCTS, TEACH_UTE_BIDIR, Product
 from .const import (
     CONF_AREA,
@@ -72,7 +73,14 @@ from .const import (
     SUBENTRY_DEVICE,
 )
 from .esp3 import id_to_str, str_to_id
-from .gateway import Gateway, GatewayError, GatewayOpenError
+from .device import (
+    LINK_TYPES,
+    LINK_TYPES_BY_MODEL,
+    LINK_TYPES_DEFAULT,
+    RS_TRIGGERS,
+    NodOnDevice,
+)
+from .gateway import Gateway, GatewayError, GatewayOpenError, ReComError
 from .mqtt_bridge import MqttConfigError, broker_settings, check_connection
 from .pairing import PairingResult, wait_for_teach_in
 
@@ -80,6 +88,8 @@ _LOGGER = logging.getLogger(__name__)
 
 MANUAL_PATH = "manual"
 MQTT_WIKI = "https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT"
+# Télécommandes dont la position atteinte se règle (interrupteur, carte)
+RS_POSITION_EEPS = {"F6-02-01", "F6-04-01"}
 
 
 def _list_ports() -> list[tuple[str, str]]:
@@ -420,12 +430,16 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
         self._result: PairingResult | None = None
         self._sender_offset: int | None = None
         self._task: asyncio.Task[PairingResult | None] | None = None
+        self._recom_task: asyncio.Task | None = None
+        self._recom_error = ""
 
     @callback
     def async_remove(self) -> None:
         """Fenêtre fermée : on arrête l'écoute d'appairage."""
         if self._task is not None and not self._task.done():
             self._task.cancel()
+        if self._recom_task is not None and not self._recom_task.done():
+            self._recom_task.cancel()
 
     def _default_name(self) -> str:
         assert self._product is not None
@@ -623,4 +637,210 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
                 }
             ),
             description_placeholders=placeholders,
+        )
+
+    # -- Reconfigurer : télécommandes appairées (Remote Commissioning) --------
+
+    def _recom_device(self) -> NodOnDevice | None:
+        entry = self._get_entry()
+        if entry.state is not ConfigEntryState.LOADED:
+            return None
+        subentry = self._get_reconfigure_subentry()
+        return entry.runtime_data.devices.get(subentry.subentry_id)
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        subentry = self._get_reconfigure_subentry()
+        if subentry.data.get(CONF_MODEL) not in features.RECOM:
+            return self.async_abort(reason="recom_not_supported")
+        device = self._recom_device()
+        if device is None:
+            return self.async_abort(reason="gateway_not_ready")
+        if self._recom_task is None:
+            self._recom_task = self.hass.async_create_task(device.read_links())
+        if not self._recom_task.done():
+            return self.async_show_progress(
+                step_id="reconfigure",
+                progress_action="recom_read",
+                description_placeholders={"name": subentry.title},
+                progress_task=self._recom_task,
+            )
+        task, self._recom_task = self._recom_task, None
+        try:
+            task.result()
+        except GatewayError as err:
+            self._recom_error = str(err)
+            return self.async_show_progress_done(next_step_id="recom_failed")
+        return self.async_show_progress_done(next_step_id="recom_menu")
+
+    async def async_step_recom_failed(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        return self.async_abort(
+            reason="recom_no_answer", description_placeholders={"error": self._recom_error}
+        )
+
+    def _links_text(self, device: NodOnDevice) -> str:
+        links = device.state.get("links") or []
+        if not links:
+            return "—"
+        return "\n".join(
+            f"- `{x['id']}` ({x['eep']}, index {x['index']})" for x in links
+        )
+
+    async def async_step_recom_menu(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        device = self._recom_device()
+        if device is None:
+            return self.async_abort(reason="gateway_not_ready")
+        options = ["links_add"]
+        if device.state.get("links"):
+            options.append("links_remove")
+            if device.product.model in features.ROLLER_SHUTTER and self._entry_options(
+                device, RS_POSITION_EEPS
+            ):
+                options.append("rs_position")
+        return self.async_show_menu(
+            step_id="recom_menu",
+            menu_options=options,
+            description_placeholders={
+                "name": device.title,
+                "links": self._links_text(device),
+                "count": str(len(device.state.get("links") or [])),
+                "capacity": str(device.state.get("links_max") or "?"),
+            },
+        )
+
+    def _entry_options(self, device: NodOnDevice, eeps: set[str] | None = None) -> list:
+        return [
+            SelectOptionDict(value=str(x["index"]), label=f"{x['id']} — {x['eep']} (index {x['index']})")
+            for x in device.state.get("links") or []
+            if eeps is None or x["eep"] in eeps
+        ]
+
+    async def async_step_links_remove(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        device = self._recom_device()
+        if device is None:
+            return self.async_abort(reason="gateway_not_ready")
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                for index in user_input["links"]:
+                    await device.recom(recom.delete_link(int(index)))
+                    await asyncio.sleep(0.3)
+                await device.read_links()
+            except GatewayError as err:
+                self._recom_error = str(err)
+                errors["base"] = "recom_failed"
+            else:
+                return self.async_abort(reason="links_updated")
+        return self.async_show_form(
+            step_id="links_remove",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("links"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=self._entry_options(device),
+                            multiple=True,
+                            mode=SelectSelectorMode.LIST,
+                        )
+                    )
+                }
+            ),
+            errors=errors,
+            description_placeholders={"name": device.title, "error": self._recom_error},
+        )
+
+    async def async_step_links_add(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        device = self._recom_device()
+        if device is None:
+            return self.async_abort(reason="gateway_not_ready")
+        types = LINK_TYPES_BY_MODEL.get(device.product.model, LINK_TYPES_DEFAULT)
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                remote_id = str_to_id(user_input[CONF_DEVICE_ID])
+            except ValueError:
+                errors[CONF_DEVICE_ID] = "invalid_id"
+            else:
+                try:
+                    await device.add_link(remote_id, user_input["link_type"])
+                except ReComError as err:
+                    self._recom_error = str(err)
+                    errors["base"] = "table_full" if err.status == "full" else "recom_failed"
+                except GatewayError as err:
+                    self._recom_error = str(err)
+                    errors["base"] = "recom_failed"
+                else:
+                    return self.async_abort(reason="links_updated")
+        return self.async_show_form(
+            step_id="links_add",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_DEVICE_ID): TextSelector(),
+                    vol.Required("link_type", default=types[0]): SelectSelector(
+                        SelectSelectorConfig(
+                            options=[t for t in types if t in LINK_TYPES],
+                            mode=SelectSelectorMode.LIST,
+                            translation_key="link_type",
+                        )
+                    ),
+                }
+            ),
+            errors=errors,
+            description_placeholders={"name": device.title, "error": self._recom_error},
+        )
+
+    async def async_step_rs_position(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        device = self._recom_device()
+        if device is None:
+            return self.async_abort(reason="gateway_not_ready")
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                await device.rs_set_link_position(
+                    int(user_input["link"]),
+                    user_input["trigger"],
+                    100 - int(user_input["position"]),
+                )
+            except GatewayError as err:
+                self._recom_error = str(err)
+                errors["base"] = "recom_failed"
+            else:
+                return self.async_abort(reason="links_updated")
+        return self.async_show_form(
+            step_id="rs_position",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("link"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=self._entry_options(device, RS_POSITION_EEPS),
+                            mode=SelectSelectorMode.LIST,
+                        )
+                    ),
+                    vol.Required("trigger", default="ai"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=list(RS_TRIGGERS),
+                            mode=SelectSelectorMode.DROPDOWN,
+                            translation_key="rs_trigger",
+                        )
+                    ),
+                    vol.Required("position", default=100): NumberSelector(
+                        NumberSelectorConfig(
+                            min=0, max=100, step=1, unit_of_measurement="%",
+                            mode=NumberSelectorMode.SLIDER,
+                        )
+                    ),
+                }
+            ),
+            errors=errors,
+            description_placeholders={"name": device.title, "error": self._recom_error},
         )

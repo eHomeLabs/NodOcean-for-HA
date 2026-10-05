@@ -5,14 +5,16 @@ from __future__ import annotations
 from homeassistant.components.button import ButtonEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from homeassistant.components import persistent_notification
 
-from . import NodOnConfigEntry
+from . import NodOnConfigEntry, features
 from .catalog import SUPPORT_URL
 from .device import NodOnDevice
 from .entity import NodOnEntity, add_per_subentry
+from .gateway import GatewayError
 
 
 async def async_setup_entry(
@@ -24,6 +26,13 @@ async def async_setup_entry(
         entities: list[ButtonEntity] = [NodOnHelp(device)]
         if device.product.metering:
             entities.append(NodOnResetEnergy(device))
+        model = device.product.model
+        if model in features.RECOM:
+            entities.append(NodOnReComRead(device))
+        if model in features.ROLLER_SHUTTER:
+            entities.extend(
+                NodOnCalibrate(device, kind) for kind in ("classic", "complex", "stop")
+            )
         return entities
 
     add_per_subentry(entry.runtime_data.devices.values(), async_add_entities, factory)
@@ -40,6 +49,45 @@ class NodOnResetEnergy(NodOnEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         await self.device.reset_energy()
+
+
+class NodOnReComRead(NodOnEntity, ButtonEntity):
+    """Relit par Remote Commissioning les télécommandes appairées (et le volet)."""
+
+    _attr_translation_key = "recom_read"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _follows_availability = False
+    _state_keys = frozenset({"_none"})
+
+    def __init__(self, device: NodOnDevice) -> None:
+        super().__init__(device, "recom_read")
+
+    async def async_press(self) -> None:
+        try:
+            await self.device.read_links()
+            if self.device.product.model in features.ROLLER_SHUTTER:
+                await self.device.rs_read_config()
+        except GatewayError as err:
+            raise HomeAssistantError(f"Lecture impossible : {err}") from err
+
+
+class NodOnCalibrate(NodOnEntity, ButtonEntity):
+    """Calibration du volet SIN-2-RS-01 : classique, complexe ou arrêt."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+    _follows_availability = False
+    _state_keys = frozenset({"_none"})
+
+    def __init__(self, device: NodOnDevice, kind: str) -> None:
+        super().__init__(device, f"calibration_{kind}")
+        self._kind = kind
+        self._attr_translation_key = f"calibration_{kind}"
+
+    async def async_press(self) -> None:
+        try:
+            await self.device.rs_calibrate(self._kind)
+        except GatewayError as err:
+            raise HomeAssistantError(f"Calibration non lancée : {err}") from err
 
 
 class NodOnHelp(NodOnEntity, ButtonEntity):

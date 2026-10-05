@@ -110,19 +110,34 @@ def _timer(seconds: float) -> int:
 
 
 def d201_set_ext_interface(
-    channel: int, auto_off: float = 0, delay_off: float = 0, switch_mode: int = 0
+    channel: int,
+    auto_off: float = 0,
+    delay_off: float = 0,
+    switch_mode: int = 0,
+    two_state: bool = False,
 ) -> bytes:
     """CMD 0xB Actuator Set External Interface Settings.
 
     Temporisations en secondes (pas de 0,1 s, 0 = désactivée).
     switch_mode : 0 non modifié, 1 interrupteur, 2 poussoir, 3 auto-détection.
+    two_state : interrupteur 2 états (contact fermé = ON, ouvert = OFF), utile
+    seulement avec switch_mode = 1.
     """
     return (
         bytes([0x0B, channel & 0x1F])
         + _timer(auto_off).to_bytes(2, "big")
         + _timer(delay_off).to_bytes(2, "big")
-        + bytes([(switch_mode & 0x03) << 6])
+        + bytes([((switch_mode & 0x03) << 6) | (0x20 if two_state else 0x00)])
     )
+
+
+# Type d'entrée filaire des SIN-2-1-01 / SIN-2-2-01 (CMD 0xB) : (mode, 2 états)
+SWITCH_TYPES = {
+    "auto": (3, False),
+    "switch": (1, False),
+    "switch_2_state": (1, True),
+    "push_button": (2, False),
+}
 
 
 def d201_measurement_config(
@@ -236,6 +251,20 @@ def d205_stop() -> bytes:
 
 def d205_query() -> bytes:
     return bytes([0x03])
+
+
+TRAVEL_TIME_MIN = 5.0  # s (guide expert SIN-2-RS-01)
+TRAVEL_TIME_MAX = 300.0
+
+
+def d205_set_travel_time(seconds: float) -> bytes:
+    """CMD 0x5 Set Parameters : temps de course montée = descente (pas de 10 ms).
+
+    Exemple NodOn : 60,32 s -> 17 90 00 00 05. Le module remet sa position à 0 %.
+    """
+    seconds = max(TRAVEL_TIME_MIN, min(TRAVEL_TIME_MAX, float(seconds)))
+    value = round(seconds * 100) & 0x7FFF
+    return value.to_bytes(2, "big") + bytes([0x00, 0x00, 0x05])
 
 
 def decode_d205(t: RadioTelegram) -> dict[str, Any] | None:

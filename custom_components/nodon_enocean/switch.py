@@ -17,6 +17,7 @@ CONFIG_SWITCHES = {
     "led": features.LED,
     "local_control": features.LOCAL_CONTROL,
     "power_failure": features.POWER_FAILURE,
+    "taught_in": features.TAUGHT_IN,
 }
 
 SWITCH_MODELS = {

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from homeassistant.components.sensor import (
+    RestoreSensor,
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
@@ -19,11 +20,12 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfPower,
     UnitOfTemperature,
+    UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import NodOnConfigEntry
+from . import NodOnConfigEntry, features
 from .device import NodOnDevice
 from .entity import NodOnEntity, add_per_subentry
 
@@ -90,6 +92,31 @@ SENSORS: tuple[NodOnSensorDescription, ...] = (
     ),
 )
 
+# Volet SIN-2-RS-01 : valeurs relues par Remote Commissioning
+RS_SENSORS: tuple[SensorEntityDescription, ...] = (
+    SensorEntityDescription(
+        key="rs_time_down",
+        translation_key="rs_time_down",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="rs_time_up",
+        translation_key="rs_time_up",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="rs_calibration_type",
+        translation_key="rs_calibration_type",
+        device_class=SensorDeviceClass.ENUM,
+        options=["classic", "complex"],
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+)
+
 # Mesure -> réglage de correction (number.py)
 OFFSETS = {"temperature": "temperature_offset", "humidity": "humidity_offset"}
 
@@ -119,6 +146,10 @@ async def async_setup_entry(
         entities.append(NodOnRssiSensor(device))
         if device.product.is_actuator:
             entities.append(NodOnFirmwareSensor(device))
+        if device.product.model in features.RECOM:
+            entities.append(NodOnLinksSensor(device))
+        if device.product.model in features.ROLLER_SHUTTER:
+            entities.extend(NodOnStateSensor(device, desc) for desc in RS_SENSORS)
         return entities
 
     add_per_subentry(entry.runtime_data.devices.values(), async_add_entities, factory)
@@ -169,3 +200,54 @@ class NodOnFirmwareSensor(NodOnEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         return self.device.state.get("firmware")
+
+
+class NodOnStateSensor(NodOnEntity, RestoreSensor):
+    """Valeur de diagnostic lue sur le produit (gardée au redémarrage)."""
+
+    _follows_availability = False
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        key = self.entity_description.key
+        if key not in self.device.state:
+            last = await self.async_get_last_sensor_data()
+            if last is not None and last.native_value is not None:
+                self.device.state[key] = last.native_value
+
+    def __init__(self, device: NodOnDevice, description: SensorEntityDescription) -> None:
+        super().__init__(device, description.key)
+        self.entity_description = description
+        self._state_keys = frozenset({description.key, "rs_config"})
+
+    @property
+    def native_value(self):
+        return self.device.state.get(self.entity_description.key)
+
+
+class NodOnLinksSensor(NodOnEntity, SensorEntity):
+    """Télécommandes appairées en direct dans le produit (table ReCom)."""
+
+    _attr_translation_key = "paired_devices"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _state_keys = frozenset({"links"})
+    _follows_availability = False
+
+    def __init__(self, device: NodOnDevice) -> None:
+        super().__init__(device, "paired_devices")
+
+    @property
+    def native_value(self) -> int | None:
+        links = self.device.state.get("links")
+        return None if links is None else len(links)
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        links = self.device.state.get("links")
+        if links is None:
+            return {}
+        return {
+            "devices": [f"{x['id']} ({x['eep']}, index {x['index']})" for x in links],
+            "capacity": self.device.state.get("links_max"),
+        }

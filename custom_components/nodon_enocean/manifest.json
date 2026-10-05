@@ -8,7 +8,7 @@
   "dependencies": [
     "usb"
   ],
-  "documentation": "https://github.com/eHomeLabs/NodOcean-for-HA",
+  "documentation": "https://github.com/eHomeLabs/NodOcean-for-HA/wiki",
   "integration_type": "hub",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/eHomeLabs/NodOcean-for-HA/issues",
@@ -28,5 +28,5 @@
       "manufacturer": "*enocean*"
     }
   ],
-  "version": "0.6.0"
+  "version": "0.6.1"
 }

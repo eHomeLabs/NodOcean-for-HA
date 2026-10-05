@@ -52,10 +52,6 @@ Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut
 
 <img src="docs/images/screenshots/05-aide.png" alt="Aide NodOn : la réponse s'affiche dans Notifications" width="760">
 
-**6. Tous les produits EnOcean NodOn** : Cartes Image + Entités sur un Dashboard.
-
-<img src="docs/images/screenshots/06-NodOcean Card.png" alt="Dashboard NodOn EnOcean" width="760">
-
 ## Prérequis
 
 - Home Assistant **2025.3** ou plus récent (toutes les installations : OS, Container, Core).
@@ -118,11 +114,14 @@ Depuis la v0.2, chaque produit a ses réglages dans la carte **Configuration** d
 
 Depuis la v0.5.0, l'intégration peut aussi envoyer l'état des produits vers un **broker MQTT** local ou distant (Jeedom, Node-RED, serveur distant…) et recevoir des commandes, comme Zigbee2MQTT. Le pont est facultatif et désactivé par défaut.
 
-- **Activer** : ligne **Clé EnOcean** → **Configurer** → adresse du broker, port, identifiant, mot de passe, TLS, topic de base. Vous pouvez aussi reprendre le broker de l'intégration MQTT de Home Assistant.
+- **Activer** : ligne **Clé EnOcean** → icône **⚙ Configurer** → adresse du broker, port, identifiant, mot de passe, TLS, topic de base. Vous pouvez aussi reprendre le broker de l'intégration MQTT de Home Assistant.
 - **États** : `nodocean/<produit>` en JSON, par exemple `{"state": "ON", "power": 12.5, "energy": 3.2, "rssi": -68}`.
 - **Boutons** : `nodocean/<produit>/action` (`left_up`, `single`…).
 - **Commandes** : `nodocean/<produit>/set`, par exemple `{"state": "ON"}`, `{"position": 50}` ou `{"mode": "eco"}`.
 - **Statut** : `nodocean/bridge/state` (`online` / `offline`) et `nodocean/bridge/info` (liste des produits).
+- **Options avancées (v0.6.0)** : télégrammes EnOcean bruts sur `nodocean/bridge/telegrams` (debug), et auto-découverte MQTT pour un **autre** Home Assistant branché sur le même broker (sur le même Home Assistant, les produits seraient en double).
+
+<img src="docs/images/screenshots/09-mqtt-broker.png" alt="Pont MQTT : broker" width="290"> <img src="docs/images/screenshots/11-mqtt-avance.png" alt="Pont MQTT : options avancées" width="290">
 
 Tous les détails sont dans le wiki : [Pont MQTT](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).
 
@@ -167,7 +166,7 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 
 **NodOcean for HA** is an unofficial Home Assistant integration for **NodOn EnOcean** products. Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
 
-**Requirements:** Home Assistant 2025.3 or newer and an EnOcean USB300 (or ESP3-compatible) stick. No MQTT needed. An optional MQTT bridge (v0.5.0+) can also publish product states to a local or remote broker and accept commands, like Zigbee2MQTT. UI in English, French and German.
+**Requirements:** Home Assistant 2025.3 or newer and an EnOcean USB300 (or ESP3-compatible) stick. No MQTT needed. An optional MQTT bridge (v0.5.0+) can also publish product states to a local or remote broker and accept commands, like Zigbee2MQTT, with optional Home Assistant MQTT discovery and raw telegrams (v0.6.0). UI in English, French and German.
 
 **Full documentation:** [English documentation (wiki)](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/English-documentation).
 

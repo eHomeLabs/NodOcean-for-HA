@@ -95,7 +95,11 @@ Depuis la v0.2, chaque produit a ses réglages dans la carte **Configuration** d
 |---|---|---|
 | LED de statut (mode jour / nuit) | SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, ASP-2, MSP-2 | Allumée / éteinte |
 | État après coupure de courant | SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, ASP-2, MSP-2 | Précédent / allumé / éteint |
-| Bouton local | SIN-2-FP-01, ASP-2, MSP-2 | Actif / inactif |
+| Bouton local | SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, ASP-2, MSP-2 | Actif / inactif |
+| Type d'interrupteur filaire (v0.7) | SIN-2-1-01, SIN-2-2-01 | Automatique / interrupteur / interrupteur 2 états / poussoir |
+| Télécommandes appairées en direct (v0.7) | SIN-2-1-01, SIN-2-2-01 | Actives / ignorées |
+| Volet : type d'interrupteur, calibration, temps de course (v0.7) | SIN-2-RS-01 | Types 1 à 4 / classique, complète, arrêt / 5 à 300 s |
+| Télécommandes appairées : liste, ajout par identifiant, suppression (v0.7) | Modules SIN-2, ASP-2, MSP-2 | Remote Commissioning, menu **⋮ → Reconfigurer** du produit |
 | Détection de coupure secteur | ASP-2, MSP-2 | Active / inactive |
 | Extinction automatique | SIN-2-1-01, SIN-2-2-01 (par canal), ASP-2, MSP-2 | 0 à 3600 s (0 = désactivée) |
 | Extinction radio retardée | SIN-2-1-01, SIN-2-2-01 (par canal) | 0 à 3600 s |

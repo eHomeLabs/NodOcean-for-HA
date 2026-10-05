@@ -23,6 +23,8 @@ from .const import (
     CONF_DEVICE_ID,
     CONF_DEVICE_PATH,
     CONF_MODEL,
+    CONF_MQTT_ADVANCED,
+    CONF_MQTT_DISCOVERY,
     CONF_SENDER_OFFSET,
     DOMAIN,
     POLL_INTERVAL,
@@ -217,7 +219,9 @@ async def _async_start_mqtt(hass: HomeAssistant, entry: NodOnConfigEntry, info) 
             "version": str(integration.version),
             "gateway": base_id,
             "base_topic": settings.base_topic,
+            "language": hass.config.language,
         },
+        entry.runtime_data.gateway,
     )
     entry.runtime_data.mqtt = bridge
     await bridge.async_start()
@@ -238,7 +242,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> bo
     if unloaded:
         runtime = entry.runtime_data
         if runtime.mqtt is not None:
-            await runtime.mqtt.async_stop()
+            # Découverte désactivée (ou pont arrêté) dans les options : on retire
+            # les produits du Home Assistant distant.
+            adv = entry.options.get(CONF_MQTT_ADVANCED) or {}
+            keep = mqtt_enabled(entry.options) and bool(adv.get(CONF_MQTT_DISCOVERY))
+            await runtime.mqtt.async_stop(
+                clear_discovery=runtime.mqtt.settings.discovery and not keep
+            )
             runtime.mqtt = None
         runtime.gateway.on_disconnect = None
         for device in runtime.devices.values():

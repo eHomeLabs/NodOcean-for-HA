@@ -355,12 +355,18 @@
               "mqtt_qos": "QoS",
               "mqtt_client_id": "Client ID",
               "mqtt_ca": "Certificate authority (CA)",
-              "mqtt_tls_insecure": "Do not verify the broker certificate"
+              "mqtt_tls_insecure": "Do not verify the broker certificate",
+              "mqtt_telegrams": "Publish raw EnOcean telegrams",
+              "mqtt_discovery": "Home Assistant MQTT discovery",
+              "mqtt_discovery_prefix": "Discovery prefix"
             },
             "data_description": {
               "mqtt_client_id": "Leave empty: nodocean- followed by the stick ID.",
               "mqtt_ca": "File path on Home Assistant (e.g. /ssl/ca.crt). Empty: system certificates.",
-              "mqtt_tls_insecure": "Avoid: only for a self-signed test certificate."
+              "mqtt_tls_insecure": "Avoid: only for a self-signed test certificate.",
+              "mqtt_telegrams": "For debugging: every telegram received or sent is published to nodocean/bridge/telegrams.",
+              "mqtt_discovery": "For ANOTHER Home Assistant connected to this broker: products show up there automatically. On this Home Assistant they would appear twice.",
+              "mqtt_discovery_prefix": "homeassistant by default."
             }
           }
         }

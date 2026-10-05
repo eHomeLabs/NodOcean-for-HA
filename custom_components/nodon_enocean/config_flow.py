@@ -48,12 +48,15 @@ from .const import (
     CONF_MQTT_BASE_TOPIC,
     CONF_MQTT_CA,
     CONF_MQTT_CLIENT_ID,
+    CONF_MQTT_DISCOVERY,
+    CONF_MQTT_DISCOVERY_PREFIX,
     CONF_MQTT_ENABLED,
     CONF_MQTT_HOST,
     CONF_MQTT_PASSWORD,
     CONF_MQTT_PORT,
     CONF_MQTT_QOS,
     CONF_MQTT_RETAIN,
+    CONF_MQTT_TELEGRAMS,
     CONF_MQTT_TLS,
     CONF_MQTT_TLS_INSECURE,
     CONF_MQTT_TOPIC_NAME,
@@ -61,6 +64,7 @@ from .const import (
     CONF_MQTT_USERNAME,
     CONF_SENDER_OFFSET,
     DEFAULT_BASE_TOPIC,
+    DEFAULT_DISCOVERY_PREFIX,
     DOMAIN,
     TOPIC_NAME_ID,
     TOPIC_NAME_NAME,
@@ -343,6 +347,16 @@ def _mqtt_schema(o: dict[str, Any]) -> vol.Schema:
                         vol.Required(
                             CONF_MQTT_TLS_INSECURE, default=adv.get(CONF_MQTT_TLS_INSECURE, False)
                         ): BooleanSelector(),
+                        vol.Required(
+                            CONF_MQTT_TELEGRAMS, default=adv.get(CONF_MQTT_TELEGRAMS, False)
+                        ): BooleanSelector(),
+                        vol.Required(
+                            CONF_MQTT_DISCOVERY, default=adv.get(CONF_MQTT_DISCOVERY, False)
+                        ): BooleanSelector(),
+                        vol.Required(
+                            CONF_MQTT_DISCOVERY_PREFIX,
+                            default=adv.get(CONF_MQTT_DISCOVERY_PREFIX, DEFAULT_DISCOVERY_PREFIX),
+                        ): TextSelector(),
                     }
                 ),
                 {"collapsed": True},

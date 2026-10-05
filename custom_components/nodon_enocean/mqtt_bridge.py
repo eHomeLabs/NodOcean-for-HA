@@ -32,22 +32,26 @@ from .const import (
     CONF_MQTT_BASE_TOPIC,
     CONF_MQTT_CA,
     CONF_MQTT_CLIENT_ID,
+    CONF_MQTT_DISCOVERY,
+    CONF_MQTT_DISCOVERY_PREFIX,
     CONF_MQTT_ENABLED,
     CONF_MQTT_HOST,
     CONF_MQTT_PASSWORD,
     CONF_MQTT_PORT,
     CONF_MQTT_QOS,
     CONF_MQTT_RETAIN,
+    CONF_MQTT_TELEGRAMS,
     CONF_MQTT_TLS,
     CONF_MQTT_TLS_INSECURE,
     CONF_MQTT_TOPIC_NAME,
     CONF_MQTT_USE_HA,
     CONF_MQTT_USERNAME,
     DEFAULT_BASE_TOPIC,
+    DEFAULT_DISCOVERY_PREFIX,
     TOPIC_NAME_ID,
 )
 from .device import AVAILABILITY_KEY, PILOT_WIRE_MODES, REPEATER_LEVELS, NodOnDevice
-from .gateway import GatewayError
+from .gateway import Gateway, GatewayError
 
 if TYPE_CHECKING:
     import paho.mqtt.client as mqtt
@@ -83,6 +87,9 @@ class BrokerSettings:
     topic_name: str
     retain: bool
     qos: int
+    discovery: bool = False
+    discovery_prefix: str = DEFAULT_DISCOVERY_PREFIX
+    telegrams: bool = False
 
 
 def broker_settings(
@@ -128,6 +135,10 @@ def broker_settings(
         topic_name=options.get(CONF_MQTT_TOPIC_NAME) or "name",
         retain=adv.get(CONF_MQTT_RETAIN, True),
         qos=int(adv.get(CONF_MQTT_QOS) or 0),
+        discovery=bool(adv.get(CONF_MQTT_DISCOVERY)),
+        discovery_prefix=(adv.get(CONF_MQTT_DISCOVERY_PREFIX) or "").strip().strip("/")
+        or DEFAULT_DISCOVERY_PREFIX,
+        telegrams=bool(adv.get(CONF_MQTT_TELEGRAMS)),
     )
 
 
@@ -310,8 +321,10 @@ class MqttBridge:
         settings: BrokerSettings,
         devices: dict[str, NodOnDevice],
         info: dict[str, Any],
+        gateway: Gateway | None = None,
     ) -> None:
         self.hass = hass
+        self.gateway = gateway
         self.settings = settings
         self.devices = devices
         self.info = info
@@ -323,6 +336,7 @@ class MqttBridge:
         self._names: dict[str, str] = {}  # subentry_id -> topic produit
         self._available: dict[str, bool] = {}
         self._last_seen: dict[str, str] = {}
+        self._discovery: dict[str, dict] = {}  # topic de configuration -> configuration
 
     # Topics ---------------------------------------------------------------
 
@@ -345,10 +359,32 @@ class MqttBridge:
     def device_topic(self, device: NodOnDevice) -> str:
         return self._t(self._names[device.subentry_id])
 
+    @property
+    def discovery_node(self) -> str:
+        return f"nodocean_{str(self.info.get('gateway', '')).lower()}"
+
+    @property
+    def _discovery_pattern(self) -> str:
+        return f"{self.settings.discovery_prefix}/+/{self.discovery_node}/+/config"
+
+    def _is_discovery_topic(self, topic: str) -> bool:
+        parts = topic.split("/")
+        prefix = self.settings.discovery_prefix.split("/")
+        return (
+            len(parts) == len(prefix) + 4
+            and parts[: len(prefix)] == prefix
+            and parts[-3] == self.discovery_node
+            and parts[-1] == "config"
+        )
+
     # Cycle de vie ---------------------------------------------------------
 
     async def async_start(self) -> None:
         self._assign_topics()
+        if self.settings.discovery:
+            from .mqtt_discovery import all_configs  # noqa: PLC0415
+
+            self._discovery = all_configs(self)
         try:
             client = await self.hass.async_add_executor_job(_new_client, self.settings)
         except (OSError, ValueError, ssl.SSLError) as err:
@@ -365,6 +401,8 @@ class MqttBridge:
             self._unsubs.append(
                 device.add_listener(self._listener(device), first=True)
             )
+        if self.settings.telegrams and self.gateway is not None:
+            self._unsubs.append(self.gateway.add_record_listener(self._on_record))
         try:
             await self.hass.async_add_executor_job(
                 client.connect_async, self.settings.host, self.settings.port, 60
@@ -374,7 +412,8 @@ class MqttBridge:
             _LOGGER.warning("Pont MQTT : %s", err)
         client.loop_start()
 
-    async def async_stop(self) -> None:
+    async def async_stop(self, clear_discovery: bool = False) -> None:
+        """Arrête le pont. clear_discovery : retire les produits du HA distant."""
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
@@ -383,6 +422,13 @@ class MqttBridge:
             return
 
         def _stop() -> None:
+            if self.connected and clear_discovery:
+                if not self._discovery:
+                    from .mqtt_discovery import all_configs  # noqa: PLC0415
+
+                    self._discovery = all_configs(self)
+                for topic in self._discovery:
+                    client.publish(topic, "", qos=1, retain=True)
             if self.connected:
                 info = client.publish(self._t("bridge", "state"), "offline", qos=1, retain=True)
                 try:
@@ -413,7 +459,16 @@ class MqttBridge:
             self.settings.base_topic,
         )
         qos = self.settings.qos
-        client.subscribe([(self._t("+", "set"), qos), (self._t("+", "get"), qos)])
+        client.subscribe(
+            [
+                (self._t("+", "set"), qos),
+                (self._t("+", "get"), qos),
+                # Configurations de découverte déjà publiées : retirer celles en trop
+                (self._discovery_pattern, 1),
+            ]
+        )
+        for topic, config in self._discovery.items():
+            client.publish(topic, json.dumps(config, ensure_ascii=False), qos=1, retain=True)
         client.publish(self._t("bridge", "state"), "online", qos=1, retain=True)
         self.hass.loop.call_soon_threadsafe(self._publish_all)
 
@@ -422,8 +477,14 @@ class MqttBridge:
             _LOGGER.warning("Pont MQTT déconnecté (%s), reconnexion…", reason_code)
         self.connected = False
 
-    def _on_message(self, _client, _userdata, message) -> None:
+    def _on_message(self, client, _userdata, message) -> None:
         topic = message.topic
+        if self._is_discovery_topic(topic):
+            # Produit supprimé ou découverte désactivée : on efface la configuration.
+            if message.payload and topic not in self._discovery:
+                _LOGGER.debug("Pont MQTT : retrait de la découverte %s", topic)
+                client.publish(topic, "", qos=1, retain=True)
+            return
         payload = bytes(message.payload)
         self.hass.loop.call_soon_threadsafe(self._handle_message, topic, payload)
 
@@ -494,6 +555,16 @@ class MqttBridge:
             self._publish_state(device)
 
         return _update
+
+    @callback
+    def _on_record(self, record: dict) -> None:
+        """Télégramme EnOcean brut (debug) -> <base>/bridge/telegrams."""
+        payload = dict(record)
+        for device in self.devices.values():
+            if device.id_str in (record.get("sender"), record.get("destination")):
+                payload["product"] = self._names.get(device.subentry_id)
+                break
+        self._publish(self._t("bridge", "telegrams"), payload, False)
 
     # Commandes ------------------------------------------------------------
 

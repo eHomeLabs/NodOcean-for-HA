@@ -86,6 +86,7 @@ class Gateway:
         self.on_disconnect: Callable[[], None] | None = None
         # Historique partagé entre rechargements (diagnostics)
         self.history: deque[dict] = history if history is not None else deque(maxlen=HISTORY_SIZE)
+        self._record_listeners: list[Callable[[dict], None]] = []
         self.duplicates = 0
         self._recent: dict[tuple[int, int, bytes], float] = {}
 
@@ -212,6 +213,11 @@ class Gateway:
                 if telegram is not None:
                     self._dispatch(telegram)
 
+    def add_record_listener(self, cb: Callable[[dict], None]) -> Callable[[], None]:
+        """Abonne cb à chaque télégramme journalisé (émis, reçus, doublons)."""
+        self._record_listeners.append(cb)
+        return lambda: self._record_listeners.remove(cb)
+
     def _record(self, direction: str, telegram: RadioTelegram, duplicate: bool = False) -> None:
         self.history.append(
             {
@@ -226,6 +232,11 @@ class Gateway:
                 "duplicate": duplicate,
             }
         )
+        for cb in list(self._record_listeners):
+            try:
+                cb(self.history[-1])
+            except Exception:  # noqa: BLE001
+                _LOGGER.exception("Erreur dans un écouteur du journal radio")
 
     def is_duplicate(self, telegram: RadioTelegram) -> bool:
         """Copie répétée d'un télégramme déjà reçu (mode répéteur des modules).

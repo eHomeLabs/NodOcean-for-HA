@@ -327,7 +327,7 @@
     "step": {
       "init": {
         "title": "Pont MQTT (NodOcean to MQTT)",
-        "description": "Envoie l'état des produits NodOn vers un broker MQTT (local ou distant) et permet de les piloter, comme Zigbee2MQTT.\n\nTopics : `nodocean/nom_du_produit` (état JSON), `…/set` (commandes), `…/action` (boutons), `nodocean/bridge/state`. Détails dans le [wiki](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).\n\nLa connexion est testée à l'enregistrement.",
+        "description": "Envoie l'état des produits NodOn vers un broker MQTT (local ou distant) et permet de les piloter, comme Zigbee2MQTT.\n\nTopics : `nodocean/nom_du_produit` (état JSON), `…/set` (commandes), `…/action` (boutons), `nodocean/bridge/state`. Détails dans le [wiki]({wiki}).\n\nLa connexion est testée à l'enregistrement.",
         "data": {
           "mqtt_enabled": "Activer le pont MQTT",
           "mqtt_use_ha": "Utiliser le broker de l'intégration MQTT de Home Assistant",

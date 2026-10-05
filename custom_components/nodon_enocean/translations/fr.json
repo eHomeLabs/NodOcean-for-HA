@@ -45,7 +45,8 @@
   "config_subentries": {
     "device": {
       "initiate_flow": {
-        "user": "Ajouter un produit NodOn"
+        "user": "Ajouter un produit NodOn",
+        "reconfigure": "Télécommandes appairées"
       },
       "entry_type": "Produit NodOn",
       "step": {
@@ -87,17 +88,56 @@
             "area_id": "Pièce existante où le produit est installé (facultatif).",
             "new_area": "Si la pièce n'existe pas encore, saisissez son nom (ex. « Garage ») : elle sera créée."
           }
+        },
+        "recom_menu": {
+          "title": "Télécommandes appairées — {name}",
+          "description": "Télécommandes et capteurs appairés directement dans le produit ({count}/{capacity}) :\n\n{links}\n\nCes appareils agissent sur le produit sans passer par Home Assistant.",
+          "menu_options": {
+            "links_add": "Ajouter une télécommande par son identifiant",
+            "links_remove": "Supprimer des télécommandes appairées",
+            "rs_position": "Régler la position atteinte par une télécommande"
+          }
+        },
+        "links_remove": {
+          "title": "Supprimer des télécommandes",
+          "description": "Sélectionnez les télécommandes à retirer de **{name}**. Elles ne piloteront plus le produit.",
+          "data": {
+            "links": "Télécommandes appairées"
+          }
+        },
+        "links_add": {
+          "title": "Ajouter une télécommande",
+          "description": "Appairez une télécommande directement dans **{name}**, sans appuyer sur aucun bouton. Saisissez son identifiant EnOcean à 8 caractères (inscrit sur le produit, ex. 0512AB34).",
+          "data": {
+            "device_id": "Identifiant EnOcean",
+            "link_type": "Type de télécommande"
+          }
+        },
+        "rs_position": {
+          "title": "Position d'une télécommande",
+          "description": "Choisissez la télécommande, le bouton (ou l'action sur la carte) et l'ouverture atteinte à l'appui. Le volet doit être calibré.",
+          "data": {
+            "link": "Télécommande",
+            "trigger": "Bouton / action",
+            "position": "Ouverture atteinte"
+          }
         }
       },
       "progress": {
-        "pairing": "{image}**En attente du {model}…**\n\n{instructions}\n\nL'écoute dure {timeout} secondes."
+        "pairing": "{image}**En attente du {model}…**\n\n{instructions}\n\nL'écoute dure {timeout} secondes.",
+        "recom_read": "**Lecture des télécommandes appairées de {name}…**\n\nÉchange Remote Commissioning en cours (quelques secondes)."
       },
       "error": {
-        "invalid_id": "Identifiant invalide : 8 caractères hexadécimaux attendus."
+        "invalid_id": "Identifiant invalide : 8 caractères hexadécimaux attendus.",
+        "recom_failed": "Le produit n'a pas appliqué la modification : {error}",
+        "table_full": "La table du produit est pleine (supprimez d'abord une télécommande)."
       },
       "abort": {
         "already_configured": "Ce produit est déjà configuré.",
-        "gateway_not_ready": "La clé EnOcean n'est pas prête. Vérifiez sa connexion puis réessayez."
+        "gateway_not_ready": "La clé EnOcean n'est pas prête. Vérifiez sa connexion puis réessayez.",
+        "recom_not_supported": "Ce produit ne gère pas le Remote Commissioning.",
+        "recom_no_answer": "Le produit n'a pas répondu à la demande Remote Commissioning ({error}). Rapprochez-le de la clé ou coupez puis remettez son alimentation, puis réessayez.",
+        "links_updated": "C'est fait : le produit a été mis à jour."
       }
     }
   },
@@ -112,6 +152,27 @@
       "options": {
         "name": "Nom du produit (ex. nodocean/prise_salon)",
         "id": "ID EnOcean (ex. nodocean/0194A3F2)"
+      }
+    },
+    "link_type": {
+      "options": {
+        "rocker_a": "Interrupteur / télécommande — bascule A (gauche)",
+        "rocker_b": "Interrupteur / télécommande — bascule B (droite)",
+        "key_card": "Interrupteur à carte",
+        "window_handle": "Poignée de fenêtre",
+        "contact": "Détecteur d'ouverture",
+        "motion": "Détecteur de mouvement",
+        "soft_button": "Soft Button"
+      }
+    },
+    "rs_trigger": {
+      "options": {
+        "ai": "Bouton AI (haut gauche)",
+        "ao": "Bouton A0 (bas gauche)",
+        "bi": "Bouton BI (haut droite)",
+        "bo": "Bouton B0 (bas droite)",
+        "card_in": "Carte insérée",
+        "card_out": "Carte retirée"
       }
     }
   },
@@ -155,6 +216,24 @@
           "4": "4 boutons (double touche)",
           "2": "2 boutons (simple touche)"
         }
+      },
+      "switch_type": {
+        "name": "Type d'interrupteur filaire",
+        "state": {
+          "auto": "Détection automatique",
+          "switch": "Interrupteur (inverse l'état)",
+          "switch_2_state": "Interrupteur (fermé = allumé, ouvert = éteint)",
+          "push_button": "Bouton poussoir"
+        }
+      },
+      "rs_switch_type": {
+        "name": "Type d'interrupteur filaire",
+        "state": {
+          "type_1": "Type 1 — bistable / tristable",
+          "type_2": "Type 2 — bistable",
+          "type_3": "Type 3 — bistable",
+          "type_4": "Type 4 — boutons poussoirs"
+        }
       }
     },
     "sensor": {
@@ -166,6 +245,22 @@
       },
       "battery_voltage": {
         "name": "Tension de la pile"
+      },
+      "paired_devices": {
+        "name": "Télécommandes appairées"
+      },
+      "rs_time_down": {
+        "name": "Temps de descente calibré"
+      },
+      "rs_time_up": {
+        "name": "Temps de montée calibré"
+      },
+      "rs_calibration_type": {
+        "name": "Type de calibration",
+        "state": {
+          "classic": "Classique",
+          "complex": "Complète"
+        }
       }
     },
     "event": {
@@ -241,6 +336,9 @@
       },
       "power_failure": {
         "name": "Détection de coupure secteur"
+      },
+      "taught_in": {
+        "name": "Télécommandes appairées en direct"
       }
     },
     "number": {
@@ -264,6 +362,9 @@
       },
       "timeout": {
         "name": "Indisponible après"
+      },
+      "travel_time": {
+        "name": "Temps de course"
       }
     },
     "button": {
@@ -272,6 +373,18 @@
       },
       "help": {
         "name": "Aide NodOn"
+      },
+      "recom_read": {
+        "name": "Lire les télécommandes appairées"
+      },
+      "calibration_classic": {
+        "name": "Lancer la calibration"
+      },
+      "calibration_complex": {
+        "name": "Lancer la calibration complète"
+      },
+      "calibration_stop": {
+        "name": "Arrêter la calibration"
       }
     },
     "image": {

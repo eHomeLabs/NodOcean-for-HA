@@ -45,7 +45,8 @@
   "config_subentries": {
     "device": {
       "initiate_flow": {
-        "user": "NodOn-Produkt hinzufügen"
+        "user": "NodOn-Produkt hinzufügen",
+        "reconfigure": "Angelernte Fernbedienungen"
       },
       "entry_type": "NodOn-Produkt",
       "step": {
@@ -87,17 +88,56 @@
             "area_id": "Vorhandener Bereich, in dem das Produkt installiert ist (optional).",
             "new_area": "Falls der Bereich noch nicht existiert, geben Sie seinen Namen ein (z. B. „Garage“): Er wird angelegt."
           }
+        },
+        "recom_menu": {
+          "title": "Angelernte Fernbedienungen — {name}",
+          "description": "Direkt im Produkt angelernte Fernbedienungen und Sensoren ({count}/{capacity}):\n\n{links}\n\nDiese Geräte steuern das Produkt ohne Home Assistant.",
+          "menu_options": {
+            "links_add": "Fernbedienung per ID hinzufügen",
+            "links_remove": "Angelernte Fernbedienungen entfernen",
+            "rs_position": "Von einer Fernbedienung angefahrene Position einstellen"
+          }
+        },
+        "links_remove": {
+          "title": "Fernbedienungen entfernen",
+          "description": "Wählen Sie die Fernbedienungen, die aus **{name}** entfernt werden sollen. Sie steuern das Produkt dann nicht mehr.",
+          "data": {
+            "links": "Angelernte Fernbedienungen"
+          }
+        },
+        "links_add": {
+          "title": "Fernbedienung hinzufügen",
+          "description": "Lernen Sie eine Fernbedienung direkt in **{name}** an, ohne eine Taste zu drücken. Geben Sie ihre 8-stellige EnOcean-ID ein (auf dem Produkt aufgedruckt, z. B. 0512AB34).",
+          "data": {
+            "device_id": "EnOcean-ID",
+            "link_type": "Art der Fernbedienung"
+          }
+        },
+        "rs_position": {
+          "title": "Position einer Fernbedienung",
+          "description": "Wählen Sie die Fernbedienung, die Taste (oder Kartenaktion) und die beim Drücken angefahrene Öffnung. Der Rollladen muss kalibriert sein.",
+          "data": {
+            "link": "Fernbedienung",
+            "trigger": "Taste / Aktion",
+            "position": "Angefahrene Öffnung"
+          }
         }
       },
       "progress": {
-        "pairing": "{image}**Warten auf {model}…**\n\n{instructions}\n\nDas Lauschen dauert {timeout} Sekunden."
+        "pairing": "{image}**Warten auf {model}…**\n\n{instructions}\n\nDas Lauschen dauert {timeout} Sekunden.",
+        "recom_read": "**Angelernte Fernbedienungen von {name} werden gelesen…**\n\nRemote-Commissioning-Austausch läuft (einige Sekunden)."
       },
       "error": {
-        "invalid_id": "Ungültige ID: 8 hexadezimale Zeichen erwartet."
+        "invalid_id": "Ungültige ID: 8 hexadezimale Zeichen erwartet.",
+        "recom_failed": "Das Produkt hat die Änderung nicht übernommen: {error}",
+        "table_full": "Die Tabelle des Produkts ist voll (zuerst eine Fernbedienung entfernen)."
       },
       "abort": {
         "already_configured": "Dieses Produkt ist bereits eingerichtet.",
-        "gateway_not_ready": "Der EnOcean-Stick ist nicht bereit. Prüfen Sie die Verbindung und versuchen Sie es erneut."
+        "gateway_not_ready": "Der EnOcean-Stick ist nicht bereit. Prüfen Sie die Verbindung und versuchen Sie es erneut.",
+        "recom_not_supported": "Dieses Produkt unterstützt kein Remote Commissioning.",
+        "recom_no_answer": "Das Produkt hat auf die Remote-Commissioning-Anfrage nicht geantwortet ({error}). Bringen Sie es näher an den Stick oder schalten Sie seine Stromversorgung aus und wieder ein und versuchen Sie es erneut.",
+        "links_updated": "Erledigt: Das Produkt wurde aktualisiert."
       }
     }
   },
@@ -112,6 +152,27 @@
       "options": {
         "name": "Produktname (z. B. nodocean/steckdose_wohnzimmer)",
         "id": "EnOcean-ID (z. B. nodocean/0194A3F2)"
+      }
+    },
+    "link_type": {
+      "options": {
+        "rocker_a": "Schalter / Fernbedienung — Wippe A (links)",
+        "rocker_b": "Schalter / Fernbedienung — Wippe B (rechts)",
+        "key_card": "Kartenschalter",
+        "window_handle": "Fenstergriff",
+        "contact": "Tür-/Fensterkontakt",
+        "motion": "Bewegungsmelder",
+        "soft_button": "Soft Button"
+      }
+    },
+    "rs_trigger": {
+      "options": {
+        "ai": "Taste AI (oben links)",
+        "ao": "Taste A0 (unten links)",
+        "bi": "Taste BI (oben rechts)",
+        "bo": "Taste B0 (unten rechts)",
+        "card_in": "Karte eingesteckt",
+        "card_out": "Karte entfernt"
       }
     }
   },
@@ -155,6 +216,24 @@
           "4": "4 Tasten (Doppelwippe)",
           "2": "2 Tasten (Einfachwippe)"
         }
+      },
+      "switch_type": {
+        "name": "Art des Wandschalters",
+        "state": {
+          "auto": "Automatische Erkennung",
+          "switch": "Schalter (wechselt den Zustand)",
+          "switch_2_state": "Schalter (geschlossen = ein, offen = aus)",
+          "push_button": "Taster"
+        }
+      },
+      "rs_switch_type": {
+        "name": "Art des Wandschalters",
+        "state": {
+          "type_1": "Typ 1 — bistabil / tristabil",
+          "type_2": "Typ 2 — bistabil",
+          "type_3": "Typ 3 — bistabil",
+          "type_4": "Typ 4 — Taster"
+        }
       }
     },
     "sensor": {
@@ -166,6 +245,22 @@
       },
       "battery_voltage": {
         "name": "Batteriespannung"
+      },
+      "paired_devices": {
+        "name": "Angelernte Fernbedienungen"
+      },
+      "rs_time_down": {
+        "name": "Kalibrierte Schließzeit"
+      },
+      "rs_time_up": {
+        "name": "Kalibrierte Öffnungszeit"
+      },
+      "rs_calibration_type": {
+        "name": "Kalibrierungsart",
+        "state": {
+          "classic": "Klassisch",
+          "complex": "Vollständig"
+        }
       }
     },
     "event": {
@@ -241,6 +336,9 @@
       },
       "power_failure": {
         "name": "Stromausfallerkennung"
+      },
+      "taught_in": {
+        "name": "Direkt angelernte Fernbedienungen"
       }
     },
     "number": {
@@ -264,6 +362,9 @@
       },
       "timeout": {
         "name": "Nicht verfügbar nach"
+      },
+      "travel_time": {
+        "name": "Laufzeit"
       }
     },
     "button": {
@@ -272,6 +373,18 @@
       },
       "help": {
         "name": "NodOn-Hilfe"
+      },
+      "recom_read": {
+        "name": "Angelernte Fernbedienungen lesen"
+      },
+      "calibration_classic": {
+        "name": "Kalibrierung starten"
+      },
+      "calibration_complex": {
+        "name": "Vollständige Kalibrierung starten"
+      },
+      "calibration_stop": {
+        "name": "Kalibrierung stoppen"
       }
     },
     "image": {

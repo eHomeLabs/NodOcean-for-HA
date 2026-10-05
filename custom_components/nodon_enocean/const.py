@@ -40,3 +40,7 @@ DEFAULT_BASE_TOPIC = "nodocean"
 DEFAULT_DISCOVERY_PREFIX = "homeassistant"
 TOPIC_NAME_NAME = "name"
 TOPIC_NAME_ID = "id"
+
+# Remote Commissioning (options de la clé)
+CONF_RECOM = "recom"
+CONF_RECOM_PREFIX = "recom_prefix"  # 4 caractères hexa : code = préfixe + 4 derniers de l'ID

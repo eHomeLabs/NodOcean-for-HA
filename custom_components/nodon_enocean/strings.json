@@ -439,8 +439,8 @@
   "options": {
     "step": {
       "init": {
-        "title": "MQTT bridge (NodOcean to MQTT)",
-        "description": "Sends the state of NodOn products to an MQTT broker (local or remote) and lets you control them, like Zigbee2MQTT.\n\nTopics: `nodocean/product_name` (JSON state), `…/set` (commands), `…/action` (buttons), `nodocean/bridge/state`. Details in the [wiki]({wiki}).\n\nThe connection is tested when you submit.",
+        "title": "EnOcean stick options",
+        "description": "**MQTT bridge (NodOcean to MQTT).** Sends the state of NodOn products to an MQTT broker (local or remote) and lets you control them, like Zigbee2MQTT.\n\nTopics: `nodocean/product_name` (JSON state), `…/set` (commands), `…/action` (buttons), `nodocean/bridge/state`. Details in the [wiki]({wiki}).\n\nThe connection is tested when you submit.",
         "data": {
           "mqtt_enabled": "Enable the MQTT bridge",
           "mqtt_use_ha": "Use the broker of the Home Assistant MQTT integration",
@@ -481,6 +481,15 @@
               "mqtt_discovery": "For ANOTHER Home Assistant connected to this broker: products show up there automatically. On this Home Assistant they would appear twice.",
               "mqtt_discovery_prefix": "homeassistant by default."
             }
+          },
+          "recom": {
+            "name": "Remote Commissioning",
+            "data": {
+              "recom_prefix": "Security code prefix"
+            },
+            "data_description": {
+              "recom_prefix": "Only if your products were given a security code built as 4 characters + the last 4 characters of their EnOcean ID (e.g. 1234 → code 1234E662 for ID 0512E662). Leave empty for new products (no code)."
+            }
           }
         }
       }
@@ -490,7 +499,8 @@
       "invalid_auth": "The broker {broker} rejects the username or password.",
       "tls_error": "TLS error: certificate unreadable or rejected.",
       "no_host": "Enter the broker address.",
-      "no_ha_mqtt": "The Home Assistant MQTT integration is not set up."
+      "no_ha_mqtt": "The Home Assistant MQTT integration is not set up.",
+      "invalid_recom_prefix": "Invalid prefix: 4 hexadecimal characters expected (e.g. 1234)."
     }
   }
 }

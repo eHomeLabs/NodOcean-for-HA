@@ -209,6 +209,21 @@ def decode_params(data: bytes) -> dict[int, bytes]:
 # --- Commandes ---------------------------------------------------------------------
 
 
+def parse_prefix(text: str | None) -> int | None:
+    """Préfixe de code ReCom (4 caractères hexadécimaux) ; None si vide."""
+    text = (text or "").strip().upper().removeprefix("0X")
+    if not text:
+        return None
+    if len(text) != 4 or any(c not in "0123456789ABCDEF" for c in text):
+        raise ValueError("Préfixe ReCom invalide : 4 caractères hexadécimaux attendus")
+    return int(text, 16)
+
+
+def derived_code(prefix: int, device_id: int) -> int:
+    """Code = préfixe (2 octets) + 2 derniers octets de l'ID (ex. 1234 + E662)."""
+    return ((prefix & 0xFFFF) << 16) | (device_id & 0xFFFF)
+
+
 def unlock(code: int = 0) -> tuple[int, bytes]:
     return FN_UNLOCK, int(code).to_bytes(4, "big")
 

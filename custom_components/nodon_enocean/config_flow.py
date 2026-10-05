@@ -42,6 +42,8 @@ from .catalog import GALLERY, PRODUCTS, TEACH_UTE_BIDIR, Product
 from .const import (
     CONF_AREA,
     CONF_NEW_AREA,
+    CONF_RECOM,
+    CONF_RECOM_PREFIX,
     CONF_DEVICE_ID,
     CONF_DEVICE_PATH,
     CONF_MODEL,
@@ -305,6 +307,7 @@ class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
 
 def _mqtt_schema(o: dict[str, Any]) -> vol.Schema:
     adv = o.get(CONF_MQTT_ADVANCED) or {}
+    recom_opts = o.get(CONF_RECOM) or {}
     password = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
     return vol.Schema(
         {
@@ -371,6 +374,17 @@ def _mqtt_schema(o: dict[str, Any]) -> vol.Schema:
                 ),
                 {"collapsed": True},
             ),
+            vol.Optional(CONF_RECOM): section(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            CONF_RECOM_PREFIX,
+                            description={"suggested_value": recom_opts.get(CONF_RECOM_PREFIX)},
+                        ): TextSelector(),
+                    }
+                ),
+                {"collapsed": not recom_opts.get(CONF_RECOM_PREFIX)},
+            ),
         }
     )
 
@@ -398,7 +412,18 @@ class NodOnOptionsFlow(OptionsFlow):
             if not (options.get(CONF_MQTT_USERNAME) or "").strip():
                 options.pop(CONF_MQTT_USERNAME, None)
                 options.pop(CONF_MQTT_PASSWORD, None)
-            if options.get(CONF_MQTT_ENABLED):
+            rec = dict(options.get(CONF_RECOM) or {})
+            try:
+                prefix = recom.parse_prefix(rec.get(CONF_RECOM_PREFIX))
+            except ValueError:
+                errors["base"] = "invalid_recom_prefix"
+            else:
+                if prefix is None:
+                    rec.pop(CONF_RECOM_PREFIX, None)
+                else:
+                    rec[CONF_RECOM_PREFIX] = f"{prefix:04X}"
+                options[CONF_RECOM] = rec
+            if options.get(CONF_MQTT_ENABLED) and not errors:
                 try:
                     settings = broker_settings(self.hass, options, "nodocean-test")
                 except MqttConfigError as err:

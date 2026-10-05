@@ -21,6 +21,8 @@ from homeassistant.loader import async_get_integration
 from . import features
 from .catalog import PRODUCTS
 from .const import (
+    CONF_RECOM,
+    CONF_RECOM_PREFIX,
     CONF_DEVICE_ID,
     CONF_DEVICE_PATH,
     CONF_MODEL,
@@ -33,6 +35,7 @@ from .const import (
 )
 from .device import AVAILABILITY_KEY, NodOnDevice
 from .esp3 import id_to_str, str_to_id
+from .recom import parse_prefix
 from .gateway import HISTORY_SIZE, Gateway, GatewayError
 from .mqtt_bridge import MqttBridge, MqttConfigError, broker_settings, mqtt_enabled
 
@@ -89,6 +92,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
         )
         raise ConfigEntryNotReady(str(err)) from err
     ir.async_delete_issue(hass, DOMAIN, issue_id)
+
+    try:
+        gateway.recom_prefix = parse_prefix(
+            (entry.options.get(CONF_RECOM) or {}).get(CONF_RECOM_PREFIX)
+        )
+    except ValueError:
+        _LOGGER.warning("Préfixe de code ReCom invalide, ignoré")
 
     runtime = NodOnRuntime(gateway=gateway)
     entry.runtime_data = runtime

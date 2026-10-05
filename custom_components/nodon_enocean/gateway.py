@@ -108,7 +108,8 @@ class Gateway:
         self._reman_lock = asyncio.Lock()
         self._reman_seq = 0
         self._unlocked: dict[int, float] = {}
-        self.recom_code = 0x00000000
+        # Préfixe du code ReCom (code = préfixe + 4 derniers caractères de l'ID).
+        self.recom_prefix: int | None = None
 
     # -- Connexion -----------------------------------------------------------
 
@@ -483,13 +484,21 @@ class Gateway:
         last = self._unlocked.get(device_id)
         if last is not None and time.monotonic() - last < 20 * 60:
             return
-        try:
-            await self._exchange(
-                device_id, sender, recom.unlock(self.recom_code), None, 1.5, check_status=False
-            )
-        except ReComError as err:
-            # Sans code défini, certains firmwares ne répondent pas : on continue.
-            _LOGGER.debug("Déverrouillage ReCom de %s : %s", id_to_str(device_id), err)
+        codes = [0x00000000]  # aucun code défini (produit neuf)
+        if self.recom_prefix is not None:
+            codes.append(recom.derived_code(self.recom_prefix, device_id))
+        for code in codes:
+            try:
+                await self._exchange(
+                    device_id, sender, recom.unlock(code), None, 1.5, check_status=False
+                )
+            except ReComError as err:
+                # Mauvais code ou firmware muet sans code défini : on essaie le suivant.
+                _LOGGER.debug(
+                    "Déverrouillage ReCom de %s (code %08X) : %s", id_to_str(device_id), code, err
+                )
+            else:
+                break
         self._unlocked[device_id] = time.monotonic()
 
     def forget_unlock(self, device_id: int) -> None:

@@ -355,12 +355,18 @@
               "mqtt_qos": "QoS",
               "mqtt_client_id": "Client ID",
               "mqtt_ca": "Certificat de l'autorité (CA)",
-              "mqtt_tls_insecure": "Ne pas vérifier le certificat du broker"
+              "mqtt_tls_insecure": "Ne pas vérifier le certificat du broker",
+              "mqtt_telegrams": "Publier les télégrammes EnOcean bruts",
+              "mqtt_discovery": "Auto-découverte MQTT de Home Assistant",
+              "mqtt_discovery_prefix": "Préfixe de découverte"
             },
             "data_description": {
               "mqtt_client_id": "Laissez vide : nodocean- suivi de l'ID de la clé.",
               "mqtt_ca": "Chemin du fichier sur Home Assistant (ex. /ssl/ca.crt). Vide : certificats du système.",
-              "mqtt_tls_insecure": "À éviter : uniquement pour un certificat auto-signé de test."
+              "mqtt_tls_insecure": "À éviter : uniquement pour un certificat auto-signé de test.",
+              "mqtt_telegrams": "Pour le debug : chaque télégramme reçu ou émis est publié sur nodocean/bridge/telegrams.",
+              "mqtt_discovery": "Pour un AUTRE Home Assistant branché sur ce broker : les produits y apparaissent automatiquement. Sur ce Home Assistant, ils seraient en double.",
+              "mqtt_discovery_prefix": "homeassistant par défaut."
             }
           }
         }

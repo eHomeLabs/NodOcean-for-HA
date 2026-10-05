@@ -27,5 +27,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: pip install pytest-homeassistant-custom-component pyserial-asyncio-fast aiousbwatcher pyudev pyserial
+      - run: pip install pytest-homeassistant-custom-component pyserial-asyncio-fast paho-mqtt aiousbwatcher pyudev pyserial
       - run: pytest -q

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 import logging
 from typing import Any
 
@@ -14,17 +15,25 @@ from homeassistant.config_entries import (
     ConfigFlow,
     ConfigFlowResult,
     ConfigSubentryFlow,
+    OptionsFlow,
     SubentryFlowResult,
 )
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers.selector import (
     AreaSelector,
+    BooleanSelector,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
     TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
 )
 from homeassistant.helpers.service_info.usb import UsbServiceInfo
 
@@ -35,13 +44,32 @@ from .const import (
     CONF_DEVICE_ID,
     CONF_DEVICE_PATH,
     CONF_MODEL,
+    CONF_MQTT_ADVANCED,
+    CONF_MQTT_BASE_TOPIC,
+    CONF_MQTT_CA,
+    CONF_MQTT_CLIENT_ID,
+    CONF_MQTT_ENABLED,
+    CONF_MQTT_HOST,
+    CONF_MQTT_PASSWORD,
+    CONF_MQTT_PORT,
+    CONF_MQTT_QOS,
+    CONF_MQTT_RETAIN,
+    CONF_MQTT_TLS,
+    CONF_MQTT_TLS_INSECURE,
+    CONF_MQTT_TOPIC_NAME,
+    CONF_MQTT_USE_HA,
+    CONF_MQTT_USERNAME,
     CONF_SENDER_OFFSET,
+    DEFAULT_BASE_TOPIC,
     DOMAIN,
+    TOPIC_NAME_ID,
+    TOPIC_NAME_NAME,
     PAIRING_TIMEOUT,
     SUBENTRY_DEVICE,
 )
 from .esp3 import id_to_str, str_to_id
 from .gateway import Gateway, GatewayError, GatewayOpenError
+from .mqtt_bridge import MqttConfigError, broker_settings, check_connection
 from .pairing import PairingResult, wait_for_teach_in
 
 _LOGGER = logging.getLogger(__name__)
@@ -94,6 +122,11 @@ class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
             e.state is ConfigEntryState.LOADED
             for e in self.hass.config_entries.async_entries("enocean")
         )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        return NodOnOptionsFlow()
 
     @classmethod
     @callback
@@ -252,6 +285,115 @@ class NodOnEnOceanConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="usb_confirm",
             description_placeholders={"path": self._usb_path, "error": self._last_error},
             errors=errors,
+        )
+
+
+def _mqtt_schema(o: dict[str, Any]) -> vol.Schema:
+    adv = o.get(CONF_MQTT_ADVANCED) or {}
+    password = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
+    return vol.Schema(
+        {
+            vol.Required(CONF_MQTT_ENABLED, default=o.get(CONF_MQTT_ENABLED, False)): BooleanSelector(),
+            vol.Required(CONF_MQTT_USE_HA, default=o.get(CONF_MQTT_USE_HA, False)): BooleanSelector(),
+            vol.Optional(
+                CONF_MQTT_HOST, description={"suggested_value": o.get(CONF_MQTT_HOST)}
+            ): TextSelector(),
+            vol.Required(CONF_MQTT_PORT, default=o.get(CONF_MQTT_PORT, 1883)): NumberSelector(
+                NumberSelectorConfig(min=1, max=65535, step=1, mode=NumberSelectorMode.BOX)
+            ),
+            vol.Optional(
+                CONF_MQTT_USERNAME, description={"suggested_value": o.get(CONF_MQTT_USERNAME)}
+            ): TextSelector(),
+            # Laissé vide : le mot de passe déjà enregistré est conservé.
+            vol.Optional(CONF_MQTT_PASSWORD): password,
+            vol.Required(CONF_MQTT_TLS, default=o.get(CONF_MQTT_TLS, False)): BooleanSelector(),
+            vol.Required(
+                CONF_MQTT_BASE_TOPIC, default=o.get(CONF_MQTT_BASE_TOPIC, DEFAULT_BASE_TOPIC)
+            ): TextSelector(),
+            vol.Required(
+                CONF_MQTT_TOPIC_NAME, default=o.get(CONF_MQTT_TOPIC_NAME, TOPIC_NAME_NAME)
+            ): SelectSelector(
+                SelectSelectorConfig(
+                    options=[TOPIC_NAME_NAME, TOPIC_NAME_ID],
+                    mode=SelectSelectorMode.LIST,
+                    translation_key="topic_name",
+                )
+            ),
+            vol.Required(CONF_MQTT_ADVANCED): section(
+                vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_MQTT_RETAIN, default=adv.get(CONF_MQTT_RETAIN, True)
+                        ): BooleanSelector(),
+                        vol.Required(
+                            CONF_MQTT_QOS, default=str(adv.get(CONF_MQTT_QOS, 0))
+                        ): SelectSelector(
+                            SelectSelectorConfig(
+                                options=["0", "1", "2"], mode=SelectSelectorMode.DROPDOWN
+                            )
+                        ),
+                        vol.Optional(
+                            CONF_MQTT_CLIENT_ID,
+                            description={"suggested_value": adv.get(CONF_MQTT_CLIENT_ID)},
+                        ): TextSelector(),
+                        vol.Optional(
+                            CONF_MQTT_CA, description={"suggested_value": adv.get(CONF_MQTT_CA)}
+                        ): TextSelector(),
+                        vol.Required(
+                            CONF_MQTT_TLS_INSECURE, default=adv.get(CONF_MQTT_TLS_INSECURE, False)
+                        ): BooleanSelector(),
+                    }
+                ),
+                {"collapsed": True},
+            ),
+        }
+    )
+
+
+class NodOnOptionsFlow(OptionsFlow):
+    """Options de la clé : pont MQTT (NodOcean to MQTT)."""
+
+    def __init__(self) -> None:
+        self._error = ""
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        current = dict(self.config_entry.options)
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            options = {**current, **user_input}
+            options[CONF_MQTT_PORT] = int(options.get(CONF_MQTT_PORT) or 1883)
+            adv = dict(options.get(CONF_MQTT_ADVANCED) or {})
+            adv[CONF_MQTT_QOS] = int(adv.get(CONF_MQTT_QOS) or 0)
+            options[CONF_MQTT_ADVANCED] = adv
+            if not user_input.get(CONF_MQTT_PASSWORD):
+                if current.get(CONF_MQTT_PASSWORD):
+                    options[CONF_MQTT_PASSWORD] = current[CONF_MQTT_PASSWORD]
+                else:
+                    options.pop(CONF_MQTT_PASSWORD, None)
+            if not (options.get(CONF_MQTT_USERNAME) or "").strip():
+                options.pop(CONF_MQTT_USERNAME, None)
+                options.pop(CONF_MQTT_PASSWORD, None)
+            if options.get(CONF_MQTT_ENABLED):
+                try:
+                    settings = broker_settings(self.hass, options, "nodocean-test")
+                except MqttConfigError as err:
+                    errors["base"] = str(err)
+                else:
+                    # Identifiant distinct : ne pas déconnecter le pont déjà en route.
+                    settings = replace(settings, client_id=f"{settings.client_id}-test")
+                    if error := await self.hass.async_add_executor_job(
+                        check_connection, settings
+                    ):
+                        errors["base"] = error
+                        self._error = f"{settings.host}:{settings.port}"
+            if not errors:
+                return self.async_create_entry(data=options)
+            current = options
+        return self.async_show_form(
+            step_id="init",
+            data_schema=_mqtt_schema(current),
+            errors=errors,
+            description_placeholders={"broker": self._error},
         )
 
 

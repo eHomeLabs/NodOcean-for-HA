@@ -88,8 +88,15 @@ class NodOnDevice:
             self._unsub()
             self._unsub = None
 
-    def add_listener(self, cb: Callable[[set[str]], None]) -> Callable[[], None]:
-        self._listeners.append(cb)
+    def add_listener(
+        self, cb: Callable[[set[str]], None], first: bool = False
+    ) -> Callable[[], None]:
+        """Abonne cb aux changements. first=True : appelé avant les entités
+        (le pont MQTT doit voir l'événement de bouton avant qu'il soit consommé)."""
+        if first:
+            self._listeners.insert(0, cb)
+        else:
+            self._listeners.append(cb)
         return lambda: self._listeners.remove(cb)
 
     # -- Réception -----------------------------------------------------------
@@ -164,9 +171,13 @@ class NodOnDevice:
 
     async def set_output(self, channel: int, on: bool) -> None:
         await self._send(eep.d201_set_output(channel, on))
+        self.state[f"output_{channel}"] = on
+        self.notify({f"output_{channel}"})
 
     async def set_pilot_wire(self, mode: str) -> None:
         await self._send(eep.d201_pilot_wire_set(PILOT_WIRE_MODES.index(mode)))
+        self.state["pilot_wire_mode"] = PILOT_WIRE_MODES.index(mode)
+        self.notify({"pilot_wire_mode"})
 
     async def cover_position(self, ha_position: int) -> None:
         await self._send(eep.d205_go_to(ha_position))

@@ -5,12 +5,13 @@ from __future__ import annotations
 import time
 from typing import Any
 
+from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.loader import async_get_integration
 
 from . import NodOnConfigEntry
-from .const import DOMAIN
+from .const import CONF_MQTT_PASSWORD, CONF_MQTT_USERNAME, DOMAIN
 from .device import NodOnDevice
 from .esp3 import id_to_str
 
@@ -41,6 +42,20 @@ def _telegrams(entry: NodOnConfigEntry, device_id: str | None = None) -> list[di
     return [t for t in history if device_id in (t["sender"], t["destination"])]
 
 
+def _mqtt_info(entry: NodOnConfigEntry) -> dict[str, Any]:
+    bridge = entry.runtime_data.mqtt
+    return {
+        "options": async_redact_data(
+            dict(entry.options), {CONF_MQTT_PASSWORD, CONF_MQTT_USERNAME}
+        ),
+        "running": bridge is not None,
+        "connected": bridge.connected if bridge else False,
+        "broker": f"{bridge.settings.host}:{bridge.settings.port}" if bridge else None,
+        "base_topic": bridge.settings.base_topic if bridge else None,
+        "last_error": bridge.last_error if bridge else None,
+    }
+
+
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: NodOnConfigEntry
 ) -> dict[str, Any]:
@@ -62,6 +77,7 @@ async def async_get_config_entry_diagnostics(
             "description": info.description if info else None,
             "duplicates_ignored": gateway.duplicates,
         },
+        "mqtt": _mqtt_info(entry),
         "products": devices,
         "last_telegrams": _telegrams(entry),
     }

@@ -13,7 +13,8 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/eHomeLabs/NodOcean-for-HA/issues",
   "requirements": [
-    "pyserial-asyncio-fast>=0.16"
+    "pyserial-asyncio-fast>=0.16",
+    "paho-mqtt>=2.0.0"
   ],
   "usb": [
     {
@@ -27,5 +28,5 @@
       "manufacturer": "*enocean*"
     }
   ],
-  "version": "0.4.0"
+  "version": "0.5.0"
 }

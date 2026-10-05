@@ -10,6 +10,7 @@
 - [Produits et entités](Produits-et-entités)
 - [Réglages des produits](Réglages-des-produits)
 - [Automatisations](Automatisations)
+- [Pont MQTT](Pont-MQTT)
 
 **Aide**
 - [Aide et dépannage](Aide-et-dépannage)

@@ -6,7 +6,7 @@
 
 <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/produits-nodon.png" alt="The 16 supported NodOn products" width="600">
 
-**Contents:** [Installation](#1-installation) · [Stick setup](#2-enocean-stick-setup) · [Adding a product](#3-adding-a-product) · [Pairing per product](#4-pairing-per-product) · [Entities](#5-products-and-entities) · [Settings](#6-product-settings) · [Automations](#7-automations) · [Help and troubleshooting](#8-help-and-troubleshooting) · [FAQ](#9-faq)
+**Contents:** [Installation](#1-installation) · [Stick setup](#2-enocean-stick-setup) · [Adding a product](#3-adding-a-product) · [Pairing per product](#4-pairing-per-product) · [Entities](#5-products-and-entities) · [Settings](#6-product-settings) · [Automations](#7-automations) · [Help and troubleshooting](#8-help-and-troubleshooting) · [FAQ](#9-faq) · [MQTT bridge](#10-mqtt-bridge-nodocean-to-mqtt)
 
 ## 1. Installation
 
@@ -165,3 +165,34 @@ Report problems with the [bug report form](https://github.com/eHomeLabs/NodOcean
 **Are NodOn Zigbee products supported?** No, use ZHA or Zigbee2MQTT.
 
 **Radio range?** About 30 m indoors depending on walls; enable the repeater of a module placed in between.
+
+## 10. MQTT bridge (NodOcean to MQTT)
+
+Since **v0.5.0**, NodOcean for HA can also publish the state of your NodOn products to an **MQTT broker** (local or remote) and accept commands, like Zigbee2MQTT. Use it to reach your products from another system: Jeedom, Node-RED, a remote server, a script… The bridge is optional and off by default. It comes on top of the integration: products stay in Home Assistant, and Home Assistant keeps working if the broker is down (the bridge reconnects by itself).
+
+**Enable it:** **Settings → Devices & services → NodOcean for HA**, then **Configure** on the **EnOcean stick** row. Fill in broker address, port (1883, or 8883 with TLS), username, password, TLS and base topic (`nodocean` by default), or tick **Use the broker of the Home Assistant MQTT integration**. The connection is tested when you submit. Products appear in topics by **name** (`nodocean/living_room_plug`, changes if you rename the product) or by **EnOcean ID** (`nodocean/0194A3F2`). Advanced options: retain (on by default), QoS, client ID, CA certificate file, skip certificate check.
+
+**Published topics:**
+
+| Topic | Content | Retained |
+|---|---|---|
+| `nodocean/bridge/state` | `online` / `offline` (last will) | yes |
+| `nodocean/bridge/info` | Version, stick ID, products and their topics (JSON) | yes |
+| `nodocean/<product>` | Product state (JSON) | retain option |
+| `nodocean/<product>/availability` | `online` / `offline` (from the "Unavailable after" setting) | yes |
+| `nodocean/<product>/action` | Button press: `left_up`, `single`, `press`… | no |
+
+**State fields:** `state` (ON / OFF) for SIN-2-1-01, ASP-2, MSP-2; `state_l1` / `state_l2` for SIN-2-2-01; `position` (0 closed – 100 open) and `state` (OPEN / CLOSED) for SIN-2-RS-01; `mode` (`off`, `comfort`, `eco`, `frost_protection`, `comfort_1`, `comfort_2`) for SIN-2-FP-01; `power` (W), `energy` (kWh); `temperature`, `humidity` (offsets applied); `open` (SDO-2, SWO-2); `motion`, `illuminance`, `voltage` (PIR-2); `card` (CCS-2); `battery` (TSB-2); for all: `rssi`, `last_seen`, `available`; modules and plugs: `firmware`, `repeater`.
+
+**Commands:** publish to `nodocean/<product>/set`:
+
+| Product | JSON | Plain text |
+|---|---|---|
+| SIN-2-1-01, ASP-2, MSP-2 | `{"state": "ON"}`, `"OFF"`, `"TOGGLE"` | `ON`, `OFF`, `TOGGLE` |
+| SIN-2-2-01 | `{"state_l1": "ON", "state_l2": "OFF"}` | — |
+| SIN-2-RS-01 | `{"position": 50}`, `{"state": "OPEN"}`, `"CLOSE"`, `"STOP"` | `OPEN`, `CLOSE`, `STOP`, `50` |
+| SIN-2-FP-01 | `{"mode": "eco"}` | `eco` |
+
+Publish anything to `nodocean/<product>/get` to read a module or plug's state again. Sensors ignore commands. A command received over MQTT also updates the Home Assistant entity, and the other way round.
+
+**Not available yet:** Home Assistant MQTT discovery (products would show up twice in Home Assistant), raw EnOcean telegrams, changing product settings over MQTT.

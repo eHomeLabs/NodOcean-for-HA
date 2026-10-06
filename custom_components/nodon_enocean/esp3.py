@@ -14,6 +14,7 @@ PACKET_RADIO_ERP1 = 0x01
 PACKET_RESPONSE = 0x02
 PACKET_EVENT = 0x04
 PACKET_COMMON_COMMAND = 0x05
+PACKET_REMOTE_MAN_COMMAND = 0x07
 
 # Commandes communes
 CO_RD_VERSION = 0x03
@@ -152,6 +153,28 @@ def build_radio(
     data = bytes([rorg]) + bytes(payload) + sender.to_bytes(4, "big") + bytes([status])
     optional = bytes([0x03]) + destination.to_bytes(4, "big") + bytes([0xFF, 0x00])
     return Packet(PACKET_RADIO_ERP1, data, optional)
+
+
+def build_remote_man(
+    function: int,
+    manufacturer: int,
+    data: bytes = b"",
+    destination: int = BROADCAST_ID,
+) -> Packet:
+    """Paquet REMOTE_MAN_COMMAND (ESP3 type 7) : la clé découpe le message en
+    télégrammes SYS_EX et l'émet vers `destination` avec son propre identifiant.
+
+    Données : fonction (2 octets), fabricant (2 octets), message.
+    Optionnel : destination (4), source (4, 0 à l'émission), dBm (0xFF à
+    l'émission), émission différée (0 = non).
+    """
+    payload = (
+        (function & 0xFFF).to_bytes(2, "big")
+        + (manufacturer & 0x7FF).to_bytes(2, "big")
+        + bytes(data)
+    )
+    optional = destination.to_bytes(4, "big") + bytes(4) + bytes([0xFF, 0x00])
+    return Packet(PACKET_REMOTE_MAN_COMMAND, payload, optional)
 
 
 def build_common_command(command: int, extra: bytes = b"") -> Packet:

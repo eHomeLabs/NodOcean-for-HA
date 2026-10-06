@@ -23,6 +23,7 @@ from .esp3 import (
     UteRequest,
     build_common_command,
     build_radio,
+    build_remote_man,
     build_ute_response,
     id_to_str,
     parse_radio,
@@ -111,6 +112,11 @@ class Gateway:
         self._reman_lock = asyncio.Lock()
         self._reman_seq = 0
         self._unlocked: dict[int, float] = {}
+        # Voie d'émission ReMan : "esp3" (paquet REMOTE_MAN_COMMAND, la clé découpe
+        # et adresse elle-même les télégrammes, comme DolphinView) ou "raw"
+        # (télégrammes SYS_EX C5 construits ici). None = pas encore trouvée.
+        self._reman_path: str | None = None
+        self._esp3_reman_unsupported = False
 
     # -- Connexion -----------------------------------------------------------
 
@@ -391,15 +397,91 @@ class Gateway:
         return lambda: self._reman_listeners.remove(cb)
 
     async def send_reman(
-        self, function: int, data: bytes, sender: int, destination: int
+        self,
+        function: int,
+        data: bytes,
+        sender: int,
+        destination: int,
+        path: str = "raw",
     ) -> None:
-        """Émet un message ReMan (télégrammes SYS_EX chaînés, adressés)."""
-        self._reman_seq = self._reman_seq % 3 + 1
+        """Émet un message ReMan adressé.
+
+        path "esp3" : paquet ESP3 REMOTE_MAN_COMMAND (type 7), la clé chaîne les
+        télégrammes et émet avec son propre identifiant ; "raw" : télégrammes
+        SYS_EX chaînés construits ici, émis avec l'identifiant `sender`.
+        """
         secret = function in (recom.FN_UNLOCK, recom.FN_LOCK, recom.FN_SET_CODE)
-        for chunk in recom.encode_message(function, data, self._reman_seq):
+        if path == "esp3":
             # Le code de sécurité n'apparaît jamais dans le journal ni les diagnostics.
+            shown = bytes(len(data)) if secret else bytes(data)
+            self.history.append(
+                {
+                    "time": round(time.time(), 3),
+                    "dir": "tx",
+                    "sender": "clé",
+                    "destination": id_to_str(destination),
+                    "rorg": "ReMan",
+                    "data": f"{function:03X} {shown.hex(' ').upper()}".strip(),
+                    "status": "",
+                    "dbm": None,
+                    "duplicate": False,
+                }
+            )
+            resp = await self.command(
+                build_remote_man(function, recom.MANUFACTURER_MULTI, data, destination)
+            )
+            if not resp.data or resp.data[0] != RET_OK:
+                self._esp3_reman_unsupported = True
+                raise GatewayError(
+                    "La clé ne gère pas les paquets Remote Management "
+                    f"(code {resp.data[0] if resp.data else '?'})"
+                )
+            return
+        self._reman_seq = self._reman_seq % 3 + 1
+        for chunk in recom.encode_message(function, data, self._reman_seq):
             logged = chunk[:5] + b"\x00\x00\x00\x00" if secret else None
             await self.send_radio(recom.RORG_SYS_EX, chunk, sender, destination, logged)
+
+    def _reman_paths(self) -> list[str]:
+        """Voies à essayer : celle qui a déjà fonctionné, sinon les deux."""
+        if self._reman_path is not None:
+            return [self._reman_path]
+        return ["raw"] if self._esp3_reman_unsupported else ["esp3", "raw"]
+
+    async def _exchange_any(
+        self,
+        device_id: int,
+        sender: int,
+        command: tuple[int, bytes],
+        expect: int | None,
+        timeout: float,
+        until: Callable[[list[recom.ReManMessage]], bool] | None = None,
+    ) -> list[recom.ReManMessage]:
+        """_exchange sur chaque voie d'émission jusqu'à obtenir une réponse."""
+        error: Exception | None = None
+        for path in self._reman_paths():
+            try:
+                result = await self._exchange(
+                    device_id, sender, command, expect, timeout, until, path=path
+                )
+            except GatewayError as err:  # voie refusée par la clé
+                _LOGGER.debug("Voie ReMan %s refusée : %s", path, err)
+                error = err
+                continue
+            except ReComError as err:
+                _LOGGER.debug("Pas de réponse ReMan par la voie %s", path)
+                error = err
+                continue
+            if self._reman_path != path:
+                _LOGGER.info("Remote Commissioning : voie d'émission « %s » retenue", path)
+            self._reman_path = path
+            return result
+        if isinstance(error, ReComError):
+            raise error
+        raise ReComError(
+            f"Pas de réponse ReCom de {id_to_str(device_id)} (fonction {command[0]:03X})",
+            None,
+        )
 
     async def reman_request(
         self,
@@ -423,7 +505,7 @@ class Gateway:
             if code is not None:
                 await self._ensure_unlocked(device_id, sender, code)
             try:
-                return await self._exchange(
+                return await self._exchange_any(
                     device_id, sender, command, expect, timeout, until
                 )
             except ReComError:
@@ -440,6 +522,7 @@ class Gateway:
         timeout: float,
         until: Callable[[list[recom.ReManMessage]], bool] | None = None,
         check_status: bool = True,
+        path: str = "raw",
     ) -> list[recom.ReManMessage]:
         function, data = command
         wanted = expect if expect is not None else recom.FN_ACK
@@ -456,13 +539,15 @@ class Gateway:
 
         unsub = self.subscribe_reman(_cb)
         try:
-            await self.send_reman(function, data, sender, device_id)
+            await self.send_reman(function, data, sender, device_id, path)
             try:
                 await asyncio.wait_for(asyncio.shield(done), timeout)
             except TimeoutError:
                 if not received:
                     status = (
-                        await self._query_status(device_id, sender) if check_status else None
+                        await self._query_status(device_id, sender, path)
+                        if check_status
+                        else None
                     )
                     if (
                         expect is None
@@ -481,7 +566,9 @@ class Gateway:
             unsub()
         return received
 
-    async def _query_status(self, device_id: int, sender: int) -> dict | None:
+    async def _query_status(
+        self, device_id: int, sender: int, path: str = "raw"
+    ) -> dict | None:
         """État de la dernière commande (None si le produit reste muet)."""
         try:
             answer = await self._exchange(
@@ -491,6 +578,7 @@ class Gateway:
                 recom.FN_QUERY_STATUS_ANSWER,
                 2.0,
                 check_status=False,
+                path=path,
             )
         except ReComError:
             return None
@@ -509,7 +597,7 @@ class Gateway:
     async def _try(self, device_id: int, sender: int, command: tuple[int, bytes]) -> bool:
         """Commande acquittée (0x240) ou confirmée par Query Status ?"""
         try:
-            await self._exchange(device_id, sender, command, None, 2.0)
+            await self._exchange_any(device_id, sender, command, None, 2.0)
         except ReComError:
             return False
         return True

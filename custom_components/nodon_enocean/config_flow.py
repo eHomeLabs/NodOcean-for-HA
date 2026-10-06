@@ -677,8 +677,39 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
     async def async_step_recom_failed(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        return self.async_abort(
-            reason="recom_no_answer", description_placeholders={"error": self._recom_error}
+        """Échec de lecture : le produit peut avoir un code (QR code, après 11Z)."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            text = (user_input.get("recom_code") or "").strip()
+            if not text:
+                return self.async_abort(
+                    reason="recom_no_answer",
+                    description_placeholders={"error": self._recom_error},
+                )
+            code = recom.parse_code(text)
+            device = self._recom_device()
+            if device is None:
+                return self.async_abort(reason="gateway_not_ready")
+            if code is None:
+                errors["recom_code"] = "invalid_code"
+            else:
+                try:
+                    await device.use_code(code)
+                except GatewayError:
+                    errors["base"] = "wrong_code"
+                else:
+                    return await self.async_step_reconfigure()
+        return self.async_show_form(
+            step_id="recom_failed",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional("recom_code"): TextSelector(
+                        TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                    )
+                }
+            ),
+            errors=errors,
+            description_placeholders={"error": self._recom_error or ""},
         )
 
     def _links_text(self, device: NodOnDevice) -> str:

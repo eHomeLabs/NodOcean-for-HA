@@ -29,6 +29,8 @@ FN_ACTION = 0x005
 FN_PING = 0x006
 FN_QUERY_FUNCTION = 0x007
 FN_QUERY_STATUS = 0x008
+FN_PING = 0x006
+FN_PING_ANSWER = 0x606
 FN_PING_ANSWER = 0x606
 FN_QUERY_STATUS_ANSWER = 0x608
 
@@ -226,6 +228,26 @@ def random_code() -> int:
 
 def unlock(code: int = 0) -> tuple[int, bytes]:
     return FN_UNLOCK, int(code).to_bytes(4, "big")
+
+
+def ping() -> tuple[int, bytes]:
+    """Ping (RMCC 0x006) : le produit répond (0x606) même verrouillé."""
+    return FN_PING, b""
+
+
+def parse_code(text: str) -> int | None:
+    """Code de sécurité saisi (8 caractères hexadécimaux, ex. lu après 11Z dans
+    le QR code). None si invalide."""
+    text = (text or "").strip().upper().replace(" ", "")
+    if text.startswith("11Z"):
+        text = text[3:]
+    if len(text) != 8:
+        return None
+    try:
+        code = int(text, 16)
+    except ValueError:
+        return None
+    return None if code in (0, 0xFFFFFFFF) else code
 
 
 def query_status() -> tuple[int, bytes]:

@@ -456,13 +456,14 @@ class Gateway:
         expect: int | None,
         timeout: float,
         until: Callable[[list[recom.ReManMessage]], bool] | None = None,
+        check_status: bool = True,
     ) -> list[recom.ReManMessage]:
         """_exchange sur chaque voie d'émission jusqu'à obtenir une réponse."""
         error: Exception | None = None
         for path in self._reman_paths():
             try:
                 result = await self._exchange(
-                    device_id, sender, command, expect, timeout, until, path=path
+                    device_id, sender, command, expect, timeout, until, check_status, path
                 )
             except GatewayError as err:  # voie refusée par la clé
                 _LOGGER.debug("Voie ReMan %s refusée : %s", path, err)
@@ -617,6 +618,18 @@ class Gateway:
             if ok:
                 self._unlocked[device_id] = time.monotonic()
             return ok
+
+    async def ping(self, device_id: int, sender: int) -> bool:
+        """Ping ReMan : True si le produit répond (il répond même verrouillé)."""
+        async with self._reman_lock:
+            try:
+                await self._exchange_any(
+                    device_id, sender, recom.ping(), recom.FN_PING_ANSWER, 2.0,
+                    check_status=False,
+                )
+            except ReComError:
+                return False
+            return True
 
     def forget_unlock(self, device_id: int) -> None:
         self._unlocked.pop(device_id, None)

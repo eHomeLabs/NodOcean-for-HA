@@ -121,6 +121,13 @@
             "trigger": "Button / action",
             "position": "Opening reached"
           }
+        },
+        "recom_failed": {
+          "title": "Remote Commissioning — no answer",
+          "description": "The product did not answer ({error}).\n\nIf it has a **security code** (in its QR code: the 8 characters after \"11Z\", e.g. `30S…+1P…+11Z673A8E41` → `673A8E41`), enter it to unlock the product. The code is saved in Home Assistant and never displayed.\n\nOtherwise leave the field empty and submit.",
+          "data": {
+            "recom_code": "Security code (QR code)"
+          }
         }
       },
       "progress": {
@@ -130,7 +137,9 @@
       "error": {
         "invalid_id": "Invalid ID: 8 hexadecimal characters expected.",
         "recom_failed": "The product did not apply the change: {error}",
-        "table_full": "The product's table is full (remove a remote first)."
+        "table_full": "The product's table is full (remove a remote first).",
+        "invalid_code": "Invalid code: 8 hexadecimal characters (0-9, A-F) expected.",
+        "wrong_code": "Code rejected or no answer: check the code and that the product is powered."
       },
       "abort": {
         "already_configured": "This product is already configured.",

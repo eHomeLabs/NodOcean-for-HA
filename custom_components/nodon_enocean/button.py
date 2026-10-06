@@ -89,16 +89,46 @@ class NodOnReComUnlock(NodOnEntity, ButtonEntity):
         try:
             result = await self.device.unlock_recom()
         except GatewayError as err:
-            raise HomeAssistantError(
-                "Le produit n'a pas répondu. Coupez puis remettez son alimentation, "
-                "puis appuyez sur Déverrouiller dans les 15 minutes."
-                if fr
-                else "Das Produkt hat nicht geantwortet. Schalten Sie seine Stromversorgung "
-                "aus und wieder ein und drücken Sie innerhalb von 15 Minuten auf Entsperren."
-                if de
-                else "The product did not answer. Power it off and on again, then press "
-                "Unlock within 15 minutes."
-            ) from err
+            status = getattr(err, "status", None)
+            if status == "locked":
+                text = (
+                    "Le produit répond mais reste verrouillé : il a déjà un code de "
+                    "sécurité. Saisissez le code de son QR code (8 caractères après "
+                    "« 11Z ») via ⋮ → Reconfigurer sur la carte du produit."
+                    if fr
+                    else "Das Produkt antwortet, bleibt aber gesperrt: Es hat bereits einen "
+                    "Sicherheitscode. Geben Sie den Code aus seinem QR-Code (8 Zeichen "
+                    "nach „11Z“) über ⋮ → Neu konfigurieren ein."
+                    if de
+                    else "The product answers but stays locked: it already has a security "
+                    "code. Enter the code from its QR code (8 characters after \"11Z\") "
+                    "via ⋮ → Reconfigure on the product card."
+                )
+            elif status == "no_answer":
+                text = (
+                    "Le produit ne répond à aucune commande Remote Commissioning, même "
+                    "au test Ping. Coupez puis remettez son alimentation et réessayez "
+                    "dans les 15 minutes ; si l'échec persiste, envoyez les diagnostics."
+                    if fr
+                    else "Das Produkt antwortet auf keinen Remote-Commissioning-Befehl, "
+                    "nicht einmal auf Ping. Schalten Sie es aus und wieder ein und "
+                    "versuchen Sie es innerhalb von 15 Minuten erneut."
+                    if de
+                    else "The product does not answer any Remote Commissioning command, "
+                    "not even Ping. Power it off and on again and retry within 15 minutes."
+                )
+            else:
+                text = (
+                    "Le produit n'a pas répondu. Coupez puis remettez son alimentation, "
+                    "puis appuyez sur Déverrouiller dans les 15 minutes."
+                    if fr
+                    else "Das Produkt hat nicht geantwortet. Schalten Sie seine Stromversorgung "
+                    "aus und wieder ein und drücken Sie innerhalb von 15 Minuten auf Entsperren."
+                    if de
+                    else "The product did not answer. Power it off and on again, then press "
+                    "Unlock within 15 minutes."
+                )
+            raise HomeAssistantError(text) from err
         if result == "assigned":
             message = (
                 "Un code de sécurité a été attribué au produit et enregistré dans Home Assistant."

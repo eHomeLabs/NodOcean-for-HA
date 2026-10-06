@@ -316,17 +316,36 @@ class NodOnDevice:
             return "unlocked"
         code = recom.random_code()
         if not await self.gateway.set_code(self.device_id, sender, code):
+            # Ping : un produit verrouillé y répond quand même (spécification ReMan).
+            if await self.gateway.ping(self.device_id, sender):
+                raise ReComError(
+                    "Le produit répond mais reste verrouillé : il a déjà un code de "
+                    "sécurité (QR code, après 11Z)",
+                    "locked",
+                )
             raise ReComError(
-                "Le produit ne répond pas : coupez puis remettez son alimentation, "
-                "puis recommencez dans les 15 minutes",
-                "locked",
+                "Le produit ne répond à aucune commande Remote Commissioning, "
+                "même au test Ping",
+                "no_answer",
             )
+        self._store_code(code)
+        return "assigned"
+
+    def _store_code(self, code: int) -> None:
         self.recom_code = code
         self.state["recom_secured"] = True
         if self.on_code_change is not None:
             self.on_code_change(self)
         self.notify({"recom_secured"})
-        return "assigned"
+
+    async def use_code(self, code: int) -> None:
+        """Code de sécurité connu (QR code) : déverrouille le produit et le garde."""
+        if self.sender_offset is None:
+            raise GatewayError(f"{self.title} n'est pas un actionneur")
+        sender = self.gateway.sender_id(self.sender_offset)
+        if not await self.gateway.unlock(self.device_id, sender, code):
+            raise ReComError("Code refusé ou produit muet", "wrong_code")
+        self._store_code(code)
 
     def _value(self, value: int, size: int = 1) -> bytes:
         return recom.gp_enum(value, size) if self.recom_gp else value.to_bytes(size, "big")

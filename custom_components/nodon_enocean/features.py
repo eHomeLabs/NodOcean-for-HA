@@ -17,8 +17,9 @@ DELAY_OFF = frozenset({"SIN-2-1-01", "SIN-2-2-01"})
 SWITCH_TYPE = frozenset({"SIN-2-1-01", "SIN-2-2-01"})
 
 # Remote Commissioning (ReCom) : table des télécommandes appairées
+# MSP-2 retirée (v0.8.0) : firmware 02.00.00 sans réponse ReMan, même au Ping.
 RECOM = frozenset(
-    {"SIN-2-1-01", "SIN-2-2-01", "SIN-2-FP-01", "SIN-2-RS-01", "ASP-2", "MSP-2"}
+    {"SIN-2-1-01", "SIN-2-2-01", "SIN-2-FP-01", "SIN-2-RS-01", "ASP-2"}
 )
 # Volet roulant : type d'interrupteur, calibration (ReCom), temps de course (D2-05)
 ROLLER_SHUTTER = frozenset({"SIN-2-RS-01"})

@@ -43,9 +43,15 @@ Le **Remote Commissioning** (ReCom) est le protocole EnOcean qui permet de lire 
   - **Régler la position atteinte par une télécommande** (volet SIN-2-RS-01 calibré) : bouton (AI, A0, BI, B0, ou carte insérée / retirée) et ouverture en %.
 - **Volet SIN-2-RS-01** : le type d'interrupteur, le type de calibration et les temps de montée / descente calibrés sont relus au démarrage (carte **Diagnostic**).
 
-Bon à savoir :
+### Code de sécurité, bouton Déverrouiller (v0.7.2)
 
-- Le produit doit être alimenté et à portée de la clé. Sans code de sécurité défini (cas des produits NodOn neufs), il accepte le ReCom ; l'intégration envoie le code par défaut `00000000` avant chaque série d'échanges.
-- **Produits protégés par un code** (v0.7.1) : si vos produits ont reçu un code formé de 4 caractères suivis des 4 derniers caractères de leur identifiant EnOcean (ex. `1234E662` pour l'ID `0512E662`), indiquez le préfixe (`1234`) dans **Paramètres → Appareils et services → NodOcean for HA → ⚙ (ligne de la clé) → Remote Commissioning**. L'intégration essaie `00000000`, puis le code calculé pour chaque produit.
-- Si le produit ne répond pas, Home Assistant affiche « Le produit n'a pas répondu » : rapprochez-le de la clé ou coupez puis remettez son alimentation, et réessayez.
+Le Remote Commissioning est protégé par un **code de sécurité** de 4 octets propre à chaque produit.
+
+- **Déverrouillage à la mise sous tension** : à chaque mise sous tension (produit neuf, ou après une coupure de courant), le produit accepte le Remote Commissioning **pendant 15 minutes**, même sans code ou avec un code inconnu.
+- **Code attribué automatiquement** : quand un produit sans code est ajouté (ou au démarrage de Home Assistant), l'intégration lui attribue un **code aléatoire** pendant cette fenêtre de 15 minutes. Le code est enregistré dans Home Assistant (il fait partie des sauvegardes), jamais affiché, et masqué dans les journaux et les diagnostics. Le capteur **Code de sécurité** (carte Diagnostic) indique « Attribué » ou « Non attribué ».
+- **Bouton Déverrouiller (Remote Commissioning)** (carte Diagnostic) : déverrouille le produit avec son code. S'il n'a pas encore de code, ou si le code a été perdu (Home Assistant réinstallé sans sauvegarde, produit repris par une autre box), **coupez puis remettez son alimentation, puis appuyez sur Déverrouiller dans les 15 minutes** : un nouveau code lui est attribué.
+- Ensuite, l'intégration déverrouille le produit toute seule quand vous utilisez une fonction Remote Commissioning (lecture, réglage, calibration).
+- Certains produits (ex. SIN-2-FP) ont un code d'usine inscrit dans leur QR code (après `11Z`) : il est remplacé par le code attribué par Home Assistant pendant la fenêtre de 15 minutes, inutile de le saisir.
+- **Limite** : les produits ne gèrent pas le Remote Management chiffré ; le code passe en clair sur la radio au moment d'un déverrouillage. Le code aléatoire évite qu'il soit devinable (comme le serait l'identifiant du produit, visible dans chaque télégramme), et l'intégration ne déverrouille que lorsque c'est nécessaire.
+- Si un produit ne répond pas, Home Assistant l'indique : rapprochez-le de la clé, ou coupez puis remettez son alimentation et appuyez sur Déverrouiller dans les 15 minutes.
 - Les diagnostics téléchargeables (fiche de la clé) contiennent les derniers échanges ReCom (télégrammes `C5`) pour l'analyse.

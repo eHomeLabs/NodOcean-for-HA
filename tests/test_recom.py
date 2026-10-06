@@ -11,6 +11,7 @@ from homeassistant.helpers import entity_registry as er
 from custom_components.nodon_enocean import eep, recom
 from custom_components.nodon_enocean.const import DOMAIN
 
+from .fake_dongle import CHIP_ID
 from .test_integration import _pair, _setup_gateway
 
 RS = 0x0512AB40
@@ -413,3 +414,30 @@ async def test_unlock_button_and_code_storage(hass: HomeAssistant, dongle) -> No
     )
     assert fake.unlocked
     assert hass.states.get(_entity(hass, "sensor", "paired_devices", SIN21)).state == "2"
+
+
+async def test_unlock_through_esp3_remote_man(hass: HomeAssistant, dongle) -> None:
+    """Clé gérant les paquets ESP3 REMOTE_MAN_COMMAND : la voie « esp3 » est retenue."""
+    dongle.reman_esp3 = True
+    fake = FakeReComDevice(dongle, SIN21)
+    entry = await _setup_gateway(hass)
+    await _pair(
+        hass,
+        entry,
+        dongle,
+        "SIN-2-1-01",
+        lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0F 01 D2"), SIN21),
+        "Lampe",
+    )
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert fake.code is not None  # attribué au démarrage
+    assert dongle.reman_packets
+    # Aucun SYS_EX construit par l'intégration : c'est la clé qui émet
+    assert not [
+        t for t in dongle.sent if t.rorg == recom.RORG_SYS_EX and t.sender != CHIP_ID
+    ]
+    # Le code n'apparaît pas dans l'historique
+    gateway = entry.runtime_data.gateway
+    secret = fake.code.to_bytes(4, "big").hex(" ").upper()
+    assert all(secret not in r["data"] for r in gateway.history)
+    assert gateway._reman_path == "esp3"

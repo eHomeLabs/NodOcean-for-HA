@@ -136,7 +136,7 @@
         "already_configured": "Ce produit est déjà configuré.",
         "gateway_not_ready": "La clé EnOcean n'est pas prête. Vérifiez sa connexion puis réessayez.",
         "recom_not_supported": "Ce produit ne gère pas le Remote Commissioning.",
-        "recom_no_answer": "Le produit n'a pas répondu à la demande Remote Commissioning ({error}). Rapprochez-le de la clé ou coupez puis remettez son alimentation, puis réessayez.",
+        "recom_no_answer": "Le produit n'a pas répondu à la demande Remote Commissioning ({error}). Coupez puis remettez son alimentation, appuyez sur **Déverrouiller (Remote Commissioning)** dans la fiche du produit (carte Diagnostic) dans les 15 minutes, puis réessayez.",
         "links_updated": "C'est fait : le produit a été mis à jour."
       }
     }
@@ -260,6 +260,13 @@
         "state": {
           "classic": "Classique",
           "complex": "Complète"
+        }
+      },
+      "recom_security": {
+        "name": "Code de sécurité",
+        "state": {
+          "assigned": "Attribué",
+          "not_assigned": "Non attribué"
         }
       }
     },
@@ -385,6 +392,9 @@
       },
       "calibration_stop": {
         "name": "Arrêter la calibration"
+      },
+      "recom_unlock": {
+        "name": "Déverrouiller (Remote Commissioning)"
       }
     },
     "image": {
@@ -439,8 +449,8 @@
   "options": {
     "step": {
       "init": {
-        "title": "Options de la clé EnOcean",
-        "description": "**Pont MQTT (NodOcean to MQTT).** Envoie l'état des produits NodOn vers un broker MQTT (local ou distant) et permet de les piloter, comme Zigbee2MQTT.\n\nTopics : `nodocean/nom_du_produit` (état JSON), `…/set` (commandes), `…/action` (boutons), `nodocean/bridge/state`. Détails dans le [wiki]({wiki}).\n\nLa connexion est testée à l'enregistrement.",
+        "title": "Pont MQTT (NodOcean to MQTT)",
+        "description": "Envoie l'état des produits NodOn vers un broker MQTT (local ou distant) et permet de les piloter, comme Zigbee2MQTT.\n\nTopics : `nodocean/nom_du_produit` (état JSON), `…/set` (commandes), `…/action` (boutons), `nodocean/bridge/state`. Détails dans le [wiki]({wiki}).\n\nLa connexion est testée à l'enregistrement.",
         "data": {
           "mqtt_enabled": "Activer le pont MQTT",
           "mqtt_use_ha": "Utiliser le broker de l'intégration MQTT de Home Assistant",
@@ -481,15 +491,6 @@
               "mqtt_discovery": "Pour un AUTRE Home Assistant branché sur ce broker : les produits y apparaissent automatiquement. Sur ce Home Assistant, ils seraient en double.",
               "mqtt_discovery_prefix": "homeassistant par défaut."
             }
-          },
-          "recom": {
-            "name": "Remote Commissioning",
-            "data": {
-              "recom_prefix": "Préfixe du code de sécurité"
-            },
-            "data_description": {
-              "recom_prefix": "Seulement si vos produits ont reçu un code de sécurité formé de 4 caractères + les 4 derniers caractères de leur identifiant EnOcean (ex. 1234 → code 1234E662 pour l'ID 0512E662). Laissez vide pour des produits neufs (sans code)."
-            }
           }
         }
       }
@@ -499,8 +500,7 @@
       "invalid_auth": "Le broker {broker} refuse l'identifiant ou le mot de passe.",
       "tls_error": "Erreur TLS : certificat illisible ou refusé.",
       "no_host": "Indiquez l'adresse du broker.",
-      "no_ha_mqtt": "L'intégration MQTT de Home Assistant n'est pas configurée.",
-      "invalid_recom_prefix": "Préfixe invalide : 4 caractères hexadécimaux attendus (ex. 1234)."
+      "no_ha_mqtt": "L'intégration MQTT de Home Assistant n'est pas configurée."
     }
   }
 }

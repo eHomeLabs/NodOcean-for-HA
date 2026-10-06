@@ -184,7 +184,7 @@ Merci de participer à la béta de **NodOcean for HA** ! Cette page liste les te
 | `RC-10` | SIN-2-RS-01 : **Type d'interrupteur filaire** = Type 4 avec des poussoirs | Comportement poussoir conforme à la notice |
 | `RC-11` | SIN-2-RS-01 : volet en haut, **Temps de course** = temps réel mesuré | Les positions intermédiaires (50 %) sont correctes |
 | `RC-12` | SIN-2-RS-01 : **⋮ → Reconfigurer → Régler la position**, bouton AI à 50 % | Un appui sur AI amène le volet à mi-hauteur |
-| `RC-13` | ASP-2 ou MSP-2 : **Lire les télécommandes appairées** | Liste correcte (ou message « Le produit n'a pas répondu » : noter le firmware) |
+| `RC-13` | ASP-2 : **Lire les télécommandes appairées** | Liste correcte (ou message « Le produit n'a pas répondu » : noter le firmware) |
 | `RC-14` | Produit neuf (ou après coupure de courant) : l'ajouter dans les 15 minutes | Capteur **Code de sécurité** = Attribué |
 | `RC-15` | Plus de 15 min après une mise sous tension : **Lire les télécommandes appairées** | Fonctionne (déverrouillage automatique avec le code) |
 | `RC-16` | Produit sans code et hors fenêtre : **Déverrouiller** ; puis coupure de courant et **Déverrouiller** dans les 15 min | 1er appui : message d'erreur ; 2e : « code attribué » |

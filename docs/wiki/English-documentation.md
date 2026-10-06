@@ -118,7 +118,7 @@ Settings are in the **Configuration** card of each device page.
 
 Products cannot report their settings back: Home Assistant shows the last value it sent and restores it after a restart. Metering reports (MSP-2, SIN-2-FP-01) are set up automatically: every 10 min at the latest, or on a 5 W / 10 Wh change.
 
-**Remote Commissioning (v0.7).** SIN-2 modules and ASP-2 / MSP-2 plugs are read and configured over the air with the EnOcean Remote Commissioning protocol:
+**Remote Commissioning (v0.7).** SIN-2 modules and the ASP-2 plug (not the MSP-2, whose firmware does not answer Remote Commissioning) are read and configured over the air with the EnOcean Remote Commissioning protocol:
 
 - **Paired remotes** sensor (Diagnostic card): remotes, switches and sensors paired *directly* in the product; the list is in the attributes. Press **Read paired remotes** to refresh it.
 - **Manage them**: **Settings → Devices & services → NodOcean for HA**, then **⋮ → Reconfigure** on the product row: add a remote by its 8-character ID (no button press needed), remove paired remotes, or (calibrated SIN-2-RS-01) set the opening reached by a remote button.

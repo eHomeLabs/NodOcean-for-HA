@@ -34,7 +34,7 @@ Les réglages se trouvent dans la carte **Configuration** de la fiche de chaque 
 
 ## Remote Commissioning (v0.7)
 
-Le **Remote Commissioning** (ReCom) est le protocole EnOcean qui permet de lire et modifier à distance la configuration interne d'un produit. L'intégration l'utilise pour les modules SIN-2 et les prises ASP-2 / MSP-2 :
+Le **Remote Commissioning** (ReCom) est le protocole EnOcean qui permet de lire et modifier à distance la configuration interne d'un produit. L'intégration l'utilise pour les modules SIN-2 et la prise ASP-2 (pas pour la MSP-2, dont le firmware ne répond pas au Remote Commissioning) :
 
 - **Télécommandes appairées** (carte **Diagnostic**) : nombre de télécommandes, interrupteurs ou capteurs appairés **directement** dans le produit (sans Home Assistant). La liste (identifiant, profil EEP, index) est dans les attributs. Appuyez sur **Lire les télécommandes appairées** pour la mettre à jour.
 - **Gérer ces télécommandes** : **Paramètres → Appareils et services → NodOcean for HA**, puis sur la ligne du produit **⋮ → Reconfigurer**. Après la lecture du produit (quelques secondes), un menu propose :

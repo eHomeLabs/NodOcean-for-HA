@@ -126,6 +126,9 @@ class FakeReComDevice:
         self.received.append((fn, data))
         if self.mute:
             return
+        if fn == recom.FN_PING:  # réponse même verrouillé (spécification ReMan)
+            self._reply(recom.FN_PING_ANSWER, bytes([0xD2, 0x01 << 2, 0x0F << 3 & 0xFF, 0x50]))
+            return
         if fn == recom.FN_UNLOCK:
             if self.code is not None and int.from_bytes(data, "big") == self.code:
                 self.unlocked = True
@@ -331,6 +334,9 @@ async def test_recom_no_answer(hass: HomeAssistant, dongle) -> None:
     while result["type"] is FlowResultType.SHOW_PROGRESS:
         await asyncio.sleep(0.5)
         result = await hass.config_entries.subentries.async_configure(result["flow_id"])
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "recom_failed"
+    result = await hass.config_entries.subentries.async_configure(result["flow_id"], {})
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "recom_no_answer"
 
@@ -392,7 +398,7 @@ async def test_unlock_button_and_code_storage(hass: HomeAssistant, dongle) -> No
     try:
         await hass.services.async_call("button", "press", {"entity_id": unlock}, blocking=True)
     except Exception as err:  # noqa: BLE001
-        assert "15" in str(err)
+        assert "11Z" in str(err)
     else:
         raise AssertionError("le bouton aurait dû échouer")
 
@@ -441,3 +447,82 @@ async def test_unlock_through_esp3_remote_man(hass: HomeAssistant, dongle) -> No
     secret = fake.code.to_bytes(4, "big").hex(" ").upper()
     assert all(secret not in r["data"] for r in gateway.history)
     assert gateway._reman_path == "esp3"
+
+
+async def test_factory_code_from_qr(hass: HomeAssistant, dongle) -> None:
+    """Produit avec code d'usine (QR code) : verrouillé, Ping répond, code saisi."""
+    fake = FakeReComDevice(dongle, SIN21)
+    fake.code = 0x673A8E41
+    fake.unlocked = False
+    entry = await _setup_gateway(hass)
+    entry = await _pair(
+        hass,
+        entry,
+        dongle,
+        "SIN-2-1-01",
+        lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0F 01 D2"), SIN21),
+        "Lampe",
+    )
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert fake.code == 0x673A8E41  # pas remplacé
+    unlock = _entity(hass, "button", "recom_unlock", SIN21)
+    try:
+        await hass.services.async_call("button", "press", {"entity_id": unlock}, blocking=True)
+    except Exception as err:  # noqa: BLE001
+        assert "11Z" in str(err)
+    else:
+        raise AssertionError("le bouton aurait dû échouer")
+
+    subentry_id = next(iter(entry.subentries))
+    result = await hass.config_entries.subentries.async_init(
+        (entry.entry_id, "device"),
+        context={"source": "reconfigure", "subentry_id": subentry_id},
+    )
+    while result["type"] is FlowResultType.SHOW_PROGRESS:
+        await asyncio.sleep(0.5)
+        result = await hass.config_entries.subentries.async_configure(result["flow_id"])
+    assert result["step_id"] == "recom_failed"
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"recom_code": "zz"}
+    )
+    assert result["errors"] == {"recom_code": "invalid_code"}
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"recom_code": "11Z12345678"}
+    )
+    assert result["errors"] == {"base": "wrong_code"}
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"recom_code": "673a8e41"}
+    )
+    while result["type"] is FlowResultType.SHOW_PROGRESS:
+        await asyncio.sleep(0.5)
+        result = await hass.config_entries.subentries.async_configure(result["flow_id"])
+    assert result["type"] is FlowResultType.MENU
+    assert result["step_id"] == "recom_menu"
+    device = next(iter(entry.runtime_data.devices.values()))
+    assert device.recom_code == 0x673A8E41
+    assert hass.states.get(_entity(hass, "sensor", "recom_security", SIN21)).state == "assigned"
+    gateway = entry.runtime_data.gateway
+    assert all("67 3A 8E 41" not in r["data"] for r in gateway.history)
+
+
+async def test_unlock_no_answer_at_all(hass: HomeAssistant, dongle) -> None:
+    """Produit muet, même au Ping : message dédié."""
+    fake = FakeReComDevice(dongle, SIN21)
+    fake.mute = True
+    entry = await _setup_gateway(hass)
+    await _pair(
+        hass,
+        entry,
+        dongle,
+        "SIN-2-1-01",
+        lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0F 01 D2"), SIN21),
+        "Lampe",
+    )
+    await hass.async_block_till_done(wait_background_tasks=True)
+    unlock = _entity(hass, "button", "recom_unlock", SIN21)
+    try:
+        await hass.services.async_call("button", "press", {"entity_id": unlock}, blocking=True)
+    except Exception as err:  # noqa: BLE001
+        assert "Ping" in str(err)
+    else:
+        raise AssertionError("le bouton aurait dû échouer")

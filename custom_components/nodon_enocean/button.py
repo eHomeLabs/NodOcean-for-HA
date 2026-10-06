@@ -29,6 +29,7 @@ async def async_setup_entry(
         model = device.product.model
         if model in features.RECOM:
             entities.append(NodOnReComRead(device))
+            entities.append(NodOnReComUnlock(device))
         if model in features.ROLLER_SHUTTER:
             entities.extend(
                 NodOnCalibrate(device, kind) for kind in ("classic", "complex", "stop")
@@ -69,6 +70,57 @@ class NodOnReComRead(NodOnEntity, ButtonEntity):
                 await self.device.rs_read_config()
         except GatewayError as err:
             raise HomeAssistantError(f"Lecture impossible : {err}") from err
+
+
+class NodOnReComUnlock(NodOnEntity, ButtonEntity):
+    """Déverrouille le produit (Remote Commissioning) ou lui attribue son code."""
+
+    _attr_translation_key = "recom_unlock"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _follows_availability = False
+    _state_keys = frozenset({"_none"})
+
+    def __init__(self, device: NodOnDevice) -> None:
+        super().__init__(device, "recom_unlock")
+
+    async def async_press(self) -> None:
+        lang = self.hass.config.language or "en"
+        fr, de = lang.startswith("fr"), lang.startswith("de")
+        try:
+            result = await self.device.unlock_recom()
+        except GatewayError as err:
+            raise HomeAssistantError(
+                "Le produit n'a pas répondu. Coupez puis remettez son alimentation, "
+                "puis appuyez sur Déverrouiller dans les 15 minutes."
+                if fr
+                else "Das Produkt hat nicht geantwortet. Schalten Sie seine Stromversorgung "
+                "aus und wieder ein und drücken Sie innerhalb von 15 Minuten auf Entsperren."
+                if de
+                else "The product did not answer. Power it off and on again, then press "
+                "Unlock within 15 minutes."
+            ) from err
+        if result == "assigned":
+            message = (
+                "Un code de sécurité a été attribué au produit et enregistré dans Home Assistant."
+                if fr
+                else "Dem Produkt wurde ein Sicherheitscode zugewiesen und in Home Assistant gespeichert."
+                if de
+                else "A security code was assigned to the product and saved in Home Assistant."
+            )
+        else:
+            message = (
+                "Produit déverrouillé : il accepte le Remote Commissioning."
+                if fr
+                else "Produkt entsperrt: Remote Commissioning ist möglich."
+                if de
+                else "Product unlocked: Remote Commissioning is available."
+            )
+        persistent_notification.async_create(
+            self.hass,
+            f"**{self.device.title}** — {message}",
+            title="Remote Commissioning",
+            notification_id=f"nodon_recom_{self.device.id_str}",
+        )
 
 
 class NodOnCalibrate(NodOnEntity, ButtonEntity):

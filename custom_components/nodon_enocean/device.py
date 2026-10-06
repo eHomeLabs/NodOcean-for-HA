@@ -99,6 +99,9 @@ class NodOnDevice:
         }
         # Format des valeurs ReCom : 0xC056 + valeur (firmwares actuels) ou brut.
         self.recom_gp = True
+        # Code de sécurité ReCom attribué par l'intégration (None = pas encore).
+        self.recom_code: int | None = None
+        self.on_code_change: Callable[[NodOnDevice], None] | None = None
         for ch in range(product.channels):
             self.settings[f"auto_off_{ch}"] = 0.0
             self.settings[f"delay_off_{ch}"] = 0.0
@@ -293,7 +296,37 @@ class NodOnDevice:
             expect,
             timeout,
             until,
+            code=self.recom_code,
         )
+
+    @property
+    def recom_secured(self) -> bool:
+        return self.recom_code is not None
+
+    async def unlock_recom(self) -> str:
+        """Bouton « Déverrouiller » : déverrouille avec le code du produit, ou lui en
+        attribue un (code aléatoire) s'il est dans sa fenêtre de 15 min après mise
+        sous tension. Renvoie "unlocked" ou "assigned"."""
+        if self.sender_offset is None:
+            raise GatewayError(f"{self.title} n'est pas un actionneur")
+        sender = self.gateway.sender_id(self.sender_offset)
+        if self.recom_code is not None and await self.gateway.unlock(
+            self.device_id, sender, self.recom_code
+        ):
+            return "unlocked"
+        code = recom.random_code()
+        if not await self.gateway.set_code(self.device_id, sender, code):
+            raise ReComError(
+                "Le produit ne répond pas : coupez puis remettez son alimentation, "
+                "puis recommencez dans les 15 minutes",
+                "locked",
+            )
+        self.recom_code = code
+        self.state["recom_secured"] = True
+        if self.on_code_change is not None:
+            self.on_code_change(self)
+        self.notify({"recom_secured"})
+        return "assigned"
 
     def _value(self, value: int, size: int = 1) -> bytes:
         return recom.gp_enum(value, size) if self.recom_gp else value.to_bytes(size, "big")

@@ -16,13 +16,12 @@ from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 
 from . import features
 from .catalog import PRODUCTS
 from .const import (
-    CONF_RECOM,
-    CONF_RECOM_PREFIX,
     CONF_DEVICE_ID,
     CONF_DEVICE_PATH,
     CONF_MODEL,
@@ -35,7 +34,6 @@ from .const import (
 )
 from .device import AVAILABILITY_KEY, NodOnDevice
 from .esp3 import id_to_str, str_to_id
-from .recom import parse_prefix
 from .gateway import HISTORY_SIZE, Gateway, GatewayError
 from .mqtt_bridge import MqttBridge, MqttConfigError, broker_settings, mqtt_enabled
 
@@ -93,15 +91,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
         raise ConfigEntryNotReady(str(err)) from err
     ir.async_delete_issue(hass, DOMAIN, issue_id)
 
-    try:
-        gateway.recom_prefix = parse_prefix(
-            (entry.options.get(CONF_RECOM) or {}).get(CONF_RECOM_PREFIX)
-        )
-    except ValueError:
-        _LOGGER.warning("Préfixe de code ReCom invalide, ignoré")
-
     runtime = NodOnRuntime(gateway=gateway)
     entry.runtime_data = runtime
+
+    # Codes de sécurité ReCom attribués aux produits (par ID, gardés même si le
+    # produit est supprimé puis réappairé : il garde son code).
+    code_store: Store[dict[str, str]] = Store(hass, 1, _code_store_key(entry))
+    codes: dict[str, str] = await code_store.async_load() or {}
+
+    @callback
+    def _save_code(device: NodOnDevice) -> None:
+        if device.recom_code is not None:
+            codes[device.id_str] = f"{device.recom_code:08X}"
+            hass.async_create_task(code_store.async_save(dict(codes)))
 
     dev_reg = dr.async_get(hass)
     hub = dev_reg.async_get_or_create(
@@ -132,6 +134,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
             subentry_id,
             subentry.title,
         )
+        if (saved := codes.get(device.id_str)) is not None:
+            device.recom_code = int(saved, 16)
+        device.state["recom_secured"] = device.recom_code is not None
+        device.on_code_change = _save_code
         device.start()
         runtime.devices[subentry_id] = device
         dev_entry = dev_reg.async_get_or_create(
@@ -181,8 +187,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
                     await device.configure_reporting()
                 await asyncio.sleep(0.2)
         await _poll()
-        # Volet : type d'interrupteur et temps calibrés (Remote Commissioning)
         for device in list(runtime.devices.values()):
+            if device.product.model not in features.RECOM:
+                continue
+            # Produit sans code : on lui en attribue un s'il vient d'être mis sous
+            # tension (fenêtre de 15 min), sinon le bouton Déverrouiller le fera.
+            if device.recom_code is None:
+                try:
+                    await device.unlock_recom()
+                except GatewayError as err:
+                    _LOGGER.debug("Code ReCom de %s non attribué : %s", device.title, err)
+            # Volet : type d'interrupteur et temps calibrés (Remote Commissioning)
             if device.product.model in features.ROLLER_SHUTTER:
                 try:
                     await device.rs_read_config()
@@ -249,7 +264,12 @@ async def _async_update_listener(hass: HomeAssistant, entry: NodOnConfigEntry) -
     await hass.config_entries.async_reload(entry.entry_id)
 
 
+def _code_store_key(entry: ConfigEntry) -> str:
+    return f"{DOMAIN}.recom_codes.{entry.entry_id}"
+
+
 async def async_remove_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> None:
+    await Store(hass, 1, _code_store_key(entry)).async_remove()
     ir.async_delete_issue(hass, DOMAIN, f"gateway_unavailable_{entry.entry_id}")
     ir.async_delete_issue(hass, DOMAIN, f"mqtt_config_{entry.entry_id}")
     hass.data.get(DOMAIN, {}).get("history", {}).pop(entry.entry_id, None)

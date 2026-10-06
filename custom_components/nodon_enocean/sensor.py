@@ -148,6 +148,7 @@ async def async_setup_entry(
             entities.append(NodOnFirmwareSensor(device))
         if device.product.model in features.RECOM:
             entities.append(NodOnLinksSensor(device))
+            entities.append(NodOnReComSecuritySensor(device))
         if device.product.model in features.ROLLER_SHUTTER:
             entities.extend(NodOnStateSensor(device, desc) for desc in RS_SENSORS)
         return entities
@@ -251,3 +252,21 @@ class NodOnLinksSensor(NodOnEntity, SensorEntity):
             "devices": [f"{x['id']} ({x['eep']}, index {x['index']})" for x in links],
             "capacity": self.device.state.get("links_max"),
         }
+
+
+class NodOnReComSecuritySensor(NodOnEntity, SensorEntity):
+    """Code de sécurité ReCom attribué ou non (la valeur du code n'est jamais affichée)."""
+
+    _attr_translation_key = "recom_security"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["assigned", "not_assigned"]
+    _state_keys = frozenset({"recom_secured"})
+    _follows_availability = False
+
+    def __init__(self, device: NodOnDevice) -> None:
+        super().__init__(device, "recom_security")
+
+    @property
+    def native_value(self) -> str:
+        return "assigned" if self.device.recom_secured else "not_assigned"

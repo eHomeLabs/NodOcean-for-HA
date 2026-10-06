@@ -34,6 +34,9 @@ _LOGGER = logging.getLogger(__name__)
 TelegramCallback = Callable[[RadioTelegram], None]
 ReManCallback = Callable[[recom.ReManMessage], None]
 
+# Déverrouillage ReCom renouvelé avant la fin de la fenêtre de 15 min des produits
+UNLOCK_RENEW = 10 * 60  # s
+
 # ESP3 : paquet REMOTE_MAN_COMMAND (la clé peut remonter les messages ReMan ainsi)
 PACKET_REMOTE_MAN_COMMAND = 0x07
 
@@ -108,8 +111,6 @@ class Gateway:
         self._reman_lock = asyncio.Lock()
         self._reman_seq = 0
         self._unlocked: dict[int, float] = {}
-        # Préfixe du code ReCom (code = préfixe + 4 derniers caractères de l'ID).
-        self.recom_prefix: int | None = None
 
     # -- Connexion -----------------------------------------------------------
 
@@ -202,10 +203,20 @@ class Gateway:
             finally:
                 self._response_waiter = None
 
-    async def send_radio(self, rorg: int, payload: bytes, sender: int, destination: int) -> None:
-        """Émet un télégramme radio adressé."""
+    async def send_radio(
+        self,
+        rorg: int,
+        payload: bytes,
+        sender: int,
+        destination: int,
+        logged: bytes | None = None,
+    ) -> None:
+        """Émet un télégramme radio adressé (logged : version masquée pour le journal)."""
         self._record(
-            "tx", RadioTelegram(rorg, bytes(payload), sender, destination=destination)
+            "tx",
+            RadioTelegram(
+                rorg, bytes(payload if logged is None else logged), sender, destination=destination
+            ),
         )
         resp = await self.command(build_radio(rorg, payload, sender, destination))
         if resp.data and resp.data[0] != RET_OK:
@@ -384,8 +395,11 @@ class Gateway:
     ) -> None:
         """Émet un message ReMan (télégrammes SYS_EX chaînés, adressés)."""
         self._reman_seq = self._reman_seq % 3 + 1
+        secret = function in (recom.FN_UNLOCK, recom.FN_LOCK, recom.FN_SET_CODE)
         for chunk in recom.encode_message(function, data, self._reman_seq):
-            await self.send_radio(recom.RORG_SYS_EX, chunk, sender, destination)
+            # Le code de sécurité n'apparaît jamais dans le journal ni les diagnostics.
+            logged = chunk[:5] + b"\x00\x00\x00\x00" if secret else None
+            await self.send_radio(recom.RORG_SYS_EX, chunk, sender, destination, logged)
 
     async def reman_request(
         self,
@@ -395,16 +409,19 @@ class Gateway:
         expect: int | None = None,
         timeout: float = 3.0,
         until: Callable[[list[recom.ReManMessage]], bool] | None = None,
+        code: int | None = None,
     ) -> list[recom.ReManMessage]:
         """Envoie une commande ReCom et attend la ou les réponses.
 
         expect : fonction de la réponse attendue (None = acquittement 0x240).
         until : pour les réponses en plusieurs messages, renvoie True quand tout
         est reçu (sinon on rend ce qui est arrivé à l'expiration du délai).
-        Le produit est déverrouillé au besoin (code par défaut 0x00000000).
+        code : code de sécurité du produit ; il est déverrouillé au besoin. Sans
+        code, on compte sur le déverrouillage qui suit sa mise sous tension.
         """
         async with self._reman_lock:
-            await self._ensure_unlocked(device_id, sender)
+            if code is not None:
+                await self._ensure_unlocked(device_id, sender, code)
             try:
                 return await self._exchange(
                     device_id, sender, command, expect, timeout, until
@@ -479,27 +496,39 @@ class Gateway:
             return None
         return recom.parse_query_status(answer[0].data)
 
-    async def _ensure_unlocked(self, device_id: int, sender: int) -> None:
-        """Déverrouille le produit (valable 30 min côté NodOn, renouvelé à 20 min)."""
+    async def _ensure_unlocked(self, device_id: int, sender: int, code: int) -> None:
+        """Déverrouille le produit si besoin (renouvelé toutes les 10 min)."""
         last = self._unlocked.get(device_id)
-        if last is not None and time.monotonic() - last < 20 * 60:
+        if last is not None and time.monotonic() - last < UNLOCK_RENEW:
             return
-        codes = [0x00000000]  # aucun code défini (produit neuf)
-        if self.recom_prefix is not None:
-            codes.append(recom.derived_code(self.recom_prefix, device_id))
-        for code in codes:
-            try:
-                await self._exchange(
-                    device_id, sender, recom.unlock(code), None, 1.5, check_status=False
-                )
-            except ReComError as err:
-                # Mauvais code ou firmware muet sans code défini : on essaie le suivant.
-                _LOGGER.debug(
-                    "Déverrouillage ReCom de %s (code %08X) : %s", id_to_str(device_id), code, err
-                )
-            else:
-                break
-        self._unlocked[device_id] = time.monotonic()
+        if await self._try(device_id, sender, recom.unlock(code)):
+            self._unlocked[device_id] = time.monotonic()
+        else:
+            _LOGGER.debug("Déverrouillage ReCom de %s sans réponse", id_to_str(device_id))
+
+    async def _try(self, device_id: int, sender: int, command: tuple[int, bytes]) -> bool:
+        """Commande acquittée (0x240) ou confirmée par Query Status ?"""
+        try:
+            await self._exchange(device_id, sender, command, None, 2.0)
+        except ReComError:
+            return False
+        return True
+
+    async def unlock(self, device_id: int, sender: int, code: int) -> bool:
+        """Déverrouille le produit avec son code ; True si accepté."""
+        async with self._reman_lock:
+            ok = await self._try(device_id, sender, recom.unlock(code))
+            if ok:
+                self._unlocked[device_id] = time.monotonic()
+            return ok
+
+    async def set_code(self, device_id: int, sender: int, code: int) -> bool:
+        """Attribue un code de sécurité (produit déverrouillé requis) ; True si accepté."""
+        async with self._reman_lock:
+            ok = await self._try(device_id, sender, recom.set_code(code))
+            if ok:
+                self._unlocked[device_id] = time.monotonic()
+            return ok
 
     def forget_unlock(self, device_id: int) -> None:
         self._unlocked.pop(device_id, None)

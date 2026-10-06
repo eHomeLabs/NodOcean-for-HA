@@ -100,6 +100,9 @@ class FakeReComDevice:
         self.link_config: dict[int, dict[int, bytes]] = {}
         self.received: list[tuple[int, bytes]] = []
         self.mute = False
+        # Sécurité : pas de code, déverrouillé (fenêtre qui suit la mise sous tension)
+        self.code: int | None = None
+        self.unlocked = True
         self._asm = recom.SysExAssembler()
         previous = dongle.on_send
 
@@ -122,7 +125,17 @@ class FakeReComDevice:
         self.received.append((fn, data))
         if self.mute:
             return
-        if fn in (recom.FN_UNLOCK, recom.FN_SET_DEVICE_CONFIG):
+        if fn == recom.FN_UNLOCK:
+            if self.code is not None and int.from_bytes(data, "big") == self.code:
+                self.unlocked = True
+                self._reply(recom.FN_ACK)
+            return
+        if not self.unlocked:  # verrouillé : seul Unlock est traité
+            return
+        if fn == recom.FN_SET_CODE:
+            self.code = int.from_bytes(data, "big")
+            self._reply(recom.FN_ACK)
+        elif fn == recom.FN_SET_DEVICE_CONFIG:
             if fn == recom.FN_SET_DEVICE_CONFIG:
                 for index, raw in recom.decode_params(data).items():
                     self.config[index] = recom.decode_value(raw)
@@ -180,8 +193,15 @@ async def test_roller_shutter_recom(hass: HomeAssistant, dongle) -> None:
     )
     await hass.async_block_till_done(wait_background_tasks=True)
 
+    # Démarrage : code de sécurité attribué (produit dans sa fenêtre de 15 min)
+    assert fake.code is not None
+    runtime = hass.config_entries.async_entries(DOMAIN)[0].runtime_data
+    assert next(iter(runtime.devices.values())).recom_code == fake.code
+    assert hass.states.get(_entity(hass, "sensor", "recom_security")).state == "assigned"
+    # Le code n'apparaît pas dans le journal (diagnostics)
+    code_hex = f"{fake.code:08X}"
+    assert not any(code_hex in h["data"].replace(" ", "") for h in runtime.gateway.history)
     # Lecture au démarrage : type d'interrupteur et temps calibrés
-    assert recom.FN_UNLOCK in [fn for fn, _ in fake.received]
     assert hass.states.get(_entity(hass, "select", "rs_switch_type")).state == "type_1"
     assert float(hass.states.get(_entity(hass, "sensor", "rs_time_down")).state) == 60.0
     assert float(hass.states.get(_entity(hass, "sensor", "rs_time_up")).state) == 62.0
@@ -349,54 +369,12 @@ async def test_sin_switch_type(hass: HomeAssistant, dongle) -> None:
     ) is None
 
 
-# --- Code de sécurité (préfixe + 4 derniers caractères de l'ID) ---------------------
 
-
-def test_recom_prefix() -> None:
-    assert recom.parse_prefix("") is None
-    assert recom.parse_prefix(" 1234 ") == 0x1234
-    assert recom.parse_prefix("0xab12") == 0xAB12
-    for bad in ("123", "12345", "12G4"):
-        try:
-            recom.parse_prefix(bad)
-        except ValueError:
-            continue
-        raise AssertionError(bad)
-    assert recom.derived_code(0x1234, 0x0512E662) == 0x1234E662
-
-
-async def test_unlock_with_prefix(hass: HomeAssistant, dongle) -> None:
-    """Code 00000000 refusé : l'intégration essaie le code dérivé 1234 + ID."""
+async def test_unlock_button_and_code_storage(hass: HomeAssistant, dongle) -> None:
+    """Produit verrouillé sans code : échec, puis attribution après mise sous tension."""
     fake = FakeReComDevice(dongle, SIN21)
-    code = recom.derived_code(0x1234, SIN21)
-    original = fake._handle
-
-    def _handle(message):
-        if message.function == recom.FN_UNLOCK:
-            fake.received.append((message.function, message.data))
-            if int.from_bytes(message.data, "big") == code:
-                fake._reply(recom.FN_ACK)
-            return
-        original(message)
-
-    fake._handle = _handle
+    fake.unlocked = False
     entry = await _setup_gateway(hass)
-
-    # Option de la clé : préfixe invalide refusé, puis 1234 accepté
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"mqtt_enabled": False, "advanced": {}, "recom": {"recom_prefix": "12G4"}}
-    )
-    assert result["errors"] == {"base": "invalid_recom_prefix"}
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"mqtt_enabled": False, "advanced": {}, "recom": {"recom_prefix": "1234"}}
-    )
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    await hass.async_block_till_done()
-    entry = hass.config_entries.async_get_entry(entry.entry_id)
-    assert entry.options["recom"] == {"recom_prefix": "1234"}
-    assert entry.runtime_data.gateway.recom_prefix == 0x1234
-
     entry = await _pair(
         hass,
         entry,
@@ -405,10 +383,33 @@ async def test_unlock_with_prefix(hass: HomeAssistant, dongle) -> None:
         lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0F 01 D2"), SIN21),
         "Lampe",
     )
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert fake.code is None
+    security = _entity(hass, "sensor", "recom_security", SIN21)
+    assert hass.states.get(security).state == "not_assigned"
+    unlock = _entity(hass, "button", "recom_unlock", SIN21)
+    try:
+        await hass.services.async_call("button", "press", {"entity_id": unlock}, blocking=True)
+    except Exception as err:  # noqa: BLE001
+        assert "15" in str(err)
+    else:
+        raise AssertionError("le bouton aurait dû échouer")
+
+    # Coupure de courant : le produit est déverrouillé 15 min -> code attribué
+    fake.unlocked = True
+    await hass.services.async_call("button", "press", {"entity_id": unlock}, blocking=True)
+    assert fake.code is not None
+    assert hass.states.get(security).state == "assigned"
+
+    # Après rechargement, le code est relu et sert à déverrouiller
+    fake.unlocked = False
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+    device = next(iter(entry.runtime_data.devices.values()))
+    assert device.recom_code == fake.code
     await hass.services.async_call(
         "button", "press", {"entity_id": _entity(hass, "button", "recom_read", SIN21)},
         blocking=True,
     )
-    unlocks = [int.from_bytes(d, "big") for fn, d in fake.received if fn == recom.FN_UNLOCK]
-    assert unlocks == [0, code]
+    assert fake.unlocked
     assert hass.states.get(_entity(hass, "sensor", "paired_devices", SIN21)).state == "2"

@@ -121,6 +121,13 @@
             "trigger": "Bouton / action",
             "position": "Ouverture atteinte"
           }
+        },
+        "recom_failed": {
+          "title": "Remote Commissioning — produit sans réponse",
+          "description": "Le produit n'a pas répondu ({error}).\n\nS'il a un **code de sécurité** (indiqué dans son QR code : les 8 caractères après « 11Z », par exemple `30S…+1P…+11Z673A8E41` → `673A8E41`), saisissez-le pour le déverrouiller. Le code est enregistré dans Home Assistant et n'est jamais affiché.\n\nSinon, laissez le champ vide et validez.",
+          "data": {
+            "recom_code": "Code de sécurité (QR code)"
+          }
         }
       },
       "progress": {
@@ -130,7 +137,9 @@
       "error": {
         "invalid_id": "Identifiant invalide : 8 caractères hexadécimaux attendus.",
         "recom_failed": "Le produit n'a pas appliqué la modification : {error}",
-        "table_full": "La table du produit est pleine (supprimez d'abord une télécommande)."
+        "table_full": "La table du produit est pleine (supprimez d'abord une télécommande).",
+        "invalid_code": "Code invalide : 8 caractères hexadécimaux (0-9, A-F) attendus.",
+        "wrong_code": "Code refusé ou produit muet : vérifiez le code et que le produit est sous tension."
       },
       "abort": {
         "already_configured": "Ce produit est déjà configuré.",

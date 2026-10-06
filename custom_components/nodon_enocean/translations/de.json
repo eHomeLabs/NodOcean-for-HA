@@ -121,6 +121,13 @@
             "trigger": "Taste / Aktion",
             "position": "Angefahrene Öffnung"
           }
+        },
+        "recom_failed": {
+          "title": "Remote Commissioning — keine Antwort",
+          "description": "Das Produkt hat nicht geantwortet ({error}).\n\nWenn es einen **Sicherheitscode** hat (im QR-Code: die 8 Zeichen nach „11Z“, z. B. `30S…+1P…+11Z673A8E41` → `673A8E41`), geben Sie ihn ein, um das Produkt zu entsperren. Der Code wird in Home Assistant gespeichert und nie angezeigt.\n\nAndernfalls lassen Sie das Feld leer und bestätigen Sie.",
+          "data": {
+            "recom_code": "Sicherheitscode (QR-Code)"
+          }
         }
       },
       "progress": {
@@ -130,7 +137,9 @@
       "error": {
         "invalid_id": "Ungültige ID: 8 hexadezimale Zeichen erwartet.",
         "recom_failed": "Das Produkt hat die Änderung nicht übernommen: {error}",
-        "table_full": "Die Tabelle des Produkts ist voll (zuerst eine Fernbedienung entfernen)."
+        "table_full": "Die Tabelle des Produkts ist voll (zuerst eine Fernbedienung entfernen).",
+        "invalid_code": "Ungültiger Code: 8 hexadezimale Zeichen (0-9, A-F) erwartet.",
+        "wrong_code": "Code abgelehnt oder keine Antwort: Prüfen Sie den Code und die Stromversorgung des Produkts."
       },
       "abort": {
         "already_configured": "Dieses Produkt ist bereits eingerichtet.",

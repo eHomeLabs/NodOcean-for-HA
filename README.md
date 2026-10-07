@@ -1,9 +1,4 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="custom_components/nodon_enocean/brand/dark_logo.png">
-    <img src="custom_components/nodon_enocean/brand/logo.png" alt="NodOn" height="64">
-  </picture>
-</p>
+<p align="center"><img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/logo-readme.png" alt="NodOn" height="72"></p>
 
 # NodOcean for HA
 
@@ -21,22 +16,22 @@ Pas de profil EEP à chercher, pas d'identifiant à recopier, pas de fichier YAM
 
 |  | Référence | Produit | Dans Home Assistant |
 |:---:|---|---|---|
-| <img src="docs/images/products/SIN-2-1-01.png" alt="SIN-2-1-01" width="64"> | **SIN-2-1-01** | Module Multifonction | Interrupteur |
-| <img src="docs/images/products/SIN-2-2-01.png" alt="SIN-2-2-01" width="64"> | **SIN-2-2-01** | Module Éclairage ON/OFF 2 canaux | 2 lumières |
-| <img src="docs/images/products/SIN-2-FP-01.png" alt="SIN-2-FP-01" width="64"> | **SIN-2-FP-01** | Module Chauffage Fil Pilote | Sélecteur de mode (6 ordres) + puissance + énergie |
-| <img src="docs/images/products/SIN-2-RS-01.png" alt="SIN-2-RS-01" width="64"> | **SIN-2-RS-01** | Module Volet Roulant | Volet avec position |
-| <img src="docs/images/products/ASP-2.png" alt="ASP-2" width="64"> | **ASP-2-1-00 (FR)<br>ASP-2-1-10 (DE)** | Prise intelligente | Prise |
-| <img src="docs/images/products/MSP-2.png" alt="MSP-2" width="64"> | **MSP-2-1-01 (FR)<br>MSP-2-1-11 (DE)** | Micro Smart Plug + Mesure | Prise + puissance + énergie |
-| <img src="docs/images/products/CWS-2-1.png" alt="CWS-2-1" width="64"> | **CWS-2-1-01** | Interrupteur mural sans pile | Événements par touche (haut/bas, gauche/droite, combinaisons) |
-| <img src="docs/images/products/CRC-2.png" alt="CRC-2" width="64"> | **CRC-2-6-0x** | Soft Remote | Événements par bouton (4 boutons, combinaisons) |
-| <img src="docs/images/products/CFS-2.png" alt="CFS-2" width="64"> | **CFS-2-1-05** | Interrupteur de sol | Événements appui / relâchement |
-| <img src="docs/images/products/CCS-2.png" alt="CCS-2" width="64"> | **CCS-2-1-01** | Interrupteur à carte | Carte insérée (oui / non) |
-| <img src="docs/images/products/TSB-2.png" alt="TSB-2" width="64"> | **TSB-2-2-02** | Soft Button | Événements simple / double / long + batterie |
-| <img src="docs/images/products/SDO-2.png" alt="SDO-2" width="64"> | **SDO-2-1-05** | Détecteur d'ouverture portes et fenêtres | Capteur d'ouverture |
-| <img src="docs/images/products/SWO-2.png" alt="SWO-2" width="64"> | **SWO-2-1-00** | Capteur d'ouverture invisible sans pile | Capteur d'ouverture |
-| <img src="docs/images/products/PIR-2.png" alt="PIR-2" width="64"> | **PIR-2-1-01** | Détecteur de mouvement | Mouvement + luminosité + tension pile |
-| <img src="docs/images/products/STP-2.png" alt="STP-2" width="64"> | **STP-2-1-05** | Capteur de température | Température |
-| <img src="docs/images/products/STPH-2.png" alt="STPH-2" width="64"> | **STPH-2-1-05** | Capteur de température et d'humidité | Température + humidité |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/SIN-2-1-01.png" alt="SIN-2-1-01" width="64"> | **SIN-2-1-01** | Module Multifonction | Interrupteur |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/SIN-2-2-01.png" alt="SIN-2-2-01" width="64"> | **SIN-2-2-01** | Module Éclairage ON/OFF 2 canaux | 2 lumières |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/SIN-2-FP-01.png" alt="SIN-2-FP-01" width="64"> | **SIN-2-FP-01** | Module Chauffage Fil Pilote | Sélecteur de mode (6 ordres) + puissance + énergie |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/SIN-2-RS-01.png" alt="SIN-2-RS-01" width="64"> | **SIN-2-RS-01** | Module Volet Roulant | Volet avec position |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/ASP-2.png" alt="ASP-2" width="64"> | **ASP-2-1-00 (FR)<br>ASP-2-1-10 (DE)** | Prise intelligente | Prise |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/MSP-2.png" alt="MSP-2" width="64"> | **MSP-2-1-01 (FR)<br>MSP-2-1-11 (DE)** | Micro Smart Plug + Mesure | Prise + puissance + énergie |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/CWS-2-1.png" alt="CWS-2-1" width="64"> | **CWS-2-1-01** | Interrupteur mural sans pile | Événements par touche (haut/bas, gauche/droite, combinaisons) |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/CRC-2.png" alt="CRC-2" width="64"> | **CRC-2-6-0x** | Soft Remote | Événements par bouton (4 boutons, combinaisons) |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/CFS-2.png" alt="CFS-2" width="64"> | **CFS-2-1-05** | Interrupteur de sol | Événements appui / relâchement |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/CCS-2.png" alt="CCS-2" width="64"> | **CCS-2-1-01** | Interrupteur à carte | Carte insérée (oui / non) |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/TSB-2.png" alt="TSB-2" width="64"> | **TSB-2-2-02** | Soft Button | Événements simple / double / long + batterie |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/SDO-2.png" alt="SDO-2" width="64"> | **SDO-2-1-05** | Détecteur d'ouverture portes et fenêtres | Capteur d'ouverture |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/SWO-2.png" alt="SWO-2" width="64"> | **SWO-2-1-00** | Capteur d'ouverture invisible sans pile | Capteur d'ouverture |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/PIR-2.png" alt="PIR-2" width="64"> | **PIR-2-1-01** | Détecteur de mouvement | Mouvement + luminosité + tension pile |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/STP-2.png" alt="STP-2" width="64"> | **STP-2-1-05** | Capteur de température | Température |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/products/STPH-2.png" alt="STPH-2" width="64"> | **STPH-2-1-05** | Capteur de température et d'humidité | Température + humidité |
 
 Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut.
 
@@ -44,13 +39,13 @@ Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut
 
 | 1. Choix du produit | 2. Consigne d'appairage |
 |:---:|:---:|
-| <img src="docs/images/screenshots/01-choix-produit.png" alt="Choix du produit NodOn" width="320"> | <img src="docs/images/screenshots/02-appairage.png" alt="Consigne d'appairage" width="320"> |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/01-choix-produit.png" alt="Choix du produit NodOn" width="320"> | <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/02-appairage.png" alt="Consigne d'appairage" width="320"> |
 | **3. Nom et pièce** | **4. Fiche du produit et réglages** |
-| <img src="docs/images/screenshots/04-nom-et-piece.png" alt="Nom et pièce du produit" width="320"> | <img src="docs/images/screenshots/03-appareil.png" alt="Fiche du Module Multifonction avec ses réglages" width="380"> |
+| <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/04-nom-et-piece.png" alt="Nom et pièce du produit" width="320"> | <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/03-appareil.png" alt="Fiche du Module Multifonction avec ses réglages" width="380"> |
 
 **5. Aide NodOn** : sur la fiche d'un produit, carte **Diagnostic** → **Aide NodOn** → **Appuyer**. La réponse s'affiche dans **Notifications** (en bas du menu de gauche) : notice du produit, support NodOn, contact et identifiant EnOcean.
 
-<img src="docs/images/screenshots/05-aide.png" alt="Aide NodOn : la réponse s'affiche dans Notifications" width="760">
+<img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/05-aide.png" alt="Aide NodOn : la réponse s'affiche dans Notifications" width="760">
 
 ## Prérequis
 
@@ -61,13 +56,22 @@ Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut
 
 > ⚠️ Si l'intégration EnOcean native de Home Assistant utilise déjà la clé, supprimez-la d'abord : une clé ne peut servir qu'à une seule intégration à la fois.
 
-## Installation (HACS)
+## Installation (HACS, dépôt personnalisé)
+
+> ℹ️ NodOcean for HA n'est **pas encore dans le catalogue HACS par défaut** (demande d'inscription en cours). Il faut donc d'abord l'ajouter à HACS comme **dépôt personnalisé**. Cette étape n'est à faire qu'une fois : les mises à jour arrivent ensuite normalement.
+
+1. Dans Home Assistant, ouvrez **HACS**.
+2. Cliquez sur **⋮** (en haut à droite), puis sur **Dépôts personnalisés**.
+3. Dans **Dépôt**, collez `https://github.com/eHomeLabs/NodOcean-for-HA`. Dans **Type**, choisissez **Intégration**. Cliquez sur **Ajouter**, puis fermez la fenêtre.
+4. Recherchez **NodOcean for HA** dans HACS, ouvrez-le et cliquez sur **Télécharger**.
+5. Redémarrez Home Assistant (**Paramètres → Système → Redémarrer**).
+6. **Paramètres → Appareils et services → Ajouter une intégration → NodOcean for HA**. Une clé USB300 branchée est normalement détectée automatiquement.
+
+Raccourci : ce bouton ouvre HACS et propose d'ajouter le dépôt personnalisé (étapes 1 à 3) à votre place.
 
 [![Ouvrir dans HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eHomeLabs&repository=NodOcean-for-HA&category=integration)
 
-1. Cliquez sur le bouton ci-dessus pour ouvrir le dépôt dans HACS. Sinon, dans HACS, ouvrez **⋮ → Dépôts personnalisés**, ajoutez `https://github.com/eHomeLabs/NodOcean-for-HA` en catégorie **Intégration**.
-2. Installez **NodOcean for HA**, puis redémarrez Home Assistant.
-3. **Paramètres → Appareils et services → Ajouter une intégration → NodOcean for HA**. Une clé USB300 branchée est normalement détectée automatiquement.
+Guide détaillé : [page Installation du wiki](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Installation).
 
 Installation manuelle : copiez le dossier `custom_components/nodon_enocean` dans le dossier `config/custom_components/` de Home Assistant, puis redémarrez.
 
@@ -127,7 +131,7 @@ Depuis la v0.5.0, l'intégration peut aussi envoyer l'état des produits vers un
 - **Statut** : `nodocean/bridge/state` (`online` / `offline`) et `nodocean/bridge/info` (liste des produits).
 - **Options avancées (v0.6.0)** : télégrammes EnOcean bruts sur `nodocean/bridge/telegrams` (debug), et auto-découverte MQTT pour un **autre** Home Assistant branché sur le même broker (sur le même Home Assistant, les produits seraient en double).
 
-<img src="docs/images/screenshots/09-mqtt-broker.png" alt="Pont MQTT : broker" width="290"> <img src="docs/images/screenshots/11-mqtt-avance.png" alt="Pont MQTT : options avancées" width="290">
+<img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/09-mqtt-broker.png" alt="Pont MQTT : broker" width="290"> <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/screenshots/11-mqtt-avance.png" alt="Pont MQTT : options avancées" width="290">
 
 Tous les détails sont dans le wiki : [Pont MQTT](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).
 
@@ -160,7 +164,7 @@ pytest
 ```
 
 Les tests utilisent un simulateur de clé USB300 (`tests/fake_dongle.py`) et les trames des Quick User Guides NodOn.
-La fiche technique de chaque produit (EEP, trames, appairage, sources) est dans [docs/PRODUITS.md](docs/PRODUITS.md).
+La fiche technique de chaque produit (EEP, trames, appairage, sources) est dans [docs/PRODUITS.md](https://github.com/eHomeLabs/NodOcean-for-HA/blob/main/docs/PRODUITS.md).
 
 ## Licence
 
@@ -176,9 +180,16 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 
 **Full documentation:** [English documentation (wiki)](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/English-documentation).
 
-[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eHomeLabs&repository=NodOcean-for-HA&category=integration)
+**Install (HACS custom repository):** NodOcean for HA is **not yet in the default HACS catalog** (inclusion request pending), so add it once as a custom repository:
 
-**Install:** click the button above, or add this repository to HACS as a custom repository (category *Integration*), install **NodOcean for HA**, restart, then add the integration from *Settings → Devices & services*.
+1. Open **HACS**, click **⋮** (top right) → **Custom repositories**.
+2. Repository: `https://github.com/eHomeLabs/NodOcean-for-HA`, Type: **Integration**, click **Add**, then close the dialog.
+3. Search **NodOcean for HA**, click **Download**, then restart Home Assistant.
+4. Add the integration from **Settings → Devices & services → Add integration → NodOcean for HA**.
+
+Shortcut: this button opens HACS and offers to add the custom repository for you.
+
+[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eHomeLabs&repository=NodOcean-for-HA&category=integration)
 
 **Add a product:** open the integration, click **Add a NodOn product**, choose the model, follow the on-screen pairing instructions and give it a name.
 

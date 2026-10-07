@@ -19,7 +19,7 @@ Merci de participer à la béta de **NodOcean for HA** ! Cette page liste les te
 
 | ID | Test | Résultat attendu |
 |---|---|---|
-| `GEN-01` | Installer NodOcean for HA via HACS, puis redémarrer | L'intégration est proposée dans Ajouter une intégration |
+| `GEN-01` | Ajouter le dépôt personnalisé dans HACS (⋮ → Dépôts personnalisés, type Intégration), installer NodOcean for HA, puis redémarrer | L'intégration est proposée dans Ajouter une intégration |
 | `GEN-02` | Ajouter la clé (détection automatique ou liste des ports) | Entrée « Clé EnOcean XXXXXXXX » créée |
 | `GEN-03` | Avec l'intégration EnOcean native active, ajouter la clé | Message clair : clé occupée par l'intégration native |
 | `GEN-04` | Débrancher la clé et redémarrer HA, puis la rebrancher | Correction « Clé EnOcean injoignable » affichée, puis disparaît |

@@ -14,13 +14,21 @@
 |---|---|
 | Home Assistant | **2025.3** or newer, any installation type (OS, Supervised, Container, Core). |
 | EnOcean USB stick | **USB300** (recommended) or any ESP3-compatible stick (TCM310, USB500…). A generic USB-serial adapter (FTDI, CH340) is not an EnOcean stick. |
-| HACS | For one-click install and updates (manual install also possible). |
+| HACS | For one-click install and updates (manual install also possible). NodOcean for HA is added as a **custom repository**. |
 
 **Free the stick first.** A stick can only serve one integration. Remove Home Assistant's native **EnOcean** integration and stop any EnOcean add-on. If Home Assistant offers the stick under **Discovered** for the native integration, click **Ignore**.
 
-**With HACS:**
-1. HACS → **⋮ → Custom repositories** → add `https://github.com/eHomeLabs/NodOcean-for-HA`, category **Integration**.
-2. Search **NodOcean for HA**, click **Download**, then **restart Home Assistant**.
+**With HACS (custom repository):** NodOcean for HA is **not yet in the default HACS catalog** (inclusion request pending), so searching HACS directly will not find it. Add it once as a custom repository:
+
+1. Open **HACS**, click **⋮** (top right) → **Custom repositories**.
+2. Repository: `https://github.com/eHomeLabs/NodOcean-for-HA`, Type: **Integration**, click **Add**, then close the dialog.
+3. Search **NodOcean for HA**, click **Download**, then **restart Home Assistant**.
+
+Shortcut: this button opens HACS and offers to add the custom repository for you.
+
+[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eHomeLabs&repository=NodOcean-for-HA&category=integration)
+
+Once NodOcean for HA is accepted into the default catalog, the custom repository keeps working: nothing to redo.
 
 **Manually:** copy `custom_components/nodon_enocean` from the [latest release](https://github.com/eHomeLabs/NodOcean-for-HA/releases/latest) into `config/custom_components/`, then restart.
 
@@ -165,6 +173,8 @@ logger:
 Report problems with the [bug report form](https://github.com/eHomeLabs/NodOcean-for-HA/issues/new?template=bug.yml).
 
 ## 9. FAQ
+
+**I can't find NodOcean for HA when searching HACS.** It is not yet in the default HACS catalog (inclusion pending). Add it first as a custom repository: HACS → **⋮ → Custom repositories** → `https://github.com/eHomeLabs/NodOcean-for-HA`, type **Integration**.
 
 **Do I need MQTT, an add-on or an EnOcean hub?** No, just a USB300 (or ESP3-compatible) stick.
 

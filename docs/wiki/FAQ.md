@@ -1,5 +1,8 @@
 # FAQ
 
+**Je ne trouve pas NodOcean for HA en le recherchant dans HACS.**
+C'est normal : il n'est pas encore dans le catalogue HACS par défaut (inscription en cours). Ajoutez-le d'abord comme dépôt personnalisé : HACS → **⋮ → Dépôts personnalisés** → `https://github.com/eHomeLabs/NodOcean-for-HA`, type **Intégration**. Voir [Installation](Installation#3-installer-avec-hacs-recommandé).
+
 **Faut-il MQTT, un add-on ou une box EnOcean ?**
 Non. Une clé USB EnOcean (USB300 ou compatible ESP3) branchée sur Home Assistant suffit.
 

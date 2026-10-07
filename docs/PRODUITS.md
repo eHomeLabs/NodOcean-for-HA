@@ -34,12 +34,3 @@ Fabricant EnOcean NodOn : **0x046**.
 | CCS-2 Interrupteur à carte | F6-04-01 | insertion d'une carte | `30` carte insérée, `00` carte retirée |
 | PIR-2 Détecteur de mouvement | A5-07-03 | 1 appui sur le bouton Pairing (teach-in 4BS) | DB3 × 0,02 = tension pile (V) ; DB2/DB1 10 bits = luminosité 0 à 1000 lx ; DB0 bit 7 = mouvement ; émission toutes les 15 à 21 min ou au changement |
 | TSB-2 Soft Button | D2-03-0A | 5 appuis brefs (UTE unidirectionnel `60 01 46 00 0A 03 D2`) | `BB YY` : BB = batterie en %, YY 1 simple / 2 double / 3 long / 4 fin d'appui long |
-
-## Points à valider sur produits réels
-
-1. **STP-2, échelle de température.** La Quick User Guide indique `T = DB1 × 0,16`, alors que la spécification A5-02-05 donne une échelle inversée (`T = 40 − DB1 × 40/255`). L'intégration suit la spécification. Il faut vérifier avec une trame captée à une température connue.
-2. **Lecture d'état D2-01 (CMD 0x3).** Les docs NodOn donnent `03 01`. L'intégration envoie `03 1E` (« tous les canaux », selon la spécification) aux produits 1 canal, et `03 00` puis `03 01` au SIN-2-2-01.
-3. **Commande ON de l'ASP-2.** Les docs donnent `01 00 01`. L'intégration envoie `01 00 64` (toute valeur de 1 à 0x64 signifie ON selon la notice).
-4. **Fil pilote.** La réponse de mesure (CMD 0x7) du SIN-2-FP-01 n'est pas documentée. L'intégration la décode comme celle de la MSP-2.
-5. **Identifiant d'émission par actionneur.** L'intégration utilise le Base ID de la clé + 1..127, un identifiant par actionneur. Il faut confirmer que l'appairage et le pilotage fonctionnent ainsi sur chaque firmware.
-6. **STP-2 / STPH-2, variante du teach-in 4BS.** Si le capteur envoie un teach-in variante 2 (EEP inclus), l'intégration vérifie que l'EEP correspond au produit choisi. Avec la variante 1, le teach-in est accepté sans vérification.

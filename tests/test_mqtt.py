@@ -73,7 +73,6 @@ class FakeClient:
 
 OPTIONS = {
     "mqtt_enabled": True,
-    "mqtt_use_ha": False,
     "mqtt_host": "192.168.1.20",
     "mqtt_port": 1883,
     "mqtt_username": "nodon",
@@ -225,15 +224,20 @@ async def test_mqtt_bridge(hass: HomeAssistant, dongle) -> None:
         assert client.last("nodocean/bridge/state") == "offline"
 
 
-async def test_mqtt_use_ha_without_mqtt(hass: HomeAssistant, dongle) -> None:
+async def test_mqtt_old_ha_broker_option(hass: HomeAssistant, dongle) -> None:
+    """Ancienne option « broker de l'intégration MQTT de HA » (retirée) : alerte, rien n'est lu."""
     entry = await _setup_gateway(hass)
-    result, _ = await _configure(hass, entry, {**OPTIONS, "mqtt_use_ha": True})
-    assert result["errors"] == {"base": "no_ha_mqtt"}
-    # Option enregistrée hors assistant (ex. intégration MQTT supprimée) -> alerte
-    hass.config_entries.async_update_entry(entry, options={**OPTIONS, "mqtt_use_ha": True})
+    old = {**OPTIONS, "mqtt_use_ha": True, "mqtt_host": ""}
+    hass.config_entries.async_update_entry(entry, options=old)
     await hass.async_block_till_done()
-    assert ir.async_get(hass).async_get_issue(DOMAIN, f"mqtt_config_{entry.entry_id}")
+    issue = ir.async_get(hass).async_get_issue(DOMAIN, f"mqtt_config_{entry.entry_id}")
+    assert issue and issue.translation_key == "mqtt_ha_broker_removed"
     assert entry.runtime_data.mqtt is None
+    # Le formulaire ne propose plus l'option et l'efface à l'enregistrement
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert "mqtt_use_ha" not in {str(k) for k in result["data_schema"].schema}
+    result, _ = await _configure(hass, entry, {**OPTIONS, "mqtt_enabled": False})
+    assert "mqtt_use_ha" not in entry.options
 
 
 async def test_mqtt_payload_and_commands(hass: HomeAssistant, dongle) -> None:

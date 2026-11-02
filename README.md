@@ -8,7 +8,7 @@ Intégration Home Assistant **officieuse** dédiée aux produits **EnOcean NodOn
 Le principe : on choisit son produit dans une liste et Home Assistant fait le reste.
 Pas de profil EEP à chercher, pas d'identifiant à recopier, pas de fichier YAML.
 
-**Documentation complète : [wiki NodOcean for HA](https://github.com/eHomeLabs/NodOcean-for-HA/wiki)** (installation, appairage produit par produit, réglages, automatisations, FAQ). Béta en cours : [plan de béta-test](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Plan-de-b%C3%A9ta-test).
+**Documentation complète : [wiki NodOcean for HA](https://github.com/eHomeLabs/NodOcean-for-HA/wiki)** (installation, appairage produit par produit, réglages, automatisations, FAQ).
 
 [English version below](#english)
 
@@ -164,6 +164,12 @@ logger:
 
 Chaque télégramme reçu est alors journalisé (identifiant, RORG, données, RSSI).
 
+## Retours et suggestions
+
+Un problème, une suggestion ou un retour d'expérience ? [Ouvrez une issue sur GitHub](https://github.com/eHomeLabs/NodOcean-for-HA/issues/new/choose). Vos retours contribuent à améliorer NodOcean for HA.
+
+Pour signaler un problème, indiquez la version de NodOcean for HA et de Home Assistant, la référence du produit et les étapes permettant de le reproduire. Joignez les diagnostics si possible (voir [Dépannage](#dépannage)), en vérifiant qu'ils ne contiennent pas d'informations personnelles.
+
 ## Développement
 
 ```bash
@@ -210,3 +216,9 @@ If you already installed NodOcean for HA as a custom repository, no reinstallati
 **Add a product:** open the integration, click **Add a NodOn product**, choose the model, follow the on-screen pairing instructions and give it a name.
 
 Supported: SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, SIN-2-RS-01, ASP-2, MSP-2, CWS-2-1, CRC-2, CFS-2, CCS-2, TSB-2, SDO-2, SWO-2, PIR-2, STP-2, STPH-2.
+
+### Feedback and suggestions
+
+Found a problem, have a suggestion or want to share your experience? [Open an issue on GitHub](https://github.com/eHomeLabs/NodOcean-for-HA/issues/new/choose). Your feedback helps improve NodOcean for HA.
+
+When reporting a problem, include your NodOcean for HA and Home Assistant versions, the product model and the steps to reproduce it. If possible, attach diagnostics from the EnOcean stick entry's **⋮ → Download diagnostics** menu after checking for personal information.

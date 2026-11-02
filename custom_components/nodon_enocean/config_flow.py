@@ -309,7 +309,6 @@ def _mqtt_schema(o: dict[str, Any]) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_MQTT_ENABLED, default=o.get(CONF_MQTT_ENABLED, False)): BooleanSelector(),
-            vol.Required(CONF_MQTT_USE_HA, default=o.get(CONF_MQTT_USE_HA, False)): BooleanSelector(),
             vol.Optional(
                 CONF_MQTT_HOST, description={"suggested_value": o.get(CONF_MQTT_HOST)}
             ): TextSelector(),
@@ -386,6 +385,7 @@ class NodOnOptionsFlow(OptionsFlow):
         errors: dict[str, str] = {}
         if user_input is not None:
             options = {**current, **user_input}
+            options.pop(CONF_MQTT_USE_HA, None)
             options[CONF_MQTT_PORT] = int(options.get(CONF_MQTT_PORT) or 1883)
             adv = dict(options.get(CONF_MQTT_ADVANCED) or {})
             adv[CONF_MQTT_QOS] = int(adv.get(CONF_MQTT_QOS) or 0)

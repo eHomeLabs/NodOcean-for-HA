@@ -19,6 +19,7 @@ EVENT_BUTTON = f"{DOMAIN}_button"  # événement bus pour les déclencheurs d'ap
 
 # Pont MQTT (options de la clé)
 CONF_MQTT_ENABLED = "mqtt_enabled"
+# Ancienne option (< 0.8.3) : seulement lue pour prévenir l'utilisateur, jamais proposée.
 CONF_MQTT_USE_HA = "mqtt_use_ha"
 CONF_MQTT_HOST = "mqtt_host"
 CONF_MQTT_PORT = "mqtt_port"

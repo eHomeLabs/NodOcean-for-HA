@@ -95,32 +95,18 @@ class BrokerSettings:
 def broker_settings(
     hass: HomeAssistant, options: dict[str, Any], default_client_id: str
 ) -> BrokerSettings:
-    """Réglages du broker à partir des options (ou de l'intégration MQTT de HA)."""
+    """Réglages du broker, saisis dans les options de l'intégration uniquement."""
     adv = options.get(CONF_MQTT_ADVANCED) or {}
-    if options.get(CONF_MQTT_USE_HA):
-        entries = hass.config_entries.async_entries("mqtt")
-        if not entries:
-            raise MqttConfigError("no_ha_mqtt")
-        data = {**entries[0].data, **entries[0].options}
-        if not data.get("broker"):
-            raise MqttConfigError("no_ha_mqtt")
-        host = data["broker"]
-        port = int(data.get("port") or 1883)
-        username = data.get("username") or None
-        password = data.get("password") or None
-        tls = bool(data.get("certificate")) or port == 8883
-        tls_insecure = bool(data.get("tls_insecure"))
-        ca_path = None
-    else:
-        host = (options.get(CONF_MQTT_HOST) or "").strip()
-        if not host:
-            raise MqttConfigError("no_host")
-        port = int(options.get(CONF_MQTT_PORT) or 1883)
-        username = options.get(CONF_MQTT_USERNAME) or None
-        password = options.get(CONF_MQTT_PASSWORD) or None
-        tls = bool(options.get(CONF_MQTT_TLS))
-        tls_insecure = bool(adv.get(CONF_MQTT_TLS_INSECURE))
-        ca_path = (adv.get(CONF_MQTT_CA) or "").strip() or None
+    host = (options.get(CONF_MQTT_HOST) or "").strip()
+    if not host:
+        # Ancienne option « broker de l'intégration MQTT de HA » retirée en 0.8.3.
+        raise MqttConfigError("ha_broker_removed" if options.get(CONF_MQTT_USE_HA) else "no_host")
+    port = int(options.get(CONF_MQTT_PORT) or 1883)
+    username = options.get(CONF_MQTT_USERNAME) or None
+    password = options.get(CONF_MQTT_PASSWORD) or None
+    tls = bool(options.get(CONF_MQTT_TLS))
+    tls_insecure = bool(adv.get(CONF_MQTT_TLS_INSECURE))
+    ca_path = (adv.get(CONF_MQTT_CA) or "").strip() or None
     base = (options.get(CONF_MQTT_BASE_TOPIC) or DEFAULT_BASE_TOPIC).strip().strip("/")
     return BrokerSettings(
         host=host,

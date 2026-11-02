@@ -29,6 +29,11 @@ REPEATER_LEVELS = ["off", "level_1", "level_2"]
 POWER_REPORT = {"delta": 5, "max_interval": 600, "min_interval": 10}  # W, s, s
 ENERGY_REPORT = {"delta": 10, "max_interval": 600, "min_interval": 10}  # Wh, s, s
 
+# Garde sur le compteur d'énergie (total_increasing dans HA) : une baisse ou un saut
+# impossible n'est publié que si la lecture suivante le confirme.
+ENERGY_MAX_POWER = 4000  # W, au-delà de ce que peut consommer une prise 16 A
+ENERGY_MARGIN = 0.01  # kWh, tolérance (arrondis, horloges)
+
 # Clé spéciale envoyée aux entités pour réévaluer leur disponibilité
 AVAILABILITY_KEY = "_availability"
 
@@ -83,6 +88,10 @@ class NodOnDevice:
         self.state: dict[str, Any] = {}
         self.last_dbm: int | None = None
         self.last_seen = time.monotonic()
+        # Compteur d'énergie : heure (time.time) de la dernière valeur publiée et
+        # valeur suspecte en attente de confirmation (valeur, heure)
+        self._energy_time: float | None = None
+        self._energy_candidate: tuple[float, float] | None = None
         # Réglages (non relisibles sur le produit : on garde la dernière valeur envoyée).
         self.settings: dict[str, Any] = {
             "led": True,
@@ -179,6 +188,11 @@ class NodOnDevice:
         self.last_dbm = telegram.dbm
         self.last_seen = time.monotonic()
         changes = self.decode(telegram)
+        if changes and "energy" in changes and not self._accept_energy(changes["energy"]):
+            changes = {k: v for k, v in changes.items() if k != "energy"}
+            if not changes:
+                self.notify({"rssi", AVAILABILITY_KEY})
+                return
         keys: set[str] = {"rssi"}
         if changes:
             self.state.update(changes)
@@ -192,6 +206,53 @@ class NodOnDevice:
                 telegram.payload.hex(" "),
             )
         self.notify(keys | {AVAILABILITY_KEY})
+
+    @staticmethod
+    def _energy_reachable(start: float, since: float, value: float, now: float) -> bool:
+        """value peut-elle suivre start (kWh) après since → now, sans baisse ?"""
+        elapsed = max(0.0, now - since)
+        return start <= value <= start + ENERGY_MAX_POWER * elapsed / 3_600_000 + ENERGY_MARGIN
+
+    def restore_energy(self, value: float, when: float) -> None:
+        """Dernière valeur connue de HA (redémarrage) : sert de référence à la garde."""
+        if "energy" not in self.state:
+            self.state["energy"] = value
+            self._energy_time = when
+
+    def _accept_energy(self, value: float) -> bool:
+        """Filtre les valeurs d'énergie aberrantes avant publication.
+
+        Une baisse (hors remise à zéro par l'intégration) ou une hausse impossible
+        depuis la dernière valeur est mise en attente : elle n'est publiée que si
+        la lecture suivante la confirme (vrai reset usine de la prise, absence
+        prolongée de mesures...). Sinon elle est oubliée.
+        """
+        now = time.time()
+        last = self.state.get("energy")
+        ok = (
+            last is None
+            or self._energy_time is None
+            or self._energy_reachable(last, self._energy_time, value, now)
+        )
+        candidate = self._energy_candidate
+        if not ok and candidate is not None and self._energy_reachable(
+            candidate[0], candidate[1], value, now
+        ):
+            _LOGGER.info(
+                "%s (%s) : nouvelle valeur d'énergie confirmée %s kWh (avant : %s kWh)",
+                self.title, self.id_str, value, last,
+            )
+            ok = True
+        if ok:
+            self._energy_time = now
+            self._energy_candidate = None
+            return True
+        _LOGGER.debug(
+            "%s (%s) : énergie %s kWh ignorée (dernière valeur %s kWh), en attente de confirmation",
+            self.title, self.id_str, value, last,
+        )
+        self._energy_candidate = (value, now)
+        return False
 
     # -- Commandes -----------------------------------------------------------
 
@@ -522,6 +583,8 @@ class NodOnDevice:
             eep.d201_measurement_config(power=False, reset=True, **ENERGY_REPORT)
         )
         self.state["energy"] = 0.0
+        self._energy_time = time.time()
+        self._energy_candidate = None
         self.notify({"energy"})
         await asyncio.sleep(0.3)
         await self._send(eep.d201_measurement_query(power=False))

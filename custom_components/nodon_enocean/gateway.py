@@ -17,6 +17,7 @@ from .esp3 import (
     PACKET_RESPONSE,
     RET_OK,
     RORG_UTE,
+    RORG_VLD,
     ESP3Parser,
     Packet,
     RadioTelegram,
@@ -105,6 +106,7 @@ class Gateway:
         self.history: deque[dict] = history if history is not None else deque(maxlen=HISTORY_SIZE)
         self._record_listeners: list[Callable[[dict], None]] = []
         self.duplicates = 0
+        # Télégrammes récents (identiques) et trames VLD directes par type (RORG -1)
         self._recent: dict[tuple[int, int, bytes], float] = {}
         # Remote Management / Remote Commissioning
         self._assembler = recom.SysExAssembler()
@@ -281,20 +283,34 @@ class Gateway:
     def is_duplicate(self, telegram: RadioTelegram) -> bool:
         """Copie répétée d'un télégramme déjà reçu (mode répéteur des modules).
 
-        Les 4 bits de poids faible du statut comptent les répétitions : seule une
-        copie répétée (compteur > 0) d'un télégramme identique reçu juste avant
-        est ignorée. Deux appuis rapides identiques (compteur 0) sont conservés.
+        Les 4 bits de poids faible du statut comptent les répétitions. Une copie
+        répétée (compteur > 0) est ignorée si, juste avant :
+        - un télégramme identique a été reçu ;
+        - ou (VLD) une trame directe du même produit et du même type (commande +
+          unité / canal) a été reçue, même si la valeur diffère : un répéteur peut
+          relayer une réponse plus ancienne du produit (ex. compteur d'énergie
+          demandé par une autre box), qui écraserait la valeur à jour.
+        Deux appuis rapides identiques (compteur 0) sont conservés.
         """
         now = time.monotonic()
-        key = (telegram.sender, telegram.rorg, bytes(telegram.payload))
+        payload = bytes(telegram.payload)
+        repeated = telegram.status & 0x0F > 0
+        key = (telegram.sender, telegram.rorg, payload)
         previous = self._recent.get(key)
         self._recent[key] = now
+        type_key = None
+        if telegram.rorg == RORG_VLD and len(payload) >= 2:
+            type_key = (telegram.sender, -1, payload[:2])
+        previous_direct = self._recent.get(type_key) if type_key else None
+        if type_key and not repeated:
+            self._recent[type_key] = now
         if len(self._recent) > 256:
             self._recent = {k: t for k, t in self._recent.items() if now - t < DUPLICATE_WINDOW}
-        return (
-            telegram.status & 0x0F > 0
-            and previous is not None
-            and now - previous <= DUPLICATE_WINDOW
+        if not repeated:
+            return False
+        return any(
+            t is not None and now - t <= DUPLICATE_WINDOW
+            for t in (previous, previous_direct)
         )
 
     def _dispatch(self, telegram: RadioTelegram) -> None:

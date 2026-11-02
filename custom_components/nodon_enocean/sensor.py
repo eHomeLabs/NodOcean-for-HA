@@ -138,7 +138,7 @@ async def async_setup_entry(
 ) -> None:
     def factory(device: NodOnDevice) -> list:
         entities: list[SensorEntity] = [
-            NodOnSensor(device, desc)
+            (NodOnEnergySensor if desc.key == "energy" else NodOnSensor)(device, desc)
             for desc in SENSORS
             if device.product.model in desc.models
             or (desc.metering and device.product.metering)
@@ -173,6 +173,28 @@ class NodOnSensor(NodOnEntity, SensorEntity):
         if value is not None and self._offset_key:
             value = round(value + (self.device.settings.get(self._offset_key) or 0), 1)
         return value
+
+
+class NodOnEnergySensor(NodOnSensor, RestoreSensor):
+    """Compteur d'énergie : la dernière valeur sert de référence au redémarrage.
+
+    Sans elle, une valeur aberrante reçue juste après le démarrage serait publiée
+    telle quelle (HA y verrait une remise à zéro ou une consommation énorme).
+    """
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        if "energy" in self.device.state:
+            return
+        last_state = await self.async_get_last_state()
+        last = await self.async_get_last_sensor_data()
+        if last_state is None or last is None:
+            return
+        try:
+            value = float(last.native_value)
+        except (TypeError, ValueError):
+            return
+        self.device.restore_energy(value, last_state.last_updated.timestamp())
 
 
 class NodOnRssiSensor(NodOnEntity, SensorEntity):

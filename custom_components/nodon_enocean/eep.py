@@ -45,6 +45,8 @@ UNIT_FACTORS = {
     3: ("power", 1.0),  # W
     4: ("power", 1000.0),  # kW
 }
+# Valeurs de mesure invalides (débordement ou « non disponible »)
+INVALID_MEASUREMENTS = frozenset({0xFFFFFFFF, 0x00FFFFFF})
 
 
 def d201_set_output(channel: int, on: bool) -> bytes:
@@ -223,6 +225,8 @@ def decode_d201(t: RadioTelegram, channels: int = 1) -> dict[str, Any] | None:
     if cmd == 0x07 and len(p) >= 6:
         unit = (p[1] >> 5) & 0x07
         value = int.from_bytes(p[2:6], "big")
+        if value in INVALID_MEASUREMENTS:
+            return None  # valeur invalide / non disponible
         kind_factor = UNIT_FACTORS.get(unit)
         if kind_factor is None:
             return None

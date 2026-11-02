@@ -124,7 +124,7 @@ Depuis la v0.2, chaque produit a ses réglages dans la carte **Configuration** d
 
 Depuis la v0.5.0, l'intégration peut aussi envoyer l'état des produits vers un **broker MQTT** local ou distant (Jeedom, Node-RED, serveur distant…) et recevoir des commandes, comme Zigbee2MQTT. Le pont est facultatif et désactivé par défaut.
 
-- **Activer** : ligne **Clé EnOcean** → icône **⚙ Configurer** → adresse du broker, port, identifiant, mot de passe, TLS, topic de base. Vous pouvez aussi reprendre le broker de l'intégration MQTT de Home Assistant.
+- **Activer** : ligne **Clé EnOcean** → icône **⚙ Configurer** → adresse du broker, port, identifiant, mot de passe, TLS, topic de base. Conseil : créez un utilisateur dédié à NodOcean sur le broker.
 - **États** : `nodocean/<produit>` en JSON, par exemple `{"state": "ON", "power": 12.5, "energy": 3.2, "rssi": -68}`.
 - **Boutons** : `nodocean/<produit>/action` (`left_up`, `single`…).
 - **Commandes** : `nodocean/<produit>/set`, par exemple `{"state": "ON"}`, `{"position": 50}` ou `{"mode": "eco"}`.

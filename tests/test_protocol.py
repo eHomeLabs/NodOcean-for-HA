@@ -142,6 +142,10 @@ def test_d201_measurement() -> None:
     assert eep.decode_d201(t(0xD2, "07 60 00 00 04 D2")) == {"power": 1234.0}
     # Énergie : unité Wh (1), 15500 Wh -> 15.5 kWh
     assert eep.decode_d201(t(0xD2, "07 20 00 00 3C 8C")) == {"energy": 15.5}
+    # Valeurs invalides (débordement / non disponible) : ignorées
+    assert eep.decode_d201(t(0xD2, "07 20 00 FF FF FF")) is None
+    assert eep.decode_d201(t(0xD2, "07 20 FF FF FF FF")) is None
+    assert eep.decode_d201(t(0xD2, "07 60 FF FF FF FF")) is None
 
 
 def test_d201_pilot_wire_status() -> None:

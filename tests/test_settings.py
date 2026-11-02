@@ -435,6 +435,111 @@ async def test_duplicates_ignored(hass: HomeAssistant, dongle) -> None:
     assert entry.runtime_data.gateway.duplicates == 1
 
 
+async def test_energy_stale_repeat_and_guard(hass: HomeAssistant, dongle) -> None:
+    """Bug #1 : copie répétée d'une ancienne valeur, sauts aberrants du compteur."""
+    entry = await _setup_gateway(hass)
+    await _pair(
+        hass,
+        entry,
+        dongle,
+        "MSP-2",
+        lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0E 01 D2"), MSP),
+        "Prise HA",
+    )
+    energy = er.async_get(hass).async_get_entity_id("sensor", DOMAIN, "0500AA01_energy")
+
+    def value() -> float:
+        return float(hass.states.get(energy).state)
+
+    gateway = entry.runtime_data.gateway
+    # Cas des logs : réponse directe 199 Wh, puis copie répétée (status 01) à 197 Wh
+    dongle.inject(0xD2, bytes.fromhex("07 60 00 00 00 08"), MSP)
+    dongle.inject(0xD2, bytes.fromhex("07 20 00 00 00 C7"), MSP)
+    dongle.inject(0xD2, bytes.fromhex("07 20 00 00 00 C5"), MSP, status=0x01)
+    await hass.async_block_till_done()
+    assert value() == 0.199
+    assert gateway.duplicates == 1
+    # Même règle pour la puissance (copie répétée juste après la trame directe)
+    power = er.async_get(hass).async_get_entity_id("sensor", DOMAIN, "0500AA01_power")
+    dongle.inject(0xD2, bytes.fromhex("07 60 00 00 00 09"), MSP, status=0x01)
+    await hass.async_block_till_done()
+    assert gateway.duplicates == 2
+    assert float(hass.states.get(power).state) == 8.0
+    # Une copie répétée d'un autre type de trame (état de la sortie) passe
+    dongle.inject(0xD2, bytes.fromhex("04 60 E4"), MSP, status=0x01)
+    await hass.async_block_till_done()
+    assert gateway.duplicates == 2
+
+    # Ancienne valeur arrivée seule (sans trame directe juste avant) : ignorée
+    await asyncio.sleep(0.7)
+    dongle.inject(0xD2, bytes.fromhex("07 20 00 00 00 C5"), MSP, status=0x01)
+    await hass.async_block_till_done()
+    assert value() == 0.199
+    dongle.inject(0xD2, bytes.fromhex("07 20 00 00 00 C8"), MSP)
+    await hass.async_block_till_done()
+    assert value() == 0.2
+
+    # Valeurs invalides 0xFFFFFF / 0xFFFFFFFF : ignorées
+    dongle.inject(0xD2, bytes.fromhex("07 20 00 FF FF FF"), MSP)
+    dongle.inject(0xD2, bytes.fromhex("07 20 FF FF FF FF"), MSP)
+    await hass.async_block_till_done()
+    assert value() == 0.2
+
+    # Saut impossible (13 MWh en quelques ms) : ignoré, la valeur normale suit
+    dongle.inject(0xD2, bytes.fromhex("07 20 00 C7 FF FF"), MSP)
+    await hass.async_block_till_done()
+    assert value() == 0.2
+    dongle.inject(0xD2, bytes.fromhex("07 20 00 00 00 C9"), MSP)
+    await hass.async_block_till_done()
+    assert value() == 0.201
+
+    # Vraie remise à zéro de la prise (reset usine) : publiée une fois confirmée
+    dongle.inject(0xD2, bytes.fromhex("07 20 00 00 00 00"), MSP)
+    await hass.async_block_till_done()
+    assert value() == 0.201
+    dongle.inject(0xD2, bytes.fromhex("07 20 00 00 00 01"), MSP)
+    await hass.async_block_till_done()
+    assert value() == 0.001
+
+
+async def test_energy_restored_as_reference(hass: HomeAssistant, dongle) -> None:
+    """Au redémarrage, la dernière valeur de HA sert de référence à la garde."""
+    from pytest_homeassistant_custom_component.common import (  # noqa: PLC0415
+        mock_restore_cache_with_extra_data,
+    )
+    from homeassistant.core import State  # noqa: PLC0415
+
+    energy = "sensor.prise_ha_energy"
+    mock_restore_cache_with_extra_data(
+        hass,
+        [
+            (
+                State(energy, "46.472"),
+                {"native_value": 46.472, "native_unit_of_measurement": "kWh"},
+            )
+        ],
+    )
+    entry = await _setup_gateway(hass)
+    await _pair(
+        hass,
+        entry,
+        dongle,
+        "MSP-2",
+        lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0E 01 D2"), MSP),
+        "Prise HA",
+    )
+    await hass.async_block_till_done()
+    assert er.async_get(hass).async_get_entity_id("sensor", DOMAIN, "0500AA01_energy") == energy
+    assert float(hass.states.get(energy).state) == 46.472
+    # Ancienne valeur 13,704 kWh reçue juste après le démarrage : ignorée
+    dongle.inject(0xD2, bytes.fromhex("07 20 00 00 35 88"), MSP)
+    await hass.async_block_till_done()
+    assert float(hass.states.get(energy).state) == 46.472
+    dongle.inject(0xD2, bytes.fromhex("07 20 00 00 B5 89"), MSP)
+    await hass.async_block_till_done()
+    assert float(hass.states.get(energy).state) == 46.473
+
+
 async def test_diagnostics(hass: HomeAssistant, dongle) -> None:
     from custom_components.nodon_enocean.diagnostics import (  # noqa: PLC0415
         async_get_config_entry_diagnostics,

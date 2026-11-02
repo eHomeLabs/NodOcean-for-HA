@@ -56,20 +56,28 @@ Chaque produit a en plus un capteur « Signal » (RSSI), désactivé par défaut
 
 > ⚠️ Si l'intégration EnOcean native de Home Assistant utilise déjà la clé, supprimez-la d'abord : une clé ne peut servir qu'à une seule intégration à la fois.
 
-## Installation (HACS, dépôt personnalisé)
+## Installation avec HACS
 
-> ℹ️ NodOcean for HA n'est **pas encore dans le catalogue HACS par défaut** (demande d'inscription en cours). Il faut donc d'abord l'ajouter à HACS comme **dépôt personnalisé**. Cette étape n'est à faire qu'une fois : les mises à jour arrivent ensuite normalement.
+NodOcean for HA est disponible dans le **catalogue HACS par défaut** : aucun dépôt personnalisé n'est nécessaire.
 
-1. Dans Home Assistant, ouvrez **HACS**.
-2. Cliquez sur **⋮** (en haut à droite), puis sur **Dépôts personnalisés**.
-3. Dans **Dépôt**, collez `https://github.com/eHomeLabs/NodOcean-for-HA`. Dans **Type**, choisissez **Intégration**. Cliquez sur **Ajouter**, puis fermez la fenêtre.
-4. Recherchez **NodOcean for HA** dans HACS, ouvrez-le et cliquez sur **Télécharger**.
-5. Redémarrez Home Assistant (**Paramètres → Système → Redémarrer**).
-6. **Paramètres → Appareils et services → Ajouter une intégration → NodOcean for HA**. Une clé USB300 branchée est normalement détectée automatiquement.
+1. Dans Home Assistant, ouvrez **HACS** et recherchez **NodOcean for HA**.
+2. Ouvrez sa fiche et cliquez sur **Télécharger**.
+3. Redémarrez Home Assistant (**Paramètres → Système → Redémarrer**).
+4. **Paramètres → Appareils et services → Ajouter une intégration → NodOcean for HA**. Une clé USB300 branchée est normalement détectée automatiquement.
 
-Raccourci : ce bouton ouvre HACS et propose d'ajouter le dépôt personnalisé (étapes 1 à 3) à votre place.
+Raccourci : ce bouton ouvre la fiche du dépôt dans HACS.
 
 [![Ouvrir dans HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eHomeLabs&repository=NodOcean-for-HA&category=integration)
+
+### Alternative : dépôt personnalisé
+
+Si NodOcean for HA n'apparaît pas encore dans votre catalogue HACS, vous pouvez l'ajouter manuellement :
+
+1. Dans **HACS**, cliquez sur **⋮ → Dépôts personnalisés**.
+2. Dans **Dépôt**, collez `https://github.com/eHomeLabs/NodOcean-for-HA`. Dans **Type**, choisissez **Intégration**, puis cliquez sur **Ajouter**.
+3. Fermez la fenêtre, puis suivez les étapes d'installation ci-dessus.
+
+Si vous aviez déjà installé NodOcean for HA comme dépôt personnalisé, aucune réinstallation n'est nécessaire.
 
 Guide détaillé : [page Installation du wiki](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Installation).
 
@@ -180,16 +188,24 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 
 **Full documentation:** [English documentation (wiki)](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/English-documentation).
 
-**Install (HACS custom repository):** NodOcean for HA is **not yet in the default HACS catalog** (inclusion request pending), so add it once as a custom repository:
+**Install with HACS:** NodOcean for HA is available in the **default HACS catalog**. No custom repository is required.
 
-1. Open **HACS**, click **⋮** (top right) → **Custom repositories**.
-2. Repository: `https://github.com/eHomeLabs/NodOcean-for-HA`, Type: **Integration**, click **Add**, then close the dialog.
-3. Search **NodOcean for HA**, click **Download**, then restart Home Assistant.
+1. Open **HACS** and search for **NodOcean for HA**.
+2. Open its repository page and click **Download**.
+3. Restart Home Assistant.
 4. Add the integration from **Settings → Devices & services → Add integration → NodOcean for HA**.
 
-Shortcut: this button opens HACS and offers to add the custom repository for you.
+Shortcut: this button opens the repository page in HACS.
 
 [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eHomeLabs&repository=NodOcean-for-HA&category=integration)
+
+**Alternative: custom repository.** If NodOcean for HA does not appear in your HACS catalog yet:
+
+1. In **HACS**, click **⋮ → Custom repositories**.
+2. Enter `https://github.com/eHomeLabs/NodOcean-for-HA`, select **Integration**, and click **Add**.
+3. Close the dialog, then follow the installation steps above.
+
+If you already installed NodOcean for HA as a custom repository, no reinstallation is needed.
 
 **Add a product:** open the integration, click **Add a NodOn product**, choose the model, follow the on-screen pairing instructions and give it a name.
 

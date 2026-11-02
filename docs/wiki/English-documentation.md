@@ -186,6 +186,8 @@ Report problems with the [bug report form](https://github.com/eHomeLabs/NodOcean
 
 **Are NodOn Zigbee products supported?** No, use ZHA or Zigbee2MQTT.
 
+**A plug's energy meter made a huge jump in the Energy dashboard.** Fixed in v0.8.2. With modules in repeater mode, a repeated copy of an older reading could replace the correct value; Home Assistant saw it as a meter reset and counted everything again. Since v0.8.2 these copies are ignored, and a drop or an impossible jump of the meter is only published once the next reading confirms it. To fix past statistics: **Developer tools → Statistics**, energy sensor row, adjust icon.
+
 **Radio range?** About 30 m indoors depending on walls; enable the repeater of a module placed in between.
 
 ## 10. MQTT bridge (NodOcean to MQTT)

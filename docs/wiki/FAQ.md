@@ -36,6 +36,9 @@ Non, cette intégration est dédiée aux produits EnOcean. Les produits Zigbee N
 **Quelle portée radio ?**
 Jusqu'à environ 30 m en intérieur selon les murs. Activez le répéteur d'un module ou d'une prise placé entre la clé et un produit éloigné.
 
+**Le compteur d'énergie d'une prise a fait un saut énorme dans le tableau Énergie.**
+Corrigé en v0.8.2. Avec des modules en répéteur, une copie répétée d'une ancienne mesure pouvait remplacer la bonne valeur ; Home Assistant y voyait une remise à zéro et recomptait tout. Depuis la v0.8.2, ces copies sont ignorées et une baisse ou un saut impossible du compteur n'est publié que s'il est confirmé par la mesure suivante. Pour corriger les anciennes statistiques : **Outils de développement → Statistiques**, ligne du capteur d'énergie, icône de réglage.
+
 **Comment savoir si la réception est bonne ?**
 Activez le capteur **Signal** du produit (carte Diagnostic, entité désactivée par défaut). Au-dessus de −80 dBm, c'est bon ; en dessous de −90 dBm, la liaison est fragile.
 

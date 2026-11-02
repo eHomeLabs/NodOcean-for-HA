@@ -19,10 +19,9 @@ Depuis la **v0.5.0** (auto-découverte et télégrammes bruts depuis la **v0.6.0
 | Champ | Rôle |
 |---|---|
 | Activer le pont MQTT | Marche / arrêt du pont |
-| Utiliser le broker de l'intégration MQTT de Home Assistant | Reprend l'adresse, le port et l'identifiant de l'intégration MQTT déjà configurée (add-on Mosquitto par exemple). Les champs du broker sont alors ignorés |
 | Adresse du broker | Ex. `192.168.1.20`, `core-mosquitto`, `mqtt.mondomaine.fr` |
 | Port | 1883 en général, 8883 en TLS |
-| Identifiant / Mot de passe | Facultatifs. Laissez le mot de passe vide pour garder celui déjà enregistré |
+| Identifiant / Mot de passe | Facultatifs. Laissez le mot de passe vide pour garder celui déjà enregistré. Conseil : créez un utilisateur dédié à NodOcean sur le broker (avec l'add-on Mosquitto : un login déclaré dans l'add-on) |
 | Connexion chiffrée (TLS) | Recommandée pour un broker sur Internet |
 | Topic de base | Préfixe de tous les topics, `nodocean` par défaut |
 | Nom des produits dans les topics | **Nom du produit** (`nodocean/prise_salon`) ou **ID EnOcean** (`nodocean/0194A3F2`) |
@@ -130,7 +129,7 @@ Option avancée **Auto-découverte MQTT de Home Assistant**. Le pont publie la d
 
 - **« Impossible de joindre le broker »** : vérifiez l'adresse, le port, le TLS et le pare-feu. Sur Home Assistant OS avec l'add-on Mosquitto, l'adresse est `core-mosquitto`.
 - **« Le broker refuse l'identifiant ou le mot de passe »** : avec l'add-on Mosquitto, utilisez un utilisateur Home Assistant ou un login déclaré dans l'add-on.
-- **Alerte « Pont MQTT » dans Corrections** : l'option « Utiliser le broker de l'intégration MQTT » est cochée mais l'intégration MQTT n'existe plus. Ouvrez **Configurer** sur la clé.
+- **Alerte « Pont MQTT : renseignez le broker » dans Corrections** (v0.8.3) : l'option « Utiliser le broker de l'intégration MQTT de Home Assistant » a été retirée (NodOcean for HA ne lit plus les identifiants d'une autre intégration). Ouvrez **Configurer** sur la clé et saisissez l'adresse, l'identifiant et le mot de passe du broker.
 - **Les produits apparaissent en double** : l'auto-découverte est active sur le même Home Assistant. Désactivez-la dans les options avancées.
 - **Diagnostics** : le fichier de diagnostics de la clé contient une partie `mqtt` (connecté ou non, broker, dernière erreur). Le mot de passe y est masqué.
 - **Journaux** : les messages du pont commencent par « Pont MQTT ».

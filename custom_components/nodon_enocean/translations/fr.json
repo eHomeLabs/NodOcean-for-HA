@@ -446,13 +446,13 @@
       "title": "La clé EnOcean est occupée par l'intégration EnOcean native",
       "description": "NodOcean for HA n'arrive pas à ouvrir `{port}` ({error}) et l'intégration **EnOcean** native de Home Assistant est active.\n\nUne clé ne peut servir qu'à une seule intégration : supprimez l'intégration EnOcean native (Paramètres → Appareils et services), puis redémarrez Home Assistant."
     },
-    "mqtt_no_ha_mqtt": {
-      "title": "Pont MQTT : intégration MQTT absente",
-      "description": "Le pont MQTT de NodOcean for HA doit utiliser le broker de l'intégration MQTT de Home Assistant, mais celle-ci n'est pas configurée.\n\nConfigurez l'intégration MQTT, ou saisissez l'adresse du broker dans **Configurer** sur la clé EnOcean."
-    },
     "mqtt_no_host": {
       "title": "Pont MQTT : adresse du broker manquante",
       "description": "Le pont MQTT est activé mais aucune adresse de broker n'est renseignée. Ouvrez **Configurer** sur la clé EnOcean."
+    },
+    "mqtt_ha_broker_removed": {
+      "title": "Pont MQTT : renseignez le broker",
+      "description": "L'option « Utiliser le broker de l'intégration MQTT de Home Assistant » a été retirée : NodOcean for HA ne lit plus les identifiants d'une autre intégration.\n\nOuvrez **Configurer** sur la clé EnOcean et saisissez l'adresse du broker, l'identifiant et le mot de passe. Un utilisateur dédié à NodOcean sur le broker est conseillé."
     }
   },
   "options": {
@@ -462,7 +462,6 @@
         "description": "Envoie l'état des produits NodOn vers un broker MQTT (local ou distant) et permet de les piloter, comme Zigbee2MQTT.\n\nTopics : `nodocean/nom_du_produit` (état JSON), `…/set` (commandes), `…/action` (boutons), `nodocean/bridge/state`. Détails dans le [wiki]({wiki}).\n\nLa connexion est testée à l'enregistrement.",
         "data": {
           "mqtt_enabled": "Activer le pont MQTT",
-          "mqtt_use_ha": "Utiliser le broker de l'intégration MQTT de Home Assistant",
           "mqtt_host": "Adresse du broker",
           "mqtt_port": "Port",
           "mqtt_username": "Identifiant",
@@ -472,8 +471,8 @@
           "mqtt_topic_name": "Nom des produits dans les topics"
         },
         "data_description": {
-          "mqtt_use_ha": "Reprend l'adresse, le port et l'identifiant de l'intégration MQTT déjà configurée. Les champs ci-dessous sont alors ignorés.",
           "mqtt_host": "Ex. 192.168.1.20, core-mosquitto ou mqtt.mondomaine.fr",
+          "mqtt_username": "Un utilisateur dédié à NodOcean sur le broker est conseillé.",
           "mqtt_port": "1883 en général, 8883 en TLS",
           "mqtt_password": "Laissez vide pour conserver le mot de passe enregistré.",
           "mqtt_tls": "Recommandé pour un broker distant (sur Internet).",
@@ -508,8 +507,7 @@
       "cannot_connect": "Impossible de joindre le broker {broker}. Vérifiez l'adresse, le port et le TLS.",
       "invalid_auth": "Le broker {broker} refuse l'identifiant ou le mot de passe.",
       "tls_error": "Erreur TLS : certificat illisible ou refusé.",
-      "no_host": "Indiquez l'adresse du broker.",
-      "no_ha_mqtt": "L'intégration MQTT de Home Assistant n'est pas configurée."
+      "no_host": "Indiquez l'adresse du broker."
     }
   }
 }

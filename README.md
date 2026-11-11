@@ -67,6 +67,10 @@ NodOcean for HA est disponible dans le **catalogue Marketplace** : aucun dépôt
 3. Suivez l'assistant de configuration qui s'ouvre après l'installation. Si nécessaire, allez dans **Paramètres → Appareils et services → Ajouter une intégration → NodOcean for HA**. Une clé USB300 branchée est normalement détectée automatiquement.
 4. Si Home Assistant demande un redémarrage, effectuez-le avant de configurer l'intégration.
 
+Accès direct à la fiche NodOcean for HA dans Marketplace :
+
+[![Ouvrir dans Marketplace](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eHomeLabs&repository=NodOcean-for-HA&category=integration)
+
 ### Alternative : ajouter le dépôt depuis son lien
 
 Si NodOcean for HA n'apparaît pas dans le catalogue :
@@ -200,6 +204,10 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 2. Open its page, click **Install**, and confirm.
 3. Follow the integration setup flow. If it does not open automatically, go to **Settings → Devices & services → Add integration → NodOcean for HA**.
 4. Restart Home Assistant only if prompted.
+
+Direct link to NodOcean for HA in Marketplace:
+
+[![Open in Marketplace](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eHomeLabs&repository=NodOcean-for-HA&category=integration)
 
 **Alternative: add from link.** If NodOcean for HA is not listed, open **Settings → Marketplace → Add from link**, enter `https://github.com/eHomeLabs/NodOcean-for-HA`, add it (select **Integration** if asked), and install it from its page. Adding a custom repository requires connecting GitHub to the Marketplace.
 

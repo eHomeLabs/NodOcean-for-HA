@@ -60,3 +60,18 @@ Experimental receive-only multibrand support: Eltako FT55/FT4F (documentation-ba
 - Suite complète : **64 tests réussis** (simulateur USB300), dont parcours Eltako/EnOcean, quatre EEP génériques, événements/mesures, rechargement et conservation des identités NodOn et offsets radio.
 - Compilation Python et contrôle Ruff F/E9 des fichiers Python modifiés : réussis. Le contrôle global du dépôt signale une double définition préexistante de `ping` dans `recom.py`, hors de ce changement.
 - Ces résultats ne constituent ni un test radio réel, ni une validation sur Home Assistant 2026.11. Les vérifications CI HACS/hassfest restent distinctes.
+
+## Référence pour l’extension du catalogue
+
+La [liste EnOcean eedomus](https://doc.eedomus.com/view/Liste_des_p%C3%A9riph%C3%A9riques_EnOcean), retenue par Spy le 13 novembre 2026, devient la base de recensement des fabricants et modèles candidats. La compatibilité eedomus ne vaut pas validation NodOcean.
+
+Le référencement d’un candidat ne l’ajoute pas automatiquement au sélecteur des équipements pris en charge. Avant activation : identifier la référence exacte et le fabricant réel, confirmer l’EEP et l’apprentissage dans une source constructeur, implémenter les capacités nécessaires, tester les trames puis indiquer le statut matériel. Conserver les noms commerciaux ou distributeurs comme alias lorsque cela évite les doublons. Les clés USB relèvent du parcours passerelle, pas du catalogue des appareils.
+
+Ordre de travail :
+
+1. Consolider les modèles NodOn existants et les variantes commerciales sans changer leurs clés internes.
+2. Examiner en priorité les contacts et sondes TriO2Sys et les commandes de type PTM210 : proximité fonctionnelle avec les EEP actuellement implémentés, à confirmer modèle par modèle. Ne pas déduire un EEP d’une simple plage de température ou catégorie commerciale.
+3. Étudier les prises et relais Ubiwizz/Vitec et TriO2Sys : profil, appairage, retours d’état et éventuelles spécificités constructeur à vérifier avant activation.
+4. Planifier séparément poignées, volets, détecteurs spécialisés et thermostats lorsque de nouveaux décodeurs ou commandes sont nécessaires.
+
+Pour chaque candidat, suivre : fabricant, modèle/référence, alias commercial, source eedomus, source constructeur, EEP confirmé ou inconnu, apprentissage, fonctions disponibles, limites et statut de validation. Distinguer « recensé », « documentation vérifiée », « tests logiciels réussis » et « testé sur matériel ». La liste utilisateur de compatibilité doit présenter seulement les fonctions réellement disponibles.

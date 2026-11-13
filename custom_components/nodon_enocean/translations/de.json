@@ -45,21 +45,21 @@
   "config_subentries": {
     "device": {
       "initiate_flow": {
-        "user": "NodOn-Produkt hinzufügen",
+        "user": "EnOcean-Gerät hinzufügen",
         "reconfigure": "Angelernte Fernbedienungen"
       },
-      "entry_type": "NodOn-Produkt",
+      "entry_type": "EnOcean-Gerät",
       "step": {
         "user": {
-          "title": "NodOn-Produkt hinzufügen",
-          "description": "{gallery}\n\nWählen Sie das NodOn-Produkt aus. Alles ist vorkonfiguriert: Sie müssen nichts weiter eingeben.",
+          "title": "EnOcean-Gerät hinzufügen",
+          "description": "Wählen Sie einen Hersteller oder Generic für ein EEP-Profil. Eltako- und EnOcean-Modelle müssen noch mit echter Hardware geprüft werden.",
           "data": {
-            "model": "Produkt"
+            "manufacturer": "Hersteller / generisches Profil"
           }
         },
         "instructions": {
           "title": "{model} — {name}",
-          "description": "{image}**Anlernen vorbereiten:**\n\n{instructions}\n\nKlicken Sie auf **Absenden**, um das Lauschen zu starten ({timeout} s), und führen Sie dann die obigen Schritte aus."
+          "description": "{image}**Anlernen vorbereiten:**\n\n{instructions}\n\nKlicken Sie auf **Absenden**, um das Lauschen zu starten ({timeout} s), und führen Sie dann die obigen Schritte aus.\n\n{support}"
         },
         "timeout": {
           "title": "Kein Produkt erkannt",
@@ -77,7 +77,7 @@
         },
         "confirm": {
           "title": "Produkt erkannt!",
-          "description": "**{model}** erkannt — ID `{device_id}`, Signal {rssi}.\n\n{after}\n\nGeben Sie ihm einen Namen und wählen Sie den Bereich, in dem es installiert ist.",
+          "description": "**{model}** erkannt — ID `{device_id}`, Signal {rssi}.\n\n{after}\n\nGeben Sie ihm einen Namen und wählen Sie den Bereich, in dem es installiert ist.\n\n{support}",
           "data": {
             "name": "Name",
             "area_id": "Bereich",
@@ -128,6 +128,20 @@
           "data": {
             "recom_code": "Sicherheitscode (QR-Code)"
           }
+        },
+        "product": {
+          "title": "{manufacturer}",
+          "description": "Wählen Sie das Modell. Eltako / EnOcean: Tastenereignisse oder Öffnung gemäß EEP, Diagnose-RSSI, Unterstützung laut Dokumentation, Hardwareprüfung ausstehend. Verschlüsselte Funktelegramme werden nicht unterstützt.",
+          "data": {
+            "model": "Modell"
+          }
+        },
+        "generic": {
+          "title": "Generisches EEP-Profil",
+          "description": "Nur Empfang: F6-02-01 = Tastenereignisse; D5-00-01 = Öffnung; A5-02-05 = Temperatur 0–40 °C; A5-04-01 = Temperatur und Feuchte. Prüfen Sie das genaue EEP in der Anleitung. Keine Aktoren, Herstellereinstellungen, ReCom oder Verschlüsselung. RSSI als Diagnose verfügbar. RPS/1BS-Telegramme identifizieren weder Hersteller noch Modell.",
+          "data": {
+            "eep": "EEP-Profil"
+          }
         }
       },
       "progress": {
@@ -139,7 +153,9 @@
         "recom_failed": "Das Produkt hat die Änderung nicht übernommen: {error}",
         "table_full": "Die Tabelle des Produkts ist voll (zuerst eine Fernbedienung entfernen).",
         "invalid_code": "Ungültiger Code: 8 hexadezimale Zeichen (0-9, A-F) erwartet.",
-        "wrong_code": "Code abgelehnt oder keine Antwort: Prüfen Sie den Code und die Stromversorgung des Produkts."
+        "wrong_code": "Code abgelehnt oder keine Antwort: Prüfen Sie den Code und die Stromversorgung des Produkts.",
+        "invalid_product": "Ungültiges Modell für diesen Hersteller.",
+        "unsupported_eep": "Nicht unterstütztes EEP-Profil."
       },
       "abort": {
         "already_configured": "Dieses Produkt ist bereits eingerichtet.",

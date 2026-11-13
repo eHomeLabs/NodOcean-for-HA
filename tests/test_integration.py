@@ -40,6 +40,9 @@ async def _pair(hass, entry, dongle, model, inject, name, area_id=None, new_area
     )
     assert result["type"] is FlowResultType.FORM and result["step_id"] == "user"
     result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"manufacturer": "NodOn"}
+    )
+    result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"model": model}
     )
     assert result["step_id"] == "instructions"
@@ -189,6 +192,9 @@ async def test_full_flow(hass: HomeAssistant, dongle) -> None:
         (entry.entry_id, "device"), context={"source": "user"}
     )
     result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"manufacturer": "NodOn"}
+    )
+    result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"model": "STPH-2"}
     )
     result = await hass.config_entries.subentries.async_configure(result["flow_id"], {})
@@ -209,6 +215,9 @@ async def test_manual_entry_after_timeout(hass: HomeAssistant, dongle, monkeypat
     entry = await _setup_gateway(hass)
     result = await hass.config_entries.subentries.async_init(
         (entry.entry_id, "device"), context={"source": "user"}
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"manufacturer": "NodOn"}
     )
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"model": "SDO-2"}

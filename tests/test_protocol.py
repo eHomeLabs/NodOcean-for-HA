@@ -209,7 +209,7 @@ def test_d2030a() -> None:
 
 
 def test_catalog_complete() -> None:
-    assert set(PRODUCTS) == {
+    assert {m for m, p in PRODUCTS.items() if p.manufacturer == "NodOn"} == {
         "SIN-2-1-01",
         "SIN-2-FP-01",
         "SIN-2-2-01",

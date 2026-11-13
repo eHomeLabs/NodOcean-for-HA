@@ -1,4 +1,4 @@
-"""Catalogue des produits EnOcean NodOn pris en charge.
+"""Catalogue EnOcean multimarque, modèles stables et profils expérimentaux.
 
 Sources : Quick User Guides de l'Integration Kit NodOn, notices utilisateur,
 fiches techniques (support.nodon.fr) — voir docs/PRODUITS.md.
@@ -55,13 +55,23 @@ class Product:
     after_en: str = ""
     variants: tuple[str, ...] = field(default_factory=tuple)
 
+    manufacturer: str = "NodOn"
+    validation: str = "existing_support"
+    source: str | None = None
+
     @property
-    def image(self) -> str:
-        return f"{_IMAGES}{self.model}.png"
+    def capabilities(self) -> tuple[str, ...]:
+        return PROFILE_CAPABILITIES.get(self.eep, ())
+
+    @property
+    def image(self) -> str | None:
+        return f"{_IMAGES}{self.model}.png" if self.manufacturer == "NodOn" else None
 
     @property
     def manual(self) -> str | None:
         """Lien vers la notice du produit sur support.nodon.fr."""
+        if self.manufacturer != "NodOn":
+            return self.source or self.url
         article = MANUALS.get(self.model)
         return f"{_NOTICES}{article}" if article else None
 
@@ -497,3 +507,74 @@ GERMAN: dict[str, dict[str, str]] = {
         "pairing": "Drücken Sie **einmal** die Anlerntaste auf der Rückseite des Sensors." + _DE_SOLAR,
     },
 }
+
+
+# Generic profiles expose only the receive functions implemented and tested in software.
+PROFILE_CAPABILITIES: dict[str, tuple[str, ...]] = {
+    "F6-02-01": ("button_events",),
+    "D5-00-01": ("opening",),
+    "A5-02-05": ("temperature",),
+    "A5-04-01": ("temperature", "humidity"),
+}
+
+_GENERIC_NAMES = {
+    "F6-02-01": ("Interrupteur 4 touches", "Four-button rocker switch", TEACH_RPS),
+    "D5-00-01": ("Contact d’ouverture", "Opening contact", TEACH_1BS),
+    "A5-02-05": ("Température 0 à 40 °C", "Temperature 0 to 40 °C", TEACH_4BS),
+    "A5-04-01": ("Température et humidité", "Temperature and humidity", TEACH_4BS),
+}
+GENERIC_PRODUCTS: dict[str, Product] = {}
+for _code, (_fr, _en, _teach) in _GENERIC_NAMES.items():
+    _product = Product(
+        model=f"EEP-{_code}", name_fr=_fr, name_en=_en, eep=_code,
+        teach_in=_teach, manufacturer="Generic", validation="profile_only",
+        pairing_fr=("Vérifiez le profil EEP dans la notice. " +
+                    ("Appuyez sur une touche pendant l’écoute." if _teach == TEACH_RPS else
+                     "Déclenchez l’apprentissage LRN selon la notice pendant l’écoute.")),
+        pairing_en=("Check the EEP in the manual. " +
+                    ("Press a rocker during listening." if _teach == TEACH_RPS else
+                     "Trigger LRN teach-in according to the manual during listening.")),
+    )
+    GENERIC_PRODUCTS[_code] = _product
+    PRODUCTS[_product.model] = _product
+
+_ELTAKO_SOURCE = "https://www.eltako.com/fileadmin/downloads/en/_main_catalogue/Gesamt-Katalog_gb_lowRes_2023.pdf"
+for _model in ("FT55", "FT4F"):
+    _product = Product(
+        model=f"Eltako-{_model}", name_fr=f"Interrupteur {_model}",
+        name_en=f"{_model} rocker switch", eep="F6-02-01", teach_in=TEACH_RPS,
+        manufacturer="Eltako", validation="hardware_pending", source=_ELTAKO_SOURCE,
+        variants=(_model,),
+        pairing_fr="Appuyez sur une touche pendant l’écoute. Testez ensuite chaque touche et le relâchement.",
+        pairing_en="Press a rocker during listening. Then test each button and release.",
+    )
+    PRODUCTS[_product.model] = _product
+
+
+_product = Product(
+    model="EnOcean-EMCSA", name_fr="Contact magnétique EMCSA (868 MHz)",
+    name_en="EMCSA magnet contact (868 MHz)", eep="D5-00-01", teach_in=TEACH_1BS,
+    manufacturer="EnOcean", validation="hardware_pending", variants=("EMCSA",),
+    source="https://www.enocean.com/wp-content/uploads/downloads-produkte/en/products/enocean_modules_902mhz/magnet-contact-sensor-emcsu-oem/data-sheet-pdf/EMCS_DataSheet_2020_03.pdf",
+    pairing_fr="En mode radio non chiffré, déclenchez l’apprentissage avec le bouton LRN selon la notice pendant l’écoute. Vérifiez ensuite ouverture et fermeture.",
+    pairing_en="In unencrypted radio mode, trigger teach-in using the LRN button according to the manual during listening. Then check opening and closing.",
+)
+PRODUCTS[_product.model] = _product
+
+
+def products_for_manufacturer(manufacturer: str) -> list[Product]:
+    return [p for p in PRODUCTS.values() if p.manufacturer == manufacturer]
+
+
+def manufacturers() -> list[str]:
+    return sorted({p.manufacturer for p in PRODUCTS.values() if p.manufacturer != "Generic"})
+
+
+for _p in PRODUCTS.values():
+    if _p.manufacturer != "NodOn":
+        GERMAN[_p.model] = {
+            "pairing": ("Prüfen Sie das genaue EEP-Profil in der Anleitung. " +
+                        ("Drücken Sie während des Empfangs eine Wippe. Prüfen Sie danach alle Tasten und das Loslassen."
+                         if _p.teach_in == TEACH_RPS else
+                         "Lösen Sie während des Empfangs das LRN-Anlernen gemäß Anleitung aus.")),
+        }

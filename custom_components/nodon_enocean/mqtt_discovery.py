@@ -89,7 +89,7 @@ def _device_block(bridge: MqttBridge, device: NodOnDevice) -> dict[str, Any]:
     return {
         "identifiers": [f"nodocean_{device.id_str}"],
         "name": device.title,
-        "manufacturer": "NodOn",
+        "manufacturer": device.product.manufacturer,
         "model": product.references,
         "model_id": product.model,
         "serial_number": device.id_str,
@@ -197,7 +197,7 @@ def device_configs(bridge: MqttBridge, device: NodOnDevice) -> list[tuple[str, s
         if key in ("power", "energy"):
             if not product.metering:
                 continue
-        elif model not in SENSOR_MODELS[key]:
+        elif model not in SENSOR_MODELS[key] and key not in product.capabilities:
             continue
         cfg: dict[str, Any] = {
             "device_class": dclass,
@@ -215,7 +215,7 @@ def device_configs(bridge: MqttBridge, device: NodOnDevice) -> list[tuple[str, s
         ("motion", {"PIR-2"}, "motion", None),
         ("card", {"CCS-2"}, None, names["card"]),
     ):
-        if model in model_set:
+        if model in model_set or (key == "open" and product.eep == "D5-00-01"):
             cfg = {
                 "name": name,
                 "payload_on": "ON",
@@ -225,7 +225,10 @@ def device_configs(bridge: MqttBridge, device: NodOnDevice) -> list[tuple[str, s
             if dclass:
                 cfg["device_class"] = dclass
             add("binary_sensor", key, cfg)
-    if model in EVENT_TYPES:
+    event_types = EVENT_TYPES.get(model)
+    if event_types is None and "button_events" in product.capabilities:
+        event_types = WALL_SWITCH_EVENTS
+    if event_types:
         add(
             "event",
             "action",
@@ -233,7 +236,7 @@ def device_configs(bridge: MqttBridge, device: NodOnDevice) -> list[tuple[str, s
                 "name": names["action"],
                 "device_class": "button",
                 "state_topic": f"{topic}/action",
-                "event_types": EVENT_TYPES[model],
+                "event_types": event_types,
                 "value_template": '{"event_type": "{{ value }}"}',
             },
         )

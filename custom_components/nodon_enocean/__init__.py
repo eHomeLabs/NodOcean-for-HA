@@ -144,7 +144,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
             config_entry_id=entry.entry_id,
             config_subentry_id=subentry_id,
             identifiers={(DOMAIN, device.id_str)},
-            manufacturer="NodOn",
+            manufacturer=product.manufacturer,
             model=product.name_fr
             if hass.config.language.startswith("fr")
             else product.name_en,

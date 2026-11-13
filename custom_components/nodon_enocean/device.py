@@ -158,7 +158,7 @@ class NodOnDevice:
     def decode(self, telegram: RadioTelegram) -> dict[str, Any] | None:
         code = self.product.eep
         if telegram.rorg == RORG_MSC:
-            return eep.decode_msc(telegram)
+            return eep.decode_msc(telegram) if self.product.manufacturer == "NodOn" else None
         if code.startswith("D2-01"):
             return eep.decode_d201(telegram, self.product.channels)
         if code == "D2-05-00":

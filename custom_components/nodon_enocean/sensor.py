@@ -141,6 +141,7 @@ async def async_setup_entry(
             (NodOnEnergySensor if desc.key == "energy" else NodOnSensor)(device, desc)
             for desc in SENSORS
             if device.product.model in desc.models
+            or desc.key in device.product.capabilities
             or (desc.metering and device.product.metering)
         ]
         entities.append(NodOnRssiSensor(device))

@@ -45,21 +45,21 @@
   "config_subentries": {
     "device": {
       "initiate_flow": {
-        "user": "Add a NodOn product",
+        "user": "Add an EnOcean device",
         "reconfigure": "Paired remotes"
       },
-      "entry_type": "NodOn product",
+      "entry_type": "EnOcean device",
       "step": {
         "user": {
-          "title": "Add a NodOn product",
-          "description": "{gallery}\n\nChoose the NodOn product to add. Everything is preconfigured: nothing else to fill in.",
+          "title": "Add an EnOcean device",
+          "description": "Choose a manufacturer, or Generic for an EEP profile. Eltako and EnOcean models await hardware validation.",
           "data": {
-            "model": "Product"
+            "manufacturer": "Manufacturer / generic profile"
           }
         },
         "instructions": {
           "title": "{model} — {name}",
-          "description": "{image}**Get ready to pair:**\n\n{instructions}\n\nClick **Submit** to start listening ({timeout} s), then do the steps above."
+          "description": "{image}**Get ready to pair:**\n\n{instructions}\n\nClick **Submit** to start listening ({timeout} s), then do the steps above.\n\n{support}"
         },
         "timeout": {
           "title": "No product detected",
@@ -77,7 +77,7 @@
         },
         "confirm": {
           "title": "Product detected!",
-          "description": "**{model}** detected — ID `{device_id}`, signal {rssi}.\n\n{after}\n\nGive it a name and choose the area where it is installed.",
+          "description": "**{model}** detected — ID `{device_id}`, signal {rssi}.\n\n{after}\n\nGive it a name and choose the area where it is installed.\n\n{support}",
           "data": {
             "name": "Name",
             "area_id": "Area",
@@ -128,6 +128,20 @@
           "data": {
             "recom_code": "Security code (QR code)"
           }
+        },
+        "product": {
+          "title": "{manufacturer}",
+          "description": "Choose the model. Eltako / EnOcean: button events or opening according to the profile, diagnostic RSSI, document-based support, hardware tests required. Encrypted radio is not supported.",
+          "data": {
+            "model": "Model"
+          }
+        },
+        "generic": {
+          "title": "Generic EEP profile",
+          "description": "Receive only: F6-02-01 = button events; D5-00-01 = opening; A5-02-05 = temperature 0–40 °C; A5-04-01 = temperature and humidity. Verify the exact EEP in the manual. No actuators, manufacturer settings, ReCom or encryption. Diagnostic RSSI available. RPS/1BS telegrams cannot identify the manufacturer or model.",
+          "data": {
+            "eep": "EEP profile"
+          }
         }
       },
       "progress": {
@@ -139,7 +153,9 @@
         "recom_failed": "The product did not apply the change: {error}",
         "table_full": "The product's table is full (remove a remote first).",
         "invalid_code": "Invalid code: 8 hexadecimal characters (0-9, A-F) expected.",
-        "wrong_code": "Code rejected or no answer: check the code and that the product is powered."
+        "wrong_code": "Code rejected or no answer: check the code and that the product is powered.",
+        "invalid_product": "Invalid model for this manufacturer.",
+        "unsupported_eep": "Unsupported EEP profile."
       },
       "abort": {
         "already_configured": "This product is already configured.",

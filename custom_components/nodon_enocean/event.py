@@ -43,7 +43,9 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     def factory(device: NodOnDevice) -> list:
-        if device.product.model == "CWS-2-1":
+        if device.product.model == "CWS-2-1" or (
+            device.product.manufacturer != "NodOn" and "button_events" in device.product.capabilities
+        ):
             return [NodOnButtonEvent(device, WALL_SWITCH_EVENTS, "wall_switch")]
         if device.product.model == "TSB-2":
             return [NodOnButtonEvent(device, SOFT_BUTTON_EVENTS, "soft_button")]

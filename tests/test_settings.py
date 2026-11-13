@@ -61,7 +61,14 @@ def test_measurement_and_msc_frames() -> None:
 
 def test_manual_links() -> None:
     for product in PRODUCTS.values():
-        assert product.manual and product.manual.startswith("https://support.nodon.fr/")
+        if product.manufacturer == "NodOn":
+            assert product.manual and product.manual.startswith("https://support.nodon.fr/")
+        elif product.manufacturer == "Eltako":
+            assert product.manual and product.manual.startswith("https://www.eltako.com/")
+        elif product.manufacturer == "EnOcean":
+            assert product.manual and product.manual.startswith("https://www.enocean.com/")
+        else:
+            assert product.manual is None
 
 
 # --- Actionneurs -------------------------------------------------------------------

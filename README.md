@@ -6,7 +6,7 @@
 
 Intégration communautaire indépendante développée par **eHomeLabs**, en cours d’ouverture aux équipements EnOcean de plusieurs fabricants.
 
-> **Branche expérimentale `develop/multibrand-enocean` — tests sur le Raspberry Pi 5 Home Assistant de Spy.** Le support actuel reste celui des produits NodOn documentés ci-dessous. Les parcours multimarque et générique EEP sont à développer et à valider ; cette branche ne revendique pas encore de compatibilité supplémentaire.
+> **Version expérimentale 0.9.0a1 — branche `develop/multibrand-enocean`.** Parcours fabricant → modèle ou Generic → EEP. Premiers modèles Eltako FT55 / FT4F et EnOcean EMCSA sur base documentaire, à valider sur matériel. Quatre profils génériques en réception non chiffrée. [Installation et protocole de tests RPi5](docs/MULTIMARQUE_TESTS.md).
 
 ### Cadre de développement multimarque
 
@@ -26,7 +26,17 @@ Pas de profil EEP à chercher, pas d'identifiant à recopier, pas de fichier YAM
 
 [English version below](#english)
 
-## Produits pris en charge
+## Catalogue expérimental multimarque
+
+| Fabricant | Modèles / profils | Fonctions | Statut |
+|---|---|---|---|
+| Eltako | FT55, FT4F — F6-02-01 | Événements des touches et déclencheurs d’appareil | Documentation constructeur ; matériel à tester |
+| EnOcean | EMCSA 868 MHz — D5-00-01 | Ouverture / fermeture | Documentation constructeur ; matériel à tester |
+| Generic | F6-02-01, D5-00-01, A5-02-05, A5-04-01 | Touches, ouverture, température et/ou humidité selon l’EEP | Profil seulement, modèle non certifié |
+
+Nouveaux produits : réception non chiffrée et RSSI diagnostic ; aucun actionneur générique ni réglage constructeur. [Guide de tests et limites](docs/MULTIMARQUE_TESTS.md).
+
+## Catalogue NodOn existant
 
 | Visuel | Référence | Produit | Dans Home Assistant |
 |:---:|---|---|---|
@@ -101,10 +111,10 @@ Guide détaillé : [page Installation du wiki](https://github.com/eHomeLabs/NodO
 
 Installation manuelle : copiez le dossier `custom_components/nodon_enocean` dans le dossier `config/custom_components/` de Home Assistant, puis redémarrez.
 
-## Ajouter un produit NodOn
+## Ajouter un équipement EnOcean
 
-1. Ouvrez l'intégration **NodOcean for HA** et cliquez sur **Ajouter un produit NodOn**.
-2. Choisissez le produit dans la liste.
+1. Ouvrez l'intégration **NodOcean for HA** et cliquez sur **Ajouter un équipement EnOcean**.
+2. Choisissez **NodOn**, **Eltako** ou **EnOcean**, puis le modèle ; ou **Generic**, puis le profil EEP exact. Lisez les fonctions disponibles et les limites affichées.
 3. Suivez la consigne affichée (par exemple « appuyez 3 fois rapidement sur le bouton du module »), puis cliquez sur **Valider**.
 4. Home Assistant écoute pendant 60 s. Il détecte le produit et répond lui-même à sa demande d'appairage pour les modules et les prises.
 5. Donnez un nom au produit et choisissez sa pièce (ou créez-en une, par exemple « Garage ») : c'est terminé.
@@ -210,7 +220,7 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 
 **NodOcean for HA** is an independent community integration developed by **eHomeLabs**, being expanded to multiple EnOcean manufacturers.
 
-> Experimental branch `develop/multibrand-enocean`, intended for Spy’s Raspberry Pi 5 test instance. Only the documented NodOn products are currently supported; multibrand and generic EEP support remain development goals. Existing domains, identifiers and pairing data must be preserved, with migration tests before release.
+> Experimental 0.9.0a1 on `develop/multibrand-enocean`: manufacturer/model selection, Eltako FT55/FT4F and EnOcean EMCSA (hardware validation pending), and four receive-only generic EEP profiles. [RPi5 test guide](docs/MULTIMARQUE_TESTS.md). Existing model keys, identifiers and pairing data are retained.
 
  Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
 
@@ -233,7 +243,7 @@ Direct link to NodOcean for HA in Marketplace:
 
 Existing HACS installations and custom repositories migrate automatically on Home Assistant 2026.11; **no reinstallation is needed**. On Home Assistant versions **before 2026.11**, continue using HACS.
 
-**Add a product:** open the integration, click **Add a NodOn product**, choose the model, follow the on-screen pairing instructions and give it a name.
+**Add a device:** click **Add an EnOcean device**, choose the manufacturer and model, or **Generic** and the exact EEP profile. Read the available functions and limitations, then follow the pairing instructions and give it a name.
 
 Supported: SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, SIN-2-RS-01, ASP-2, MSP-2, CWS-2-1, CRC-2, CFS-2, CCS-2, TSB-2, SDO-2, SWO-2, PIR-2, STP-2, STPH-2.
 

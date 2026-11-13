@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import replace
 import logging
+from dataclasses import replace
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.config_entries import (
     ConfigEntry,
     ConfigEntryState,
@@ -38,10 +37,16 @@ from homeassistant.helpers.selector import (
 from homeassistant.helpers.service_info.usb import UsbServiceInfo
 
 from . import features, recom
-from .catalog import GALLERY, PRODUCTS, TEACH_UTE_BIDIR, Product
+from .catalog import (
+    GENERIC_PRODUCTS,
+    PRODUCTS,
+    TEACH_UTE_BIDIR,
+    Product,
+    manufacturers,
+    products_for_manufacturer,
+)
 from .const import (
     CONF_AREA,
-    CONF_NEW_AREA,
     CONF_DEVICE_ID,
     CONF_DEVICE_PATH,
     CONF_MODEL,
@@ -63,16 +68,16 @@ from .const import (
     CONF_MQTT_TOPIC_NAME,
     CONF_MQTT_USE_HA,
     CONF_MQTT_USERNAME,
+    CONF_NEW_AREA,
     CONF_SENDER_OFFSET,
     DEFAULT_BASE_TOPIC,
     DEFAULT_DISCOVERY_PREFIX,
     DOMAIN,
-    TOPIC_NAME_ID,
-    TOPIC_NAME_NAME,
     PAIRING_TIMEOUT,
     SUBENTRY_DEVICE,
+    TOPIC_NAME_ID,
+    TOPIC_NAME_NAME,
 )
-from .esp3 import id_to_str, str_to_id
 from .device import (
     LINK_TYPES,
     LINK_TYPES_BY_MODEL,
@@ -80,6 +85,7 @@ from .device import (
     RS_TRIGGERS,
     NodOnDevice,
 )
+from .esp3 import id_to_str, str_to_id
 from .gateway import Gateway, GatewayError, GatewayOpenError, ReComError
 from .mqtt_bridge import MqttConfigError, broker_settings, check_connection
 from .pairing import PairingResult, wait_for_teach_in
@@ -426,6 +432,7 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
     """Ajout guidé d'un produit NodOn : choix → consignes → appairage auto."""
 
     def __init__(self) -> None:
+        self._manufacturer = "NodOn"
         self._product: Product | None = None
         self._result: PairingResult | None = None
         self._sender_offset: int | None = None
@@ -443,7 +450,7 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
 
     def _default_name(self) -> str:
         assert self._product is not None
-        return f"{self._product.name(self._lang)} NodOn"
+        return f"{self._product.name(self._lang)} {self._product.manufacturer}"
 
     @property
     def _lang(self) -> str:
@@ -477,30 +484,67 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
             "image": image,
             "instructions": p.pairing(self._lang),
             "timeout": str(PAIRING_TIMEOUT),
+            "support": self._support_text(),
         }
 
+    def _support_text(self) -> str:
+        assert self._product is not None
+        if self._product.manufacturer == "NodOn":
+            return {"fr": "Support NodOn existant.", "de": "Bestehende NodOn-Unterstützung."}.get(
+                self._lang[:2], "Existing NodOn support.")
+        return {
+            "fr": "Profil EEP uniquement, modèle non validé sur matériel. Réception non chiffrée ; aucun réglage constructeur. Vérifiez chaque fonction après ajout.",
+            "de": "Nur EEP-basiert; Modell nicht auf Hardware geprüft. Unverschlüsselter Empfang, keine Herstellereinstellungen. Prüfen Sie jede Funktion nach dem Hinzufügen.",
+        }.get(self._lang[:2], "EEP-based support only; model not hardware-validated. Unencrypted reception; no manufacturer settings. Check every function after adding.")
+
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
-        entry = self._get_entry()
-        if entry.state is not ConfigEntryState.LOADED:
+        if self._get_entry().state is not ConfigEntryState.LOADED:
             return self.async_abort(reason="gateway_not_ready")
         if user_input is not None:
-            self._product = PRODUCTS[user_input[CONF_MODEL]]
-            return await self.async_step_instructions()
-
-        options = [
-            SelectOptionDict(value=p.model, label=f"{p.references} — {p.name(self._lang)}")
-            for p in PRODUCTS.values()
-        ]
+            self._manufacturer = user_input["manufacturer"]
+            if self._manufacturer == "Generic":
+                return await self.async_step_generic()
+            return await self.async_step_product()
         return self.async_show_form(
             step_id="user",
-            description_placeholders={"gallery": f"![NodOn]({GALLERY})"},
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_MODEL): SelectSelector(
-                        SelectSelectorConfig(options=options, mode=SelectSelectorMode.LIST)
-                    )
-                }
-            ),
+            data_schema=vol.Schema({vol.Required("manufacturer"): SelectSelector(
+                SelectSelectorConfig(options=manufacturers() + ["Generic"], mode=SelectSelectorMode.LIST)
+            )}),
+        )
+
+    async def async_step_product(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
+        products = products_for_manufacturer(self._manufacturer)
+        errors = {}
+        if user_input is not None:
+            model = user_input[CONF_MODEL]
+            if model in {p.model for p in products}:
+                self._product = PRODUCTS[model]
+                return await self.async_step_instructions()
+            errors[CONF_MODEL] = "invalid_product"
+        return self.async_show_form(
+            step_id="product", errors=errors,
+            description_placeholders={"manufacturer": self._manufacturer},
+            data_schema=vol.Schema({vol.Required(CONF_MODEL): SelectSelector(
+                SelectSelectorConfig(options=[SelectOptionDict(value=p.model,
+                    label=f"{p.references} — {p.name(self._lang)} — {p.eep}") for p in products],
+                    mode=SelectSelectorMode.LIST)
+            )}),
+        )
+
+    async def async_step_generic(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
+        errors = {}
+        if user_input is not None:
+            self._product = GENERIC_PRODUCTS.get(user_input["eep"])
+            if self._product is not None:
+                return await self.async_step_instructions()
+            errors["eep"] = "unsupported_eep"
+        return self.async_show_form(
+            step_id="generic", errors=errors,
+            data_schema=vol.Schema({vol.Required("eep"): SelectSelector(
+                SelectSelectorConfig(options=[SelectOptionDict(value=code,
+                    label=f"{code} — {p.name(self._lang)}") for code, p in GENERIC_PRODUCTS.items()],
+                    mode=SelectSelectorMode.LIST)
+            )}),
         )
 
     async def async_step_instructions(

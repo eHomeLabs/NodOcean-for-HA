@@ -22,7 +22,7 @@ async def async_setup_entry(
     add_per_subentry(
         entry.runtime_data.devices.values(),
         async_add_entities,
-        lambda device: [NodOnProductImage(hass, device)],
+        lambda device: [NodOnProductImage(hass, device)] if device.product.image else [],
     )
 
 

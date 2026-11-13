@@ -23,7 +23,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     def factory(device: NodOnDevice) -> list:
-        entities: list[ButtonEntity] = [NodOnHelp(device)]
+        entities: list[ButtonEntity] = [NodOnHelp(device)] if device.product.manufacturer == "NodOn" else []
         if device.product.metering:
             entities.append(NodOnResetEnergy(device))
         model = device.product.model

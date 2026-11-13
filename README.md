@@ -1,4 +1,4 @@
-<p align="center"><img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/logo-readme.png" alt="NodOcean for HA" height="72"></p>
+<p align="center"><a href="https://github.com/eHomeLabs"><img src="https://avatars.githubusercontent.com/u/316657149?s=240" alt="eHome Labs" width="120" height="120"></a><br><strong>eHome Labs</strong></p>
 
 # NodOcean for HA
 

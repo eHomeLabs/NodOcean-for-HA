@@ -1,10 +1,24 @@
-<p align="center"><img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/logo-readme.png" alt="NodOn" height="72"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/logo-readme.png" alt="NodOcean for HA" height="72"></p>
 
 # NodOcean for HA
 
-**Les produits EnOcean by NodOn dans Home Assistant.**
+**Vos équipements EnOcean dans Home Assistant, simplement.**
 
-Intégration Home Assistant **officieuse** dédiée aux produits **EnOcean NodOn**.
+Intégration communautaire indépendante développée par **eHomeLabs**, en cours d’ouverture aux équipements EnOcean de plusieurs fabricants.
+
+> **Branche expérimentale `develop/multibrand-enocean` — tests sur le Raspberry Pi 5 Home Assistant de Spy.** Le support actuel reste celui des produits NodOn documentés ci-dessous. Les parcours multimarque et générique EEP sont à développer et à valider ; cette branche ne revendique pas encore de compatibilité supplémentaire.
+
+### Cadre de développement multimarque
+
+- Conserver le domaine `nodon_enocean`, les identifiants uniques des appareils et entités, les configurations et les données d’appairage, y compris les identifiants d’émission.
+- Prévoir une migration automatique et des tests de migration pour toute évolution du stockage ; vérifier la conservation des automatisations avant publication.
+- Organiser le catalogue par fabricant et modèle, avec un socle de capacités par profil EEP et des adaptations propres aux produits.
+- Préparer les parcours « Produit connu », « Apprentissage » et « Profil EEP avancé », selon les informations réellement disponibles.
+- Distinguer systématiquement profil implémenté, modèle déclaré compatible et modèle testé sur matériel.
+- Valider d’abord sur le RPi5 de tests, puis proposer les changements par pull request avant toute fusion dans `main`.
+- Cette branche conserve la même identité technique que la version stable et la remplace sur l’instance de test. Elle ne constitue pas une seconde intégration à installer en parallèle sur cette instance.
+
+
 Le principe : on choisit son produit dans une liste et Home Assistant fait le reste.
 Pas de profil EEP à chercher, pas d'identifiant à recopier, pas de fichier YAML.
 
@@ -192,7 +206,13 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 
 ## English
 
-**NodOcean for HA** is an unofficial Home Assistant integration for **NodOn EnOcean** products. Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
+**Your EnOcean devices in Home Assistant, made simple.**
+
+**NodOcean for HA** is an independent community integration developed by **eHomeLabs**, being expanded to multiple EnOcean manufacturers.
+
+> Experimental branch `develop/multibrand-enocean`, intended for Spy’s Raspberry Pi 5 test instance. Only the documented NodOn products are currently supported; multibrand and generic EEP support remain development goals. Existing domains, identifiers and pairing data must be preserved, with migration tests before release.
+
+ Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
 
 **Requirements:** Home Assistant 2025.3 or newer and an EnOcean USB300 (or ESP3-compatible) stick. No MQTT needed. An optional MQTT bridge (v0.5.0+) can also publish product states to a local or remote broker and accept commands, like Zigbee2MQTT, with optional Home Assistant MQTT discovery and raw telegrams (v0.6.0). UI in English, French and German.
 

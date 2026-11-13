@@ -116,15 +116,12 @@ async def test_receive_flow(
         else GENERIC_PRODUCTS[selection["eep"]]
     )
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"category": product.category}
-    )
-    assert result["step_id"] == "manufacturer"
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"manufacturer": manufacturer}
-    )
-    assert result["step_id"] == ("generic" if manufacturer == "Generic" else "product")
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], selection
+        result["flow_id"],
+        {
+            "category": product.category,
+            "manufacturer": manufacturer,
+            "model": product.model,
+        },
     )
     assert result["step_id"] == "instructions"
     assert result["description_placeholders"]["support"]
@@ -228,3 +225,40 @@ def test_functional_families():
     assert all(
         p.category == "sensors" for p in products_for_manufacturer("NodOn", "sensors")
     )
+
+
+async def test_single_form_invalid_combination(hass, dongle):
+    entry = await _setup_gateway(hass)
+    result = await hass.config_entries.subentries.async_init(
+        (entry.entry_id, "device"), context={"source": "user"}
+    )
+    assert result["step_id"] == "user"
+    fields = {key.schema: value for key, value in result["data_schema"].schema.items()}
+    assert set(fields) == {"category", "manufacturer", "model"}
+    assert all(value.config["mode"] == "dropdown" for value in fields.values())
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"],
+        {"category": "sensors", "manufacturer": "NodOn", "model": "Eltako-FT55"},
+    )
+    assert result["step_id"] == "user"
+    assert result["errors"] == {"model": "invalid_combination"}
+    fields = {key.schema: value for key, value in result["data_schema"].schema.items()}
+    assert all(
+        PRODUCTS[opt["value"]].category == "sensors"
+        for opt in fields["model"].config["options"]
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"category": "actuators", "manufacturer": "Generic"}
+    )
+    assert result["errors"] == {"model": "no_supported_model"}
+    assert not entry.subentries
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"category": "sensors", "manufacturer": "Generic"}
+    )
+    assert result["errors"] == {"model": "invalid_combination"}
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"],
+        {"category": "sensors", "manufacturer": "Generic", "model": "EEP-D5-00-01"},
+    )
+    assert result["step_id"] == "instructions"
+    hass.config_entries.subentries.async_abort(result["flow_id"])

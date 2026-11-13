@@ -1,4 +1,4 @@
-# NodOcean multimarque — 0.9.0a2
+# NodOcean multimarque — 0.9.0a3
 
 **Vos équipements EnOcean dans Home Assistant, simplement.**
 
@@ -25,7 +25,7 @@ Les touches sont exposées selon le repérage du profil ; vérifier leur corresp
 1. Réaliser une sauvegarde Home Assistant sur le RPi5 ; utiliser une clé dédiée, compatible avec la fréquence des équipements testés.
 2. Télécharger le ZIP de la branche `develop/multibrand-enocean` depuis GitHub (Code → Download ZIP).
 3. Copier le dossier `custom_components/nodon_enocean` dans `/config/custom_components/` sur le RPi5, puis redémarrer Home Assistant.
-4. Ajouter/configurer NodOcean for HA dans Appareils et services. Le manifeste doit annoncer `0.9.0a2`.
+4. Ajouter/configurer NodOcean for HA dans Appareils et services. Le manifeste doit annoncer `0.9.0a3`.
 5. Ajouter un équipement : famille → fabricant → modèle, ou famille → Generic → EEP ; lire les limites puis lancer l'écoute et déclencher l'appairage selon les consignes.
 6. À la confirmation, vérifier l'ID imprimé sur le produit et choisir nom et pièce.
 
@@ -57,7 +57,7 @@ Experimental receive-only multibrand support: Eltako FT55/FT4F (documentation-ba
 ## Validation logicielle de cette version
 
 - Python 3.13.18, Home Assistant 2026.2.3, pytest-homeassistant-custom-component 0.13.316.
-- Suite complète : **65 tests réussis** (simulateur USB300), dont parcours Eltako/EnOcean, quatre EEP génériques, événements/mesures, rechargement et conservation des identités NodOn et offsets radio.
+- Suite complète : **66 tests réussis** (simulateur USB300), dont parcours Eltako/EnOcean, quatre EEP génériques, événements/mesures, rechargement et conservation des identités NodOn et offsets radio.
 - Compilation Python et contrôle Ruff F/E9 des fichiers Python modifiés : réussis. Le contrôle global du dépôt signale une double définition préexistante de `ping` dans `recom.py`, hors de ce changement.
 - Ces résultats ne constituent ni un test radio réel, ni une validation sur Home Assistant 2026.11. Les vérifications CI HACS/hassfest restent distinctes.
 
@@ -76,7 +76,7 @@ Ordre de travail :
 
 Pour chaque candidat, suivre : fabricant, modèle/référence, alias commercial, source eedomus, source constructeur, EEP confirmé ou inconnu, apprentissage, fonctions disponibles, limites et statut de validation. Distinguer « recensé », « documentation vérifiée », « tests logiciels réussis » et « testé sur matériel ». La liste utilisateur de compatibilité doit présenter seulement les fonctions réellement disponibles.
 
-## Classement fonctionnel — 0.9.0a2
+## Classement fonctionnel — 0.9.0a3
 
 Le premier écran propose les trois familles retenues, dans cet ordre :
 
@@ -89,3 +89,13 @@ Le premier écran propose les trois familles retenues, dans cet ordre :
 Le fabricant puis les modèles sont filtrés par famille. Le parcours Generic ne propose que les EEP de cette famille ; aucun profil d’actionneur générique n’est disponible à ce stade. Les thermostats sont classés comme contrôleurs dans le cadre du catalogue futur : aucun modèle supplémentaire de thermostat n’est activé par ce classement. Les clés USB restent dans le parcours passerelle.
 
 Cette classification pourra être affinée, sans modifier les clés des modèles ni les identifiants d’appareils et d’entités existants.
+
+## Formulaire unique et apparence — 0.9.0a3
+
+Les trois menus déroulants natifs **Famille**, **Fabricant** et **Modèle / profil EEP** sont affichés sur le même écran. En sélectionnant Generic, choisir un modèle `EEP-…` correspondant à la famille.
+
+Les sélecteurs natifs ne filtrent pas ces listes en direct au changement d’un champ. La liste initiale contient le catalogue disponible, avec fabricant et EEP dans les libellés des modèles. Au clic sur **Suivant**, la combinaison famille/fabricant/modèle est vérifiée. Si elle est incohérente ou incomplète, le formulaire reste sur le même écran, conserve famille et fabricant, efface le modèle périmé et actualise les modèles proposés. Une combinaison valide mène directement aux consignes d’appairage. Aucun appareil n’est créé à ce stade.
+
+Présentation : composants natifs Home Assistant, menus en mode déroulant, bouton Suivant. Le rendu bleu et blanc correspond au thème clair HA ; le thème actif de l’utilisateur est respecté. La maquette est illustrative, sans interface personnalisée ni surcharge de couleurs du thème.
+
+Evology reste une cible du catalogue documentaire, pas un fabricant activé dans cette version. Aucune nouvelle compatibilité radio n’est ajoutée par cette modification du formulaire.

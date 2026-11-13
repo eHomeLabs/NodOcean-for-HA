@@ -6,7 +6,7 @@
 
 Intégration communautaire indépendante développée par **eHomeLabs**, en cours d’ouverture aux équipements EnOcean de plusieurs fabricants.
 
-> **Version expérimentale 0.9.0a2 — branche `develop/multibrand-enocean`.** Parcours famille → fabricant → modèle, ou famille → Generic → EEP. Premiers modèles Eltako FT55 / FT4F et EnOcean EMCSA sur base documentaire, à valider sur matériel. Quatre profils génériques en réception non chiffrée. [Installation et protocole de tests RPi5](docs/MULTIMARQUE_TESTS.md).
+> **Version expérimentale 0.9.0a3 — branche `develop/multibrand-enocean`.** Un seul formulaire avec trois menus déroulants : Famille, Fabricant, Modèle / profil EEP. Premiers modèles Eltako FT55 / FT4F et EnOcean EMCSA sur base documentaire, à valider sur matériel. Quatre profils génériques en réception non chiffrée. [Installation et protocole de tests RPi5](docs/MULTIMARQUE_TESTS.md).
 
 ### Cadre de développement multimarque
 
@@ -220,7 +220,7 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 
 **NodOcean for HA** is an independent community integration developed by **eHomeLabs**, being expanded to multiple EnOcean manufacturers.
 
-> Experimental 0.9.0a2 on `develop/multibrand-enocean`: family/manufacturer/model selection, Eltako FT55/FT4F and EnOcean EMCSA (hardware validation pending), and four receive-only generic EEP profiles. [RPi5 test guide](docs/MULTIMARQUE_TESTS.md). Existing model keys, identifiers and pairing data are retained.
+> Experimental 0.9.0a3 on `develop/multibrand-enocean`: single-form family/manufacturer/model dropdowns, Eltako FT55/FT4F and EnOcean EMCSA (hardware validation pending), and four receive-only generic EEP profiles. [RPi5 test guide](docs/MULTIMARQUE_TESTS.md). Existing model keys, identifiers and pairing data are retained.
 
  Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
 

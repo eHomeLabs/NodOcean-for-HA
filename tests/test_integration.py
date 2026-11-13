@@ -42,13 +42,7 @@ async def _pair(hass, entry, dongle, model, inject, name, area_id=None, new_area
     )
     assert result["type"] is FlowResultType.FORM and result["step_id"] == "user"
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"category": PRODUCTS[model].category}
-    )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"manufacturer": "NodOn"}
-    )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"model": model}
+        result["flow_id"], {"category": PRODUCTS[model].category, "manufacturer": "NodOn", "model": model}
     )
     assert result["step_id"] == "instructions"
     assert model in result["description_placeholders"]["model"]
@@ -197,13 +191,7 @@ async def test_full_flow(hass: HomeAssistant, dongle) -> None:
         (entry.entry_id, "device"), context={"source": "user"}
     )
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"category": "sensors"}
-    )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"manufacturer": "NodOn"}
-    )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"model": "STPH-2"}
+        result["flow_id"], {"category": "sensors", "manufacturer": "NodOn", "model": "STPH-2"}
     )
     result = await hass.config_entries.subentries.async_configure(result["flow_id"], {})
     await asyncio.sleep(0)
@@ -225,13 +213,7 @@ async def test_manual_entry_after_timeout(hass: HomeAssistant, dongle, monkeypat
         (entry.entry_id, "device"), context={"source": "user"}
     )
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"category": "sensors"}
-    )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"manufacturer": "NodOn"}
-    )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"model": "SDO-2"}
+        result["flow_id"], {"category": "sensors", "manufacturer": "NodOn", "model": "SDO-2"}
     )
     result = await hass.config_entries.subentries.async_configure(result["flow_id"], {})
     await asyncio.sleep(0.1)

@@ -52,9 +52,11 @@
       "step": {
         "user": {
           "title": "Ajouter un équipement EnOcean",
-          "description": "Choisissez une famille : Capteurs et Sondes ; Actionneurs (prises, relais, volets…) ; Contrôleurs (interrupteurs, thermostats, télécommandes…). Seuls les équipements actuellement pris en charge sont ensuite proposés.",
+          "description": "Sélectionnez la famille, le fabricant et le modèle sur ce même écran. Generic permet de choisir un profil EEP. Les modèles sont vérifiés avec vos choix au clic sur Suivant ; en cas de combinaison incohérente, la liste est actualisée. Les modèles des autres fabricants restent à valider sur matériel.",
           "data": {
-            "category": "Famille d’équipement"
+            "category": "Famille",
+            "manufacturer": "Fabricant",
+            "model": "Modèle / profil EEP"
           }
         },
         "instructions": {
@@ -128,27 +130,6 @@
           "data": {
             "recom_code": "Code de sécurité (QR code)"
           }
-        },
-        "product": {
-          "title": "{manufacturer}",
-          "description": "Choisissez le modèle. Eltako / EnOcean : réception des touches ou ouverture selon le profil, RSSI diagnostic, prise en charge documentaire, essais matériels nécessaires. Pas de sécurité radio chiffrée.",
-          "data": {
-            "model": "Modèle"
-          }
-        },
-        "generic": {
-          "title": "Profil EEP générique",
-          "description": "Réception uniquement : F6-02-01 = événements des touches ; D5-00-01 = ouverture ; A5-02-05 = température 0–40 °C ; A5-04-01 = température et humidité. Vérifiez le profil exact dans la notice. Aucun actionneur, réglage constructeur, ReCom ou chiffrement. RSSI disponible en diagnostic. Un télégramme RPS/1BS ne permet pas d’identifier le fabricant ou le modèle.",
-          "data": {
-            "eep": "Profil EEP"
-          }
-        },
-        "manufacturer": {
-          "title": "Ajouter un équipement EnOcean",
-          "description": "Choisissez un fabricant, ou Generic pour un profil EEP. Les modèles Eltako et EnOcean restent à valider sur matériel.",
-          "data": {
-            "manufacturer": "Fabricant / profil générique"
-          }
         }
       },
       "progress": {
@@ -162,7 +143,9 @@
         "invalid_code": "Code invalide : 8 caractères hexadécimaux (0-9, A-F) attendus.",
         "wrong_code": "Code refusé ou produit muet : vérifiez le code et que le produit est sous tension.",
         "invalid_product": "Modèle invalide pour ce fabricant.",
-        "unsupported_eep": "Profil non pris en charge."
+        "unsupported_eep": "Profil non pris en charge.",
+        "invalid_combination": "Sélectionnez un modèle correspondant à la famille et au fabricant. La liste a été actualisée.",
+        "no_supported_model": "Aucun modèle disponible pour cette combinaison. Changez la famille ou le fabricant, puis cliquez sur Suivant."
       },
       "abort": {
         "already_configured": "Ce produit est déjà configuré.",

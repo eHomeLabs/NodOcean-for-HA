@@ -39,7 +39,6 @@ from homeassistant.helpers.service_info.usb import UsbServiceInfo
 from . import features, recom
 from .catalog import (
     CATEGORIES,
-    GENERIC_PRODUCTS,
     PRODUCTS,
     TEACH_UTE_BIDIR,
     Product,
@@ -500,67 +499,43 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
         }.get(self._lang[:2], "EEP-based support only; model not hardware-validated. Unencrypted reception; no manufacturer settings. Check every function after adding.")
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
+        """One native HA form with three dropdowns; validate their combination."""
         if self._get_entry().state is not ConfigEntryState.LOADED:
             return self.async_abort(reason="gateway_not_ready")
+        errors: dict[str, str] = {}
+        values = user_input or {}
+        products = list(PRODUCTS.values())
         if user_input is not None:
             self._category = user_input["category"]
-            return await self.async_step_manufacturer()
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema({vol.Required("category"): SelectSelector(
-                SelectSelectorConfig(options=list(CATEGORIES), translation_key="device_category",
-                                     mode=SelectSelectorMode.LIST)
-            )}),
-        )
-
-    async def async_step_manufacturer(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
-        if user_input is not None:
             self._manufacturer = user_input["manufacturer"]
-            if self._manufacturer == "Generic":
-                return await self.async_step_generic()
-            return await self.async_step_product()
-        return self.async_show_form(
-            step_id="manufacturer",
-            data_schema=vol.Schema({vol.Required("manufacturer"): SelectSelector(
-                SelectSelectorConfig(options=manufacturers(self._category) + (
-                    ["Generic"] if any(p.category == self._category for p in GENERIC_PRODUCTS.values()) else []
-                ), mode=SelectSelectorMode.LIST)
-            )}),
-        )
-
-    async def async_step_product(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
-        products = products_for_manufacturer(self._manufacturer, self._category)
-        errors = {}
-        if user_input is not None:
-            model = user_input[CONF_MODEL]
-            if model in {p.model for p in products}:
-                self._product = PRODUCTS[model]
+            product = PRODUCTS.get(user_input.get(CONF_MODEL, ""))
+            if product is not None and (
+                product.category == self._category
+                and product.manufacturer == self._manufacturer
+            ):
+                self._product = product
                 return await self.async_step_instructions()
-            errors[CONF_MODEL] = "invalid_product"
+            products = products_for_manufacturer(self._manufacturer, self._category)
+            errors[CONF_MODEL] = "invalid_combination" if products else "no_supported_model"
+            # Never carry a stale model over to another family or manufacturer.
+            values = {"category": self._category, "manufacturer": self._manufacturer}
+        schema = vol.Schema({
+            vol.Required("category"): SelectSelector(SelectSelectorConfig(
+                options=list(CATEGORIES), translation_key="device_category",
+                mode=SelectSelectorMode.DROPDOWN,
+            )),
+            vol.Required("manufacturer"): SelectSelector(SelectSelectorConfig(
+                options=manufacturers() + ["Generic"], mode=SelectSelectorMode.DROPDOWN,
+            )),
+            vol.Optional(CONF_MODEL): SelectSelector(SelectSelectorConfig(
+                options=[SelectOptionDict(value=p.model,
+                    label=f"{p.manufacturer} — {p.references} — {p.name(self._lang)} — {p.eep}")
+                    for p in products], mode=SelectSelectorMode.DROPDOWN,
+            )),
+        })
         return self.async_show_form(
-            step_id="product", errors=errors,
-            description_placeholders={"manufacturer": self._manufacturer},
-            data_schema=vol.Schema({vol.Required(CONF_MODEL): SelectSelector(
-                SelectSelectorConfig(options=[SelectOptionDict(value=p.model,
-                    label=f"{p.references} — {p.name(self._lang)} — {p.eep}") for p in products],
-                    mode=SelectSelectorMode.LIST)
-            )}),
-        )
-
-    async def async_step_generic(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
-        errors = {}
-        if user_input is not None:
-            self._product = GENERIC_PRODUCTS.get(user_input["eep"])
-            if self._product is not None and self._product.category == self._category:
-                return await self.async_step_instructions()
-            errors["eep"] = "unsupported_eep"
-        return self.async_show_form(
-            step_id="generic", errors=errors,
-            data_schema=vol.Schema({vol.Required("eep"): SelectSelector(
-                SelectSelectorConfig(options=[SelectOptionDict(value=code,
-                    label=f"{code} — {p.name(self._lang)}") for code, p in GENERIC_PRODUCTS.items() if p.category == self._category],
-                    mode=SelectSelectorMode.LIST)
-            )}),
+            step_id="user", data_schema=self.add_suggested_values_to_schema(schema, values),
+            errors=errors, last_step=False,
         )
 
     async def async_step_instructions(

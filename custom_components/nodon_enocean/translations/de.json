@@ -52,9 +52,11 @@
       "step": {
         "user": {
           "title": "EnOcean-Gerät hinzufügen",
-          "description": "Wählen Sie eine Familie: Sensoren und Fühler; Aktoren (Steckdosen, Relais, Rollläden…); Bediengeräte (Wandschalter, Thermostate, Fernbedienungen…). Danach werden nur derzeit unterstützte Geräte angeboten.",
+          "description": "Wählen Sie Familie, Hersteller und Modell auf diesem Bildschirm. Generic bietet EEP-Profile. Weiter prüft die Auswahl; bei unpassenden Angaben wird die Modellliste aktualisiert. Andere Hersteller müssen noch auf Hardware geprüft werden.",
           "data": {
-            "category": "Gerätefamilie"
+            "category": "Familie",
+            "manufacturer": "Hersteller",
+            "model": "Modell / EEP-Profil"
           }
         },
         "instructions": {
@@ -128,27 +130,6 @@
           "data": {
             "recom_code": "Sicherheitscode (QR-Code)"
           }
-        },
-        "product": {
-          "title": "{manufacturer}",
-          "description": "Wählen Sie das Modell. Eltako / EnOcean: Tastenereignisse oder Öffnung gemäß EEP, Diagnose-RSSI, Unterstützung laut Dokumentation, Hardwareprüfung ausstehend. Verschlüsselte Funktelegramme werden nicht unterstützt.",
-          "data": {
-            "model": "Modell"
-          }
-        },
-        "generic": {
-          "title": "Generisches EEP-Profil",
-          "description": "Nur Empfang: F6-02-01 = Tastenereignisse; D5-00-01 = Öffnung; A5-02-05 = Temperatur 0–40 °C; A5-04-01 = Temperatur und Feuchte. Prüfen Sie das genaue EEP in der Anleitung. Keine Aktoren, Herstellereinstellungen, ReCom oder Verschlüsselung. RSSI als Diagnose verfügbar. RPS/1BS-Telegramme identifizieren weder Hersteller noch Modell.",
-          "data": {
-            "eep": "EEP-Profil"
-          }
-        },
-        "manufacturer": {
-          "title": "EnOcean-Gerät hinzufügen",
-          "description": "Wählen Sie einen Hersteller oder Generic für ein EEP-Profil. Eltako- und EnOcean-Modelle müssen noch mit echter Hardware geprüft werden.",
-          "data": {
-            "manufacturer": "Hersteller / generisches Profil"
-          }
         }
       },
       "progress": {
@@ -162,7 +143,9 @@
         "invalid_code": "Ungültiger Code: 8 hexadezimale Zeichen (0-9, A-F) erwartet.",
         "wrong_code": "Code abgelehnt oder keine Antwort: Prüfen Sie den Code und die Stromversorgung des Produkts.",
         "invalid_product": "Ungültiges Modell für diesen Hersteller.",
-        "unsupported_eep": "Nicht unterstütztes EEP-Profil."
+        "unsupported_eep": "Nicht unterstütztes EEP-Profil.",
+        "invalid_combination": "Wählen Sie ein Modell passend zu Familie und Hersteller. Die Liste wurde aktualisiert.",
+        "no_supported_model": "Für diese Auswahl ist kein Modell verfügbar. Ändern Sie Familie oder Hersteller und klicken Sie auf Weiter."
       },
       "abort": {
         "already_configured": "Dieses Produkt ist bereits eingerichtet.",

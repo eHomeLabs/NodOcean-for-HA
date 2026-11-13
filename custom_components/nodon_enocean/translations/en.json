@@ -52,9 +52,11 @@
       "step": {
         "user": {
           "title": "Add an EnOcean device",
-          "description": "Choose a family: sensors and probes; actuators (plugs, relays, shutters…); controllers (wall switches, thermostats, remotes…). Only currently supported devices are offered afterwards.",
+          "description": "Select family, manufacturer and model on this screen. Generic offers EEP profiles. The combination is checked on Next; incompatible choices refresh the model list. Other manufacturers await hardware validation.",
           "data": {
-            "category": "Device family"
+            "category": "Family",
+            "manufacturer": "Manufacturer",
+            "model": "Model / EEP profile"
           }
         },
         "instructions": {
@@ -128,27 +130,6 @@
           "data": {
             "recom_code": "Security code (QR code)"
           }
-        },
-        "product": {
-          "title": "{manufacturer}",
-          "description": "Choose the model. Eltako / EnOcean: button events or opening according to the profile, diagnostic RSSI, document-based support, hardware tests required. Encrypted radio is not supported.",
-          "data": {
-            "model": "Model"
-          }
-        },
-        "generic": {
-          "title": "Generic EEP profile",
-          "description": "Receive only: F6-02-01 = button events; D5-00-01 = opening; A5-02-05 = temperature 0–40 °C; A5-04-01 = temperature and humidity. Verify the exact EEP in the manual. No actuators, manufacturer settings, ReCom or encryption. Diagnostic RSSI available. RPS/1BS telegrams cannot identify the manufacturer or model.",
-          "data": {
-            "eep": "EEP profile"
-          }
-        },
-        "manufacturer": {
-          "title": "Add an EnOcean device",
-          "description": "Choose a manufacturer, or Generic for an EEP profile. Eltako and EnOcean models await hardware validation.",
-          "data": {
-            "manufacturer": "Manufacturer / generic profile"
-          }
         }
       },
       "progress": {
@@ -162,7 +143,9 @@
         "invalid_code": "Invalid code: 8 hexadecimal characters (0-9, A-F) expected.",
         "wrong_code": "Code rejected or no answer: check the code and that the product is powered.",
         "invalid_product": "Invalid model for this manufacturer.",
-        "unsupported_eep": "Unsupported EEP profile."
+        "unsupported_eep": "Unsupported EEP profile.",
+        "invalid_combination": "Choose a model matching the family and manufacturer. The list has been refreshed.",
+        "no_supported_model": "No supported model for this combination. Change family or manufacturer and click Next."
       },
       "abort": {
         "already_configured": "This product is already configured.",

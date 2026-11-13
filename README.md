@@ -6,7 +6,7 @@
 
 Intégration communautaire indépendante développée par **eHomeLabs**, en cours d’ouverture aux équipements EnOcean de plusieurs fabricants.
 
-> **Version expérimentale 0.9.0a1 — branche `develop/multibrand-enocean`.** Parcours fabricant → modèle ou Generic → EEP. Premiers modèles Eltako FT55 / FT4F et EnOcean EMCSA sur base documentaire, à valider sur matériel. Quatre profils génériques en réception non chiffrée. [Installation et protocole de tests RPi5](docs/MULTIMARQUE_TESTS.md).
+> **Version expérimentale 0.9.0a2 — branche `develop/multibrand-enocean`.** Parcours famille → fabricant → modèle, ou famille → Generic → EEP. Premiers modèles Eltako FT55 / FT4F et EnOcean EMCSA sur base documentaire, à valider sur matériel. Quatre profils génériques en réception non chiffrée. [Installation et protocole de tests RPi5](docs/MULTIMARQUE_TESTS.md).
 
 ### Cadre de développement multimarque
 
@@ -114,7 +114,7 @@ Installation manuelle : copiez le dossier `custom_components/nodon_enocean` dans
 ## Ajouter un équipement EnOcean
 
 1. Ouvrez l'intégration **NodOcean for HA** et cliquez sur **Ajouter un équipement EnOcean**.
-2. Choisissez **NodOn**, **Eltako** ou **EnOcean**, puis le modèle ; ou **Generic**, puis le profil EEP exact. Lisez les fonctions disponibles et les limites affichées.
+2. Choisissez la famille **Capteurs et Sondes**, **Actionneurs** ou **Contrôleurs**, puis **NodOn**, **Eltako** ou **EnOcean**, puis le modèle ; ou **Generic**, puis le profil EEP exact. Lisez les fonctions disponibles et les limites affichées.
 3. Suivez la consigne affichée (par exemple « appuyez 3 fois rapidement sur le bouton du module »), puis cliquez sur **Valider**.
 4. Home Assistant écoute pendant 60 s. Il détecte le produit et répond lui-même à sa demande d'appairage pour les modules et les prises.
 5. Donnez un nom au produit et choisissez sa pièce (ou créez-en une, par exemple « Garage ») : c'est terminé.
@@ -220,7 +220,7 @@ MIT. Projet indépendant : il n'est ni affilié à Home Assistant / Nabu Casa, n
 
 **NodOcean for HA** is an independent community integration developed by **eHomeLabs**, being expanded to multiple EnOcean manufacturers.
 
-> Experimental 0.9.0a1 on `develop/multibrand-enocean`: manufacturer/model selection, Eltako FT55/FT4F and EnOcean EMCSA (hardware validation pending), and four receive-only generic EEP profiles. [RPi5 test guide](docs/MULTIMARQUE_TESTS.md). Existing model keys, identifiers and pairing data are retained.
+> Experimental 0.9.0a2 on `develop/multibrand-enocean`: family/manufacturer/model selection, Eltako FT55/FT4F and EnOcean EMCSA (hardware validation pending), and four receive-only generic EEP profiles. [RPi5 test guide](docs/MULTIMARQUE_TESTS.md). Existing model keys, identifiers and pairing data are retained.
 
  Pick your product from a list: Home Assistant handles the EEP profile, the device ID and the pairing response for you.
 
@@ -243,7 +243,7 @@ Direct link to NodOcean for HA in Marketplace:
 
 Existing HACS installations and custom repositories migrate automatically on Home Assistant 2026.11; **no reinstallation is needed**. On Home Assistant versions **before 2026.11**, continue using HACS.
 
-**Add a device:** click **Add an EnOcean device**, choose the manufacturer and model, or **Generic** and the exact EEP profile. Read the available functions and limitations, then follow the pairing instructions and give it a name.
+**Add a device:** click **Add an EnOcean device**, choose the family, manufacturer and model, or **Generic** and the exact EEP profile. Read the available functions and limitations, then follow the pairing instructions and give it a name.
 
 Supported: SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, SIN-2-RS-01, ASP-2, MSP-2, CWS-2-1, CRC-2, CFS-2, CCS-2, TSB-2, SDO-2, SWO-2, PIR-2, STP-2, STPH-2.
 

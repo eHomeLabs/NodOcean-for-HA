@@ -52,9 +52,9 @@
       "step": {
         "user": {
           "title": "Add an EnOcean device",
-          "description": "Choose a manufacturer, or Generic for an EEP profile. Eltako and EnOcean models await hardware validation.",
+          "description": "Choose a family: sensors and probes; actuators (plugs, relays, shutters…); controllers (wall switches, thermostats, remotes…). Only currently supported devices are offered afterwards.",
           "data": {
-            "manufacturer": "Manufacturer / generic profile"
+            "category": "Device family"
           }
         },
         "instructions": {
@@ -142,6 +142,13 @@
           "data": {
             "eep": "EEP profile"
           }
+        },
+        "manufacturer": {
+          "title": "Add an EnOcean device",
+          "description": "Choose a manufacturer, or Generic for an EEP profile. Eltako and EnOcean models await hardware validation.",
+          "data": {
+            "manufacturer": "Manufacturer / generic profile"
+          }
         }
       },
       "progress": {
@@ -198,6 +205,13 @@
         "bo": "Button B0 (bottom right)",
         "card_in": "Card inserted",
         "card_out": "Card removed"
+      }
+    },
+    "device_category": {
+      "options": {
+        "sensors": "Sensors and probes",
+        "actuators": "Actuators",
+        "controllers": "Controllers"
       }
     }
   },

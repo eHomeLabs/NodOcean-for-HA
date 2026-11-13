@@ -110,6 +110,15 @@ async def test_receive_flow(
     result = await hass.config_entries.subentries.async_init(
         (entry.entry_id, "device"), context={"source": "user"}
     )
+    product = (
+        PRODUCTS[selection["model"]]
+        if "model" in selection
+        else GENERIC_PRODUCTS[selection["eep"]]
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"category": product.category}
+    )
+    assert result["step_id"] == "manufacturer"
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"manufacturer": manufacturer}
     )
@@ -200,3 +209,22 @@ def test_generic_pairing_rejects_wrong_profile():
         GENERIC_PRODUCTS["F6-02-01"],
         RadioTelegram(rorg=0xD5, payload=b"\x00", sender=0x01020304),
     )[0]
+
+
+def test_functional_families():
+    from custom_components.nodon_enocean.catalog import (
+        CATEGORIES,
+        products_for_manufacturer,
+    )
+
+    assert CATEGORIES == ("sensors", "actuators", "controllers")
+    assert PRODUCTS["SIN-2-RS-01"].category == "actuators"
+    assert PRODUCTS["ASP-2"].category == "actuators"
+    assert PRODUCTS["CCS-2"].category == "controllers"
+    assert PRODUCTS["TSB-2"].category == "controllers"
+    assert PRODUCTS["STPH-2"].category == "sensors"
+    assert manufacturers("actuators") == ["NodOn"]
+    assert manufacturers("controllers") == ["Eltako", "NodOn"]
+    assert all(
+        p.category == "sensors" for p in products_for_manufacturer("NodOn", "sensors")
+    )

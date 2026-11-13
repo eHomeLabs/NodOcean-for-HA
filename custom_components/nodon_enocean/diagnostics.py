@@ -22,6 +22,7 @@ def _device_info(device: NodOnDevice, subentry_data: dict[str, Any]) -> dict[str
         "title": device.title,
         "model": product.model,
         "manufacturer": product.manufacturer,
+        "category": product.category,
         "validation": product.validation,
         "profile_capabilities": list(product.capabilities),
         "source": product.source,

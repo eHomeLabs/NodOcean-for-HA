@@ -52,9 +52,9 @@
       "step": {
         "user": {
           "title": "Ajouter un équipement EnOcean",
-          "description": "Choisissez un fabricant, ou Generic pour un profil EEP. Les modèles Eltako et EnOcean restent à valider sur matériel.",
+          "description": "Choisissez une famille : Capteurs et Sondes ; Actionneurs (prises, relais, volets…) ; Contrôleurs (interrupteurs, thermostats, télécommandes…). Seuls les équipements actuellement pris en charge sont ensuite proposés.",
           "data": {
-            "manufacturer": "Fabricant / profil générique"
+            "category": "Famille d’équipement"
           }
         },
         "instructions": {
@@ -142,6 +142,13 @@
           "data": {
             "eep": "Profil EEP"
           }
+        },
+        "manufacturer": {
+          "title": "Ajouter un équipement EnOcean",
+          "description": "Choisissez un fabricant, ou Generic pour un profil EEP. Les modèles Eltako et EnOcean restent à valider sur matériel.",
+          "data": {
+            "manufacturer": "Fabricant / profil générique"
+          }
         }
       },
       "progress": {
@@ -198,6 +205,13 @@
         "bo": "Bouton B0 (bas droite)",
         "card_in": "Carte insérée",
         "card_out": "Carte retirée"
+      }
+    },
+    "device_category": {
+      "options": {
+        "sensors": "Capteurs et Sondes",
+        "actuators": "Actionneurs",
+        "controllers": "Contrôleurs"
       }
     }
   },

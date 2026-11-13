@@ -60,6 +60,15 @@ class Product:
     source: str | None = None
 
     @property
+    def category(self) -> str:
+        """Functional family; independent of manufacturer and radio transport."""
+        if self.is_actuator:
+            return "actuators"
+        if self.teach_in == TEACH_RPS or self.model == "TSB-2":
+            return "controllers"
+        return "sensors"
+
+    @property
     def capabilities(self) -> tuple[str, ...]:
         return PROFILE_CAPABILITIES.get(self.eep, ())
 
@@ -562,12 +571,17 @@ _product = Product(
 PRODUCTS[_product.model] = _product
 
 
-def products_for_manufacturer(manufacturer: str) -> list[Product]:
-    return [p for p in PRODUCTS.values() if p.manufacturer == manufacturer]
+def products_for_manufacturer(manufacturer: str, category: str | None = None) -> list[Product]:
+    return [p for p in PRODUCTS.values() if p.manufacturer == manufacturer
+            and (category is None or p.category == category)]
 
 
-def manufacturers() -> list[str]:
-    return sorted({p.manufacturer for p in PRODUCTS.values() if p.manufacturer != "Generic"})
+def manufacturers(category: str | None = None) -> list[str]:
+    return sorted({p.manufacturer for p in PRODUCTS.values() if p.manufacturer != "Generic"
+                   and (category is None or p.category == category)})
+
+
+CATEGORIES = ("sensors", "actuators", "controllers")
 
 
 for _p in PRODUCTS.values():

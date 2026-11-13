@@ -7,8 +7,10 @@ import asyncio
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 
+from custom_components.nodon_enocean.catalog import PRODUCTS
 from custom_components.nodon_enocean.const import DOMAIN
 
 from .fake_dongle import BASE_ID
@@ -39,6 +41,9 @@ async def _pair(hass, entry, dongle, model, inject, name, area_id=None, new_area
         (entry.entry_id, "device"), context={"source": "user"}
     )
     assert result["type"] is FlowResultType.FORM and result["step_id"] == "user"
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"category": PRODUCTS[model].category}
+    )
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"manufacturer": "NodOn"}
     )
@@ -192,6 +197,9 @@ async def test_full_flow(hass: HomeAssistant, dongle) -> None:
         (entry.entry_id, "device"), context={"source": "user"}
     )
     result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"category": "sensors"}
+    )
+    result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"manufacturer": "NodOn"}
     )
     result = await hass.config_entries.subentries.async_configure(
@@ -215,6 +223,9 @@ async def test_manual_entry_after_timeout(hass: HomeAssistant, dongle, monkeypat
     entry = await _setup_gateway(hass)
     result = await hass.config_entries.subentries.async_init(
         (entry.entry_id, "device"), context={"source": "user"}
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"category": "sensors"}
     )
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"manufacturer": "NodOn"}

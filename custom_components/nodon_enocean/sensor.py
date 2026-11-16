@@ -282,7 +282,7 @@ class NodOnReComSecuritySensor(NodOnEntity, SensorEntity):
     _attr_translation_key = "recom_security"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["assigned", "not_assigned"]
+    _attr_options = ["assigned", "not_assigned", "pending"]
     _state_keys = frozenset({"recom_secured"})
     _follows_availability = False
 
@@ -291,4 +291,6 @@ class NodOnReComSecuritySensor(NodOnEntity, SensorEntity):
 
     @property
     def native_value(self) -> str:
+        if self.device.recom_pending:
+            return "pending"
         return "assigned" if self.device.recom_secured else "not_assigned"

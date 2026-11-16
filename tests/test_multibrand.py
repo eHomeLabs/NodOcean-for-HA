@@ -90,7 +90,7 @@ async def test_receive_flow(
         else GENERIC_PRODUCTS[selection["eep"]]
     )
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"manufacturer": manufacturer}
+        result["flow_id"], {"manufacturer": manufacturer.lower()}
     )
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"model": product.model}
@@ -189,9 +189,9 @@ async def test_two_step_form(hass, dongle):
     assert result["description_placeholders"] == {"gallery": ""}
     fields = {key.schema: value for key, value in result["data_schema"].schema.items()}
     assert set(fields) == {"manufacturer"}
-    assert fields["manufacturer"].config["options"] == ["NodOn", "Generic"]
+    assert fields["manufacturer"].config["options"] == ["nodon", "generic"]
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"manufacturer": "NodOn"}
+        result["flow_id"], {"manufacturer": "nodon"}
     )
     assert result["step_id"] == "product"
     assert "produits-nodon.png" in result["description_placeholders"]["gallery"]
@@ -209,7 +209,7 @@ async def test_two_step_form(hass, dongle):
         (entry.entry_id, "device"), context={"source": "user"}
     )
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"manufacturer": "Generic"}
+        result["flow_id"], {"manufacturer": "generic"}
     )
     assert result["description_placeholders"]["gallery"] == ""
     fields = {key.schema: value for key, value in result["data_schema"].schema.items()}
@@ -231,7 +231,7 @@ async def test_generic_actuator(hass, dongle):
         (entry.entry_id, "device"), context={"source": "user"}
     )
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"manufacturer": "Generic"}
+        result["flow_id"], {"manufacturer": "generic"}
     )
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"model": "EEP-D2-01-0F"}

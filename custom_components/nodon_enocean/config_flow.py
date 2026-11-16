@@ -502,18 +502,19 @@ class NodOnDeviceSubentryFlow(ConfigSubentryFlow):
         if self._get_entry().state is not ConfigEntryState.LOADED:
             return self.async_abort(reason="gateway_not_ready")
         if user_input is not None:
-            self._manufacturer = user_input["manufacturer"]
+            choice = user_input["manufacturer"]
+            self._manufacturer = next(m for m in ADD_MANUFACTURERS if m.lower() == choice)
             return await self.async_step_product()
         schema = vol.Schema({
             vol.Required("manufacturer"): SelectSelector(SelectSelectorConfig(
-                options=list(ADD_MANUFACTURERS), translation_key="manufacturer",
+                options=[m.lower() for m in ADD_MANUFACTURERS], translation_key="manufacturer",
                 mode=SelectSelectorMode.DROPDOWN,
             )),
         })
         return self.async_show_form(
             step_id="user",
             data_schema=self.add_suggested_values_to_schema(
-                schema, {"manufacturer": self._manufacturer}
+                schema, {"manufacturer": self._manufacturer.lower()}
             ),
             # Placeholder conservé : un navigateur qui a encore les textes de la
             # 0.8.x en cache ne doit pas afficher d'erreur de traduction.

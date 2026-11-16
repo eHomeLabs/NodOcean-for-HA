@@ -198,8 +198,8 @@
     },
     "manufacturer": {
       "options": {
-        "NodOn": "NodOn",
-        "Generic": "Generic (EEP-Profil)"
+        "nodon": "NodOn",
+        "generic": "Generic (EEP-Profil)"
       }
     }
   },

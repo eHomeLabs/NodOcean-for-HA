@@ -1,4 +1,4 @@
-# NodOcean multimarque — 0.9.0a3
+# NodOcean multimarque — 0.9.0a4
 
 **Vos équipements EnOcean dans Home Assistant, simplement.**
 
@@ -25,8 +25,8 @@ Les touches sont exposées selon le repérage du profil ; vérifier leur corresp
 1. Réaliser une sauvegarde Home Assistant sur le RPi5 ; utiliser une clé dédiée, compatible avec la fréquence des équipements testés.
 2. Télécharger le ZIP de la branche `develop/multibrand-enocean` depuis GitHub (Code → Download ZIP).
 3. Copier le dossier `custom_components/nodon_enocean` dans `/config/custom_components/` sur le RPi5, puis redémarrer Home Assistant.
-4. Ajouter/configurer NodOcean for HA dans Appareils et services. Le manifeste doit annoncer `0.9.0a3`.
-5. Ajouter un équipement : famille → fabricant → modèle, ou famille → Generic → EEP ; lire les limites puis lancer l'écoute et déclencher l'appairage selon les consignes.
+4. Ajouter/configurer NodOcean for HA dans Appareils et services. Le manifeste doit annoncer `0.9.0a4`. Après la mise à jour, vider le cache du navigateur (Ctrl+F5) : sinon HA peut afficher les textes de l'ancienne version.
+5. Ajouter un équipement : fabricant (NodOn ou Generic) → produit ; lire les limites puis lancer l'écoute et déclencher l'appairage selon les consignes.
 6. À la confirmation, vérifier l'ID imprimé sur le produit et choisir nom et pièce.
 
 Cette branche utilise le même domaine technique que la stable : elle la remplace sur l'instance de test. Aucun changement de version stable ni fusion dans `main` n'est réalisé à ce stade.
@@ -76,26 +76,33 @@ Ordre de travail :
 
 Pour chaque candidat, suivre : fabricant, modèle/référence, alias commercial, source eedomus, source constructeur, EEP confirmé ou inconnu, apprentissage, fonctions disponibles, limites et statut de validation. Distinguer « recensé », « documentation vérifiée », « tests logiciels réussis » et « testé sur matériel ». La liste utilisateur de compatibilité doit présenter seulement les fonctions réellement disponibles.
 
-## Classement fonctionnel — 0.9.0a3
+## Formulaire d'ajout — 0.9.0a4
 
-Le premier écran propose les trois familles retenues, dans cet ordre :
+Deux écrans natifs Home Assistant, avec menus déroulants :
 
-| Famille | Équipements |
-|---|---|
-| Capteurs et Sondes | Température, humidité, ouverture, présence, mesures et autres détections |
-| Actionneurs | Prises, relais, modules d’éclairage, fil pilote, volets et autres sorties pilotées |
-| Contrôleurs | Interrupteurs, télécommandes, thermostats et autres commandes utilisateur |
+1. **Fabricant** : NodOn en premier, puis Generic. Eltako et EnOcean restent au catalogue (appareils déjà ajoutés) mais ne sont plus proposés pour l'instant. La famille n'est plus demandée.
+2. **Produit** : seulement les produits du fabricant choisi. Pour NodOn, la planche des produits est affichée.
 
-Le fabricant puis les modèles sont filtrés par famille. Le parcours Generic ne propose que les EEP de cette famille ; aucun profil d’actionneur générique n’est disponible à ce stade. Les thermostats sont classés comme contrôleurs dans le cadre du catalogue futur : aucun modèle supplémentaire de thermostat n’est activé par ce classement. Les clés USB restent dans le parcours passerelle.
+Home Assistant ne sait pas filtrer une liste en direct sur un même écran : le filtrage par fabricant se fait donc au passage à l'écran 2.
 
-Cette classification pourra être affinée, sans modifier les clés des modèles ni les identifiants d’appareils et d’entités existants.
+## Profils génériques — 0.9.0a4
 
-## Formulaire unique et apparence — 0.9.0a3
+Un profil par EEP déjà utilisé par un produit NodOn. Chaque profil reprend les entités fonctionnelles du produit NodOn de référence, sans réglages constructeur, ReCom, répéteur ni version de firmware.
 
-Les trois menus déroulants natifs **Famille**, **Fabricant** et **Modèle / profil EEP** sont affichés sur le même écran. En sélectionnant Generic, choisir un modèle `EEP-…` correspondant à la famille.
+| EEP | Profil | Référence NodOn |
+|---|---|---|
+| D2-01-0F | Actionneur 1 canal | SIN-2-1-01 |
+| D2-01-12 | Actionneur 2 canaux | SIN-2-2-01 |
+| D2-01-0A | Prise commandée | ASP-2 |
+| D2-01-0E | Prise commandée avec mesure | MSP-2 |
+| D2-01-0C | Fil pilote avec mesure | SIN-2-FP-01 |
+| D2-05-00 | Volet roulant | SIN-2-RS-01 |
+| F6-02-01 | Interrupteur 4 touches | CWS-2-1 |
+| D2-03-0A | Bouton poussoir avec batterie | TSB-2 |
+| F6-04-01 | Lecteur de carte | CCS-2 |
+| D5-00-01 | Contact d'ouverture | SDO-2 |
+| A5-02-05 | Température 0 à 40 °C | STP-2 |
+| A5-04-01 | Température et humidité | STPH-2 |
+| A5-07-03 | Détecteur de présence et luminosité | PIR-2 |
 
-Les sélecteurs natifs ne filtrent pas ces listes en direct au changement d’un champ. La liste initiale contient le catalogue disponible, avec fabricant et EEP dans les libellés des modèles. Au clic sur **Suivant**, la combinaison famille/fabricant/modèle est vérifiée. Si elle est incohérente ou incomplète, le formulaire reste sur le même écran, conserve famille et fabricant, efface le modèle périmé et actualise les modèles proposés. Une combinaison valide mène directement aux consignes d’appairage. Aucun appareil n’est créé à ce stade.
-
-Présentation : composants natifs Home Assistant, menus en mode déroulant, bouton Suivant. Le rendu bleu et blanc correspond au thème clair HA ; le thème actif de l’utilisateur est respecté. La maquette est illustrative, sans interface personnalisée ni surcharge de couleurs du thème.
-
-Evology reste une cible du catalogue documentaire, pas un fabricant activé dans cette version. Aucune nouvelle compatibilité radio n’est ajoutée par cette modification du formulaire.
+Les identifiants `EEP-…` des 4 profils existants sont conservés.

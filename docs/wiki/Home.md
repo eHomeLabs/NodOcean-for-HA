@@ -25,14 +25,14 @@
 - [Plan de béta-test](Plan-de-béta-test) : les tests à faire pendant la béta.
 - **English:** [English documentation](English-documentation)
 
-## Produits pris en charge (16)
+## Produits pris en charge
 
 <img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/main/docs/images/produits-nodon.png" alt="Les 16 produits NodOn pris en charge" width="600">
 
 | Famille | Produits |
 |---|---|
 | Modules encastrés | SIN-2-1-01 Multifonction, SIN-2-2-01 Éclairage 2 canaux, SIN-2-FP-01 Fil pilote, SIN-2-RS-01 Volet roulant |
-| Prises | ASP-2 Prise intelligente, MSP-2 Micro Smart Plug + mesure |
+| Prises | ASP-2 sans mesure (D2-01-0A), ASP avec mesure (D2-01-0B, dont Ubiwizz UBID1501S), MSP-2 Micro Smart Plug + mesure |
 | Commandes | CWS-2-1 Interrupteur mural, CRC-2 Soft Remote, CFS-2 Interrupteur de sol, CCS-2 Interrupteur à carte, TSB-2 Soft Button |
 | Capteurs | SDO-2 Ouverture, SWO-2 Ouverture invisible, PIR-2 Mouvement, STP-2 Température, STPH-2 Température + humidité |
 

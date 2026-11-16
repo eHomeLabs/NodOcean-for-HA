@@ -86,6 +86,7 @@ def test_match_teach_in_per_product() -> None:
         "SIN-2-FP-01": "A0 01 46 00 0C 01 D2",
         "SIN-2-RS-01": "A0 01 46 00 00 05 D2",
         "ASP-2": "A0 01 46 00 0A 01 D2",
+        "ASP-2-METERING": "A0 01 46 00 0B 01 D2",
         "MSP-2": "A0 01 46 00 0E 01 D2",
         "TSB-2": "60 01 46 00 0A 03 D2",
     }
@@ -219,6 +220,7 @@ def test_catalog_complete() -> None:
         "STPH-2",
         "CWS-2-1",
         "ASP-2",
+        "ASP-2-METERING",
         "MSP-2",
         "TSB-2",
         "SWO-2",
@@ -230,3 +232,33 @@ def test_catalog_complete() -> None:
     for p in PRODUCTS.values():
         assert p.pairing_fr and p.pairing_en
         p.rorg_func_type  # noqa: B018
+
+
+def test_asp_metering_catalog_and_profile_isolation() -> None:
+    plain = PRODUCTS["ASP-2"]
+    metering = PRODUCTS["ASP-2-METERING"]
+    assert not plain.metering and metering.metering
+    assert plain.eep == "D2-01-0A" and metering.eep == "D2-01-0B"
+    assert "UBID1501S" in metering.variants
+    assert metering.image == plain.image
+    assert metering.manual == plain.manual
+    assert not match_teach_in(metering, t(0xD4, "A0 01 46 00 0A 01 D2"))[0]
+
+
+def test_asp_mqtt_discovery_variants() -> None:
+    from types import SimpleNamespace
+    from custom_components.nodon_enocean.mqtt_discovery import device_configs
+
+    bridge = SimpleNamespace(
+        info={"gateway": "FF8A2C00", "version": "test", "language": "fr"},
+        device_topic=lambda device: "nodocean/asp",
+        _t=lambda *parts: "/".join(("nodocean", *parts)),
+    )
+    for model in ("ASP-2", "ASP-2-METERING"):
+        device = SimpleNamespace(product=PRODUCTS[model], id_str="01A33881", title="ASP")
+        configs = device_configs(bridge, device)
+        outlet = next(c for component, _, c in configs if component == "switch")
+        assert outlet["device_class"] == "outlet"
+        measured = {c["device_class"] for component, _, c in configs if component == "sensor"}
+        assert ("power" in measured) == (model == "ASP-2-METERING")
+        assert ("energy" in measured) == (model == "ASP-2-METERING")

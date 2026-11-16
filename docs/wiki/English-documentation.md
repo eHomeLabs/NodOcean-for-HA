@@ -89,7 +89,8 @@ Factory reset: SIN-2 modules, press **> 5 s** (orange LED) then a short press; A
 | SIN-2-2-01 | 2 lights |
 | SIN-2-FP-01 | Pilot wire mode select (Off, Comfort, Comfort -1, Comfort -2, Eco, Frost protection), power, energy |
 | SIN-2-RS-01 | Cover with position |
-| ASP-2 | Outlet |
+| ASP-2 (ASP-2-1-00 / ASP-2-1-10), D2-01-0A | Outlet without metering |
+| ASP-2-METERING (ASP-2-1-01 / ASP-2-1-11 / Ubiwizz UBID1501S), D2-01-0B | Outlet, power, energy |
 | MSP-2 | Outlet, power, energy (Energy dashboard ready) |
 | CWS-2-1 / CRC-2 | Button event (keys and combinations) |
 | CFS-2 | Event (press, release) |
@@ -227,3 +228,7 @@ Publish anything to `nodocean/<product>/get` to read a module or plug's state ag
 **Home Assistant MQTT discovery (v0.6.0):** advanced option (prefix `homeassistant` by default). The bridge publishes a description of each product, so **another** Home Assistant on the same broker creates the devices and entities automatically (switches, lights, cover, pilot wire mode, sensors, opening, motion, buttons as an event entity, signal, bridge status) and controls them through `/set`. ⚠️ On the Home Assistant running NodOcean for HA, with the MQTT integration enabled, every product would show up twice: only enable it for another Home Assistant or a discovery-compatible software. Turning the option (or the bridge) off removes the products from the remote Home Assistant; a product removed from NodOcean for HA disappears there at the next bridge start. If you delete the integration while the option is on, remove the devices on the remote side.
 
 **Not available yet:** changing product settings over MQTT.
+
+### Metering ASP variant (v0.8.4)
+
+Select **EnOcean Metering Smart Plug (Ubiwizz UBID1501S)** for D2-01-0B, including manual setup. The existing ASP-2 model remains D2-01-0A without metering; existing installations are preserved. The reported Ubiwizz teach-in is covered by simulated tests; hardware validation remains pending.

@@ -28,7 +28,7 @@ Non. Les produits, leurs noms, pièces et réglages sont conservés.
 Les produits EnOcean NodOn ne permettent pas de relire leurs réglages. Home Assistant affiche la dernière valeur qu'il a envoyée. Voir [Réglages des produits](Réglages-des-produits#bon-à-savoir).
 
 **Mon produit NodOn n'est pas dans la liste.**
-La liste couvre les 16 produits EnOcean NodOn actuels. Pour en demander un autre, ouvrez une [issue](https://github.com/eHomeLabs/NodOcean-for-HA/issues).
+La liste couvre les produits EnOcean NodOn documentés, dont les deux variantes ASP avec et sans mesure. Pour en demander un autre, ouvrez une [issue](https://github.com/eHomeLabs/NodOcean-for-HA/issues).
 
 **Les produits Zigbee NodOn sont-ils pris en charge ?**
 Non, cette intégration est dédiée aux produits EnOcean. Les produits Zigbee NodOn s'intègrent avec ZHA ou Zigbee2MQTT.

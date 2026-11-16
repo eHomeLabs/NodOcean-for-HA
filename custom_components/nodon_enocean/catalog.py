@@ -6,7 +6,7 @@ fiches techniques (support.nodon.fr) — voir docs/PRODUITS.md.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 # Types d'appairage
 TEACH_UTE_BIDIR = "ute_bidir"  # l'appareil envoie une requête UTE, HA répond
@@ -57,12 +57,13 @@ class Product:
 
     @property
     def image(self) -> str:
-        return f"{_IMAGES}{self.model}.png"
+        model = "ASP-2" if self.model == "ASP-2-METERING" else self.model
+        return f"{_IMAGES}{model}.png"
 
     @property
     def manual(self) -> str | None:
         """Lien vers la notice du produit sur support.nodon.fr."""
-        article = MANUALS.get(self.model)
+        article = MANUALS.get("ASP-2" if self.model == "ASP-2-METERING" else self.model)
         return f"{_NOTICES}{article}" if article else None
 
     @property
@@ -187,8 +188,8 @@ PRODUCTS: dict[str, Product] = {
         ),
         Product(
             model="ASP-2",
-            name_fr="Prise intelligente EnOcean",
-            name_en="EnOcean Smart Plug",
+            name_fr="Prise intelligente EnOcean sans mesure",
+            name_en="EnOcean Smart Plug without metering",
             eep="D2-01-0A",
             teach_in=TEACH_UTE_BIDIR,
             variants=("ASP-2-1-00", "ASP-2-1-10"),
@@ -389,9 +390,21 @@ PRODUCTS: dict[str, Product] = {
     )
 }
 
+# Variante ASP avec mesure : même commande de relais, EEP distinct au teach-in.
+# L'identifiant ASP-2 historique reste inchangé pour les installations existantes.
+PRODUCTS["ASP-2-METERING"] = replace(
+    PRODUCTS["ASP-2"],
+    model="ASP-2-METERING",
+    name_fr="Prise intelligente EnOcean avec mesure (Ubiwizz UBID1501S)",
+    name_en="EnOcean Metering Smart Plug (Ubiwizz UBID1501S)",
+    eep="D2-01-0B",
+    metering=True,
+    variants=("ASP-2-1-01", "ASP-2-1-11", "UBID1501S"),
+)
+
 # Ordre d'affichage : actionneurs, commandes, capteurs
 _ORDER = (
-    "SIN-2-1-01", "SIN-2-2-01", "SIN-2-FP-01", "SIN-2-RS-01", "ASP-2", "MSP-2",
+    "SIN-2-1-01", "SIN-2-2-01", "SIN-2-FP-01", "SIN-2-RS-01", "ASP-2", "ASP-2-METERING", "MSP-2",
     "CWS-2-1", "CRC-2", "CFS-2", "CCS-2", "TSB-2",
     "SDO-2", "SWO-2", "PIR-2", "STP-2", "STPH-2",
 )  # fmt: skip
@@ -439,7 +452,11 @@ GERMAN: dict[str, dict[str, str]] = {
             "am Modul (Zyklus auf / ab / auf)."
         ),
     },
-    "ASP-2": {"name": "EnOcean Zwischenstecker", "pairing": _DE_PLUG},
+    "ASP-2": {"name": "EnOcean Zwischenstecker ohne Messung", "pairing": _DE_PLUG},
+    "ASP-2-METERING": {
+        "name": "EnOcean Zwischenstecker mit Messung (Ubiwizz UBID1501S)",
+        "pairing": _DE_PLUG,
+    },
     "MSP-2": {"name": "EnOcean Micro-Zwischenstecker mit Messung", "pairing": _DE_PLUG},
     "CWS-2-1": {
         "name": "EnOcean Wandschalter (batterielos)",

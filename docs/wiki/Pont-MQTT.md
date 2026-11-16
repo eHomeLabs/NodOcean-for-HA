@@ -67,7 +67,7 @@ Champs JSON par produit :
 
 | Produits | Champs |
 |---|---|
-| SIN-2-1-01, ASP-2, MSP-2 | `state` (ON / OFF), `power` (W) et `energy` (kWh) pour la MSP-2 |
+| SIN-2-1-01, ASP-2, MSP-2 | `state` (ON / OFF), `power` (W) et `energy` (kWh) pour la MSP-2 et l’ASP avec mesure (`D2-01-0B`) |
 | SIN-2-2-01 | `state_l1`, `state_l2` |
 | SIN-2-RS-01 | `position` (0 = fermé, 100 = ouvert), `state` (OPEN / CLOSED) |
 | SIN-2-FP-01 | `mode` (`off`, `comfort`, `eco`, `frost_protection`, `comfort_1`, `comfort_2`), `power`, `energy` |

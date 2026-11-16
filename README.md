@@ -20,7 +20,8 @@ Pas de profil EEP à chercher, pas d'identifiant à recopier, pas de fichier YAM
 | <img src="./docs/images/products/SIN-2-2-01.png" alt="SIN-2-2-01" width="64"> | **SIN-2-2-01** | Module Éclairage ON/OFF 2 canaux | 2 lumières |
 | <img src="./docs/images/products/SIN-2-FP-01.png" alt="SIN-2-FP-01" width="64"> | **SIN-2-FP-01** | Module Chauffage Fil Pilote | Sélecteur de mode (6 ordres) + puissance + énergie |
 | <img src="./docs/images/products/SIN-2-RS-01.png" alt="SIN-2-RS-01" width="64"> | **SIN-2-RS-01** | Module Volet Roulant | Volet avec position |
-| <img src="./docs/images/products/ASP-2.png" alt="ASP-2" width="64"> | **ASP-2-1-00 (FR)<br>ASP-2-1-10 (DE)** | Prise intelligente | Prise |
+| <img src="./docs/images/products/ASP-2.png" alt="ASP-2" width="64"> | **ASP-2-1-00 (FR)<br>ASP-2-1-10 (DE)** | Prise intelligente sans mesure (`D2-01-0A`) | Prise |
+| <img src="./docs/images/products/ASP-2.png" alt="ASP avec mesure" width="64"> | **ASP-2-1-01 (FR)<br>ASP-2-1-11 (DE)<br>Ubiwizz UBID1501S** | Prise intelligente avec mesure (`D2-01-0B`) | Prise + puissance + énergie |
 | <img src="./docs/images/products/MSP-2.png" alt="MSP-2" width="64"> | **MSP-2-1-01 (FR)<br>MSP-2-1-11 (DE)** | Micro Smart Plug + Mesure | Prise + puissance + énergie |
 | <img src="./docs/images/products/CWS-2-1.png" alt="CWS-2-1" width="64"> | **CWS-2-1-01** | Interrupteur mural sans pile | Événements par touche (haut/bas, gauche/droite, combinaisons) |
 | <img src="./docs/images/products/CRC-2.png" alt="CRC-2" width="64"> | **CRC-2-6-0x** | Soft Remote | Événements par bouton (4 boutons, combinaisons) |
@@ -215,7 +216,7 @@ Existing HACS installations and custom repositories migrate automatically on Hom
 
 **Add a product:** open the integration, click **Add a NodOn product**, choose the model, follow the on-screen pairing instructions and give it a name.
 
-Supported: SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, SIN-2-RS-01, ASP-2, MSP-2, CWS-2-1, CRC-2, CFS-2, CCS-2, TSB-2, SDO-2, SWO-2, PIR-2, STP-2, STPH-2.
+Supported: SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, SIN-2-RS-01, ASP-2 (D2-01-0A, no metering), ASP-2-METERING (D2-01-0B: ASP-2-1-01 / ASP-2-1-11 / Ubiwizz UBID1501S, power and energy), MSP-2, CWS-2-1, CRC-2, CFS-2, CCS-2, TSB-2, SDO-2, SWO-2, PIR-2, STP-2, STPH-2.
 
 ### Feedback and suggestions
 

@@ -43,15 +43,14 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     def factory(device: NodOnDevice) -> list:
-        if device.product.model == "CWS-2-1" or (
-            device.product.manufacturer != "NodOn" and "button_events" in device.product.capabilities
-        ):
+        model = device.product.profile_model
+        if model == "CWS-2-1":
             return [NodOnButtonEvent(device, WALL_SWITCH_EVENTS, "wall_switch")]
-        if device.product.model == "TSB-2":
+        if model == "TSB-2":
             return [NodOnButtonEvent(device, SOFT_BUTTON_EVENTS, "soft_button")]
-        if device.product.model == "CRC-2":
+        if model == "CRC-2":
             return [NodOnButtonEvent(device, SOFT_REMOTE_EVENTS, "soft_remote")]
-        if device.product.model == "CFS-2":
+        if model == "CFS-2":
             return [NodOnButtonEvent(device, FLOOR_SWITCH_EVENTS, "floor_switch")]
         return []
 
@@ -71,7 +70,7 @@ class NodOnButtonEvent(NodOnEntity, EventEntity):
     def _on_state(self, keys: set[str]) -> None:
         event = self.device.state.pop("event", None)
         if (
-            self.device.product.model == "CWS-2-1"
+            self.device.product.profile_model == "CWS-2-1"
             and self.device.settings.get("buttons") == "2"
         ):
             if event != "release":

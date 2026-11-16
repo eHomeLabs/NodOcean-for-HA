@@ -52,11 +52,19 @@
       "step": {
         "user": {
           "title": "Ajouter un équipement EnOcean",
-          "description": "Sélectionnez la famille, le fabricant et le modèle sur ce même écran. Generic permet de choisir un profil EEP. Les modèles sont vérifiés avec vos choix au clic sur Suivant ; en cas de combinaison incohérente, la liste est actualisée. Les modèles des autres fabricants restent à valider sur matériel.",
+          "description": "{gallery}Choisissez le produit EnOcean à ajouter. Tout est préconfiguré : il n'y a rien d'autre à renseigner.",
           "data": {
-            "category": "Famille",
-            "manufacturer": "Fabricant",
-            "model": "Modèle / profil EEP"
+            "manufacturer": "Fabricant"
+          },
+          "data_description": {
+            "manufacturer": "Generic : tout produit EnOcean qui utilise un profil EEP déjà pris en charge pour les produits NodOn."
+          }
+        },
+        "product": {
+          "title": "Choisissez le produit",
+          "description": "{gallery}",
+          "data": {
+            "model": "Produit"
           }
         },
         "instructions": {
@@ -143,9 +151,7 @@
         "invalid_code": "Code invalide : 8 caractères hexadécimaux (0-9, A-F) attendus.",
         "wrong_code": "Code refusé ou produit muet : vérifiez le code et que le produit est sous tension.",
         "invalid_product": "Modèle invalide pour ce fabricant.",
-        "unsupported_eep": "Profil non pris en charge.",
-        "invalid_combination": "Sélectionnez un modèle correspondant à la famille et au fabricant. La liste a été actualisée.",
-        "no_supported_model": "Aucun modèle disponible pour cette combinaison. Changez la famille ou le fabricant, puis cliquez sur Suivant."
+        "unsupported_eep": "Profil non pris en charge."
       },
       "abort": {
         "already_configured": "Ce produit est déjà configuré.",
@@ -190,11 +196,10 @@
         "card_out": "Carte retirée"
       }
     },
-    "device_category": {
+    "manufacturer": {
       "options": {
-        "sensors": "Capteurs et Sondes",
-        "actuators": "Actionneurs",
-        "controllers": "Contrôleurs"
+        "NodOn": "NodOn",
+        "Generic": "Generic (profil EEP)"
       }
     }
   },

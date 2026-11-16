@@ -26,7 +26,7 @@ async def async_setup_entry(
     def factory(device: NodOnDevice) -> list:
         model = device.product.model
         entities: list[SelectEntity] = []
-        if model == "SIN-2-FP-01":
+        if device.product.profile_model == "SIN-2-FP-01":
             entities.append(NodOnPilotWire(device))
         if model in features.POWER_ON_STATE:
             entities.append(
@@ -38,7 +38,7 @@ async def async_setup_entry(
             entities.append(NodOnRsSwitchTypeSelect(device))
         if model in features.BUTTON_MODE:
             entities.append(NodOnButtonModeSelect(device, "buttons", BUTTON_MODES))
-        if device.product.is_actuator:
+        if device.product.is_actuator and device.product.is_nodon:
             entities.append(NodOnRepeater(device))
         return entities
 

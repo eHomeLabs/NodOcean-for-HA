@@ -140,12 +140,11 @@ async def async_setup_entry(
         entities: list[SensorEntity] = [
             (NodOnEnergySensor if desc.key == "energy" else NodOnSensor)(device, desc)
             for desc in SENSORS
-            if device.product.model in desc.models
-            or desc.key in device.product.capabilities
+            if device.product.profile_model in desc.models
             or (desc.metering and device.product.metering)
         ]
         entities.append(NodOnRssiSensor(device))
-        if device.product.is_actuator:
+        if device.product.is_actuator and device.product.is_nodon:
             entities.append(NodOnFirmwareSensor(device))
         if device.product.model in features.RECOM:
             entities.append(NodOnLinksSensor(device))

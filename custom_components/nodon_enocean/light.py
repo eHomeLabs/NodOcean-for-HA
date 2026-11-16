@@ -19,7 +19,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     def factory(device: NodOnDevice) -> list:
-        if device.product.model == "SIN-2-2-01":
+        if device.product.profile_model == "SIN-2-2-01":
             return [NodOnLight(device, ch) for ch in range(device.product.channels)]
         return []
 

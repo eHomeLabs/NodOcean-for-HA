@@ -24,7 +24,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     def factory(device: NodOnDevice) -> list:
-        if device.product.model == "SIN-2-RS-01":
+        if device.product.profile_model == "SIN-2-RS-01":
             return [NodOnCover(device)]
         return []
 

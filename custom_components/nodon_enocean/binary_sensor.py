@@ -23,9 +23,9 @@ async def async_setup_entry(
     def factory(device: NodOnDevice) -> list:
         if device.product.eep == "D5-00-01":
             return [NodOnOpening(device)]
-        if device.product.model == "CCS-2":
+        if device.product.profile_model == "CCS-2":
             return [NodOnCard(device)]
-        if device.product.model == "PIR-2":
+        if device.product.profile_model == "PIR-2":
             return [NodOnMotion(device)]
         return []
 

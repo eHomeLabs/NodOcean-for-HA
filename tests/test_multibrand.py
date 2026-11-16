@@ -3,14 +3,14 @@
 import asyncio
 
 import pytest
-from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.data_entry_flow import FlowResultType, InvalidData
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.nodon_enocean.catalog import (
+    ADD_MANUFACTURERS,
     GENERIC_PRODUCTS,
     PRODUCTS,
-    manufacturers,
 )
 from custom_components.nodon_enocean.const import DOMAIN
 from custom_components.nodon_enocean.device_trigger import async_get_triggers
@@ -19,48 +19,22 @@ from .test_integration import _pair, _setup_gateway
 
 
 def test_catalogue_is_bounded():
-    assert manufacturers() == ["Eltako", "EnOcean", "NodOn"]
-    assert set(GENERIC_PRODUCTS) == {"F6-02-01", "D5-00-01", "A5-02-05", "A5-04-01"}
+    assert ADD_MANUFACTURERS == ("NodOn", "Generic")
+    nodon = {p.eep for p in PRODUCTS.values() if p.manufacturer == "NodOn"}
+    # One generic profile per EEP already used by a NodOn product, nothing more.
+    assert set(GENERIC_PRODUCTS) == nodon
     assert PRODUCTS["SIN-2-1-01"].manufacturer == "NodOn"
     assert PRODUCTS["SIN-2-1-01"].model == "SIN-2-1-01"
-    for p in PRODUCTS.values():
-        if p.manufacturer != "NodOn":
-            assert not p.is_actuator and not p.metering and p.image is None
+    for code, p in GENERIC_PRODUCTS.items():
+        base = PRODUCTS[p.base_model]
+        assert base.manufacturer == "NodOn" and base.eep == code
+        assert p.teach_in == base.teach_in and p.channels == base.channels
+        assert p.metering == base.metering and p.image is None
 
 
 @pytest.mark.parametrize(
     ("manufacturer", "selection", "rorg", "teach", "data", "domain", "key", "expected"),
     [
-        (
-            "EnOcean",
-            {"model": "EnOcean-EMCSA"},
-            0xD5,
-            "00",
-            "08",
-            "binary_sensor",
-            "opening",
-            "on",
-        ),
-        (
-            "Eltako",
-            {"model": "Eltako-FT55"},
-            0xF6,
-            "30",
-            "00",
-            "event",
-            "wall_switch",
-            "release",
-        ),
-        (
-            "Eltako",
-            {"model": "Eltako-FT4F"},
-            0xF6,
-            "30",
-            "00",
-            "event",
-            "wall_switch",
-            "release",
-        ),
         (
             "Generic",
             {"eep": "F6-02-01"},
@@ -116,12 +90,10 @@ async def test_receive_flow(
         else GENERIC_PRODUCTS[selection["eep"]]
     )
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"],
-        {
-            "category": product.category,
-            "manufacturer": manufacturer,
-            "model": product.model,
-        },
+        result["flow_id"], {"manufacturer": manufacturer}
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"model": product.model}
     )
     assert result["step_id"] == "instructions"
     assert result["description_placeholders"]["support"]
@@ -208,57 +180,76 @@ def test_generic_pairing_rejects_wrong_profile():
     )[0]
 
 
-def test_functional_families():
-    from custom_components.nodon_enocean.catalog import (
-        CATEGORIES,
-        products_for_manufacturer,
-    )
-
-    assert CATEGORIES == ("sensors", "actuators", "controllers")
-    assert PRODUCTS["SIN-2-RS-01"].category == "actuators"
-    assert PRODUCTS["ASP-2"].category == "actuators"
-    assert PRODUCTS["CCS-2"].category == "controllers"
-    assert PRODUCTS["TSB-2"].category == "controllers"
-    assert PRODUCTS["STPH-2"].category == "sensors"
-    assert manufacturers("actuators") == ["NodOn"]
-    assert manufacturers("controllers") == ["Eltako", "NodOn"]
-    assert all(
-        p.category == "sensors" for p in products_for_manufacturer("NodOn", "sensors")
-    )
-
-
-async def test_single_form_invalid_combination(hass, dongle):
+async def test_two_step_form(hass, dongle):
     entry = await _setup_gateway(hass)
     result = await hass.config_entries.subentries.async_init(
         (entry.entry_id, "device"), context={"source": "user"}
     )
     assert result["step_id"] == "user"
+    assert result["description_placeholders"] == {"gallery": ""}
     fields = {key.schema: value for key, value in result["data_schema"].schema.items()}
-    assert set(fields) == {"category", "manufacturer", "model"}
-    assert all(value.config["mode"] == "dropdown" for value in fields.values())
+    assert set(fields) == {"manufacturer"}
+    assert fields["manufacturer"].config["options"] == ["NodOn", "Generic"]
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"],
-        {"category": "sensors", "manufacturer": "NodOn", "model": "Eltako-FT55"},
+        result["flow_id"], {"manufacturer": "NodOn"}
     )
-    assert result["step_id"] == "user"
-    assert result["errors"] == {"model": "invalid_combination"}
+    assert result["step_id"] == "product"
+    assert "produits-nodon.png" in result["description_placeholders"]["gallery"]
     fields = {key.schema: value for key, value in result["data_schema"].schema.items()}
-    assert all(
-        PRODUCTS[opt["value"]].category == "sensors"
-        for opt in fields["model"].config["options"]
+    models = [opt["value"] for opt in fields["model"].config["options"]]
+    assert models and all(PRODUCTS[m].manufacturer == "NodOn" for m in models)
+    # A product of another manufacturer is not in the list: refused.
+    with pytest.raises(InvalidData):
+        await hass.config_entries.subentries.async_configure(
+            result["flow_id"], {"model": "EEP-D5-00-01"}
+        )
+    hass.config_entries.subentries.async_abort(result["flow_id"])
+
+    result = await hass.config_entries.subentries.async_init(
+        (entry.entry_id, "device"), context={"source": "user"}
     )
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"category": "actuators", "manufacturer": "Generic"}
+        result["flow_id"], {"manufacturer": "Generic"}
     )
-    assert result["errors"] == {"model": "no_supported_model"}
-    assert not entry.subentries
+    assert result["description_placeholders"]["gallery"] == ""
+    fields = {key.schema: value for key, value in result["data_schema"].schema.items()}
+    options = fields["model"].config["options"]
+    assert {opt["value"] for opt in options} == {p.model for p in GENERIC_PRODUCTS.values()}
+    assert all(opt["label"].startswith(PRODUCTS[opt["value"]].eep) for opt in options)
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"category": "sensors", "manufacturer": "Generic"}
-    )
-    assert result["errors"] == {"model": "invalid_combination"}
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"],
-        {"category": "sensors", "manufacturer": "Generic", "model": "EEP-D5-00-01"},
+        result["flow_id"], {"model": "EEP-D5-00-01"}
     )
     assert result["step_id"] == "instructions"
     hass.config_entries.subentries.async_abort(result["flow_id"])
+    assert not entry.subentries
+
+
+async def test_generic_actuator(hass, dongle):
+    """Generic D2-01-0F: relay switch, no NodOn-only entities."""
+    entry = await _setup_gateway(hass)
+    result = await hass.config_entries.subentries.async_init(
+        (entry.entry_id, "device"), context={"source": "user"}
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"manufacturer": "Generic"}
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"model": "EEP-D2-01-0F"}
+    )
+    result = await hass.config_entries.subentries.async_configure(result["flow_id"], {})
+    await asyncio.sleep(0)
+    # UTE teach-in request from another manufacturer (0x00D).
+    dongle.inject(0xD4, bytes.fromhex("A0 01 0D 00 0F 01 D2"), 0x01020305)
+    await hass.async_block_till_done()
+    result = await hass.config_entries.subentries.async_configure(result["flow_id"])
+    assert result["step_id"] == "confirm", result
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"name": "Relais générique"}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    registry = er.async_get(hass)
+    uids = {e.unique_id for e in registry.entities.values()}
+    assert any(u.startswith("01020305_") and u.endswith("_switch") or u == "01020305_switch" for u in uids), uids
+    for key in ("help", "repeater", "firmware", "links", "recom", "led", "default_state"):
+        assert not any(u.startswith("01020305") and key in u for u in uids), (key, uids)

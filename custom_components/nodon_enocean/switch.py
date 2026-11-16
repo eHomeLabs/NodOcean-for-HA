@@ -35,8 +35,8 @@ async def async_setup_entry(
     def factory(device: NodOnDevice) -> list:
         model = device.product.model
         entities: list[SwitchEntity] = []
-        if model in SWITCH_MODELS:
-            entities.append(NodOnSwitch(device, SWITCH_MODELS[model]))
+        if device.product.profile_model in SWITCH_MODELS:
+            entities.append(NodOnSwitch(device, SWITCH_MODELS[device.product.profile_model]))
         entities.extend(
             NodOnSettingSwitch(device, setting)
             for setting, models in CONFIG_SWITCHES.items()

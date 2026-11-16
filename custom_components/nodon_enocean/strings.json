@@ -52,11 +52,19 @@
       "step": {
         "user": {
           "title": "Add an EnOcean device",
-          "description": "Select family, manufacturer and model on this screen. Generic offers EEP profiles. The combination is checked on Next; incompatible choices refresh the model list. Other manufacturers await hardware validation.",
+          "description": "{gallery}Choose the EnOcean product to add. Everything is preconfigured: there is nothing else to fill in.",
           "data": {
-            "category": "Family",
-            "manufacturer": "Manufacturer",
-            "model": "Model / EEP profile"
+            "manufacturer": "Manufacturer"
+          },
+          "data_description": {
+            "manufacturer": "Generic: any EnOcean product using an EEP profile already supported for NodOn products."
+          }
+        },
+        "product": {
+          "title": "Choose the product",
+          "description": "{gallery}",
+          "data": {
+            "model": "Product"
           }
         },
         "instructions": {
@@ -143,9 +151,7 @@
         "invalid_code": "Invalid code: 8 hexadecimal characters (0-9, A-F) expected.",
         "wrong_code": "Code rejected or no answer: check the code and that the product is powered.",
         "invalid_product": "Invalid model for this manufacturer.",
-        "unsupported_eep": "Unsupported EEP profile.",
-        "invalid_combination": "Choose a model matching the family and manufacturer. The list has been refreshed.",
-        "no_supported_model": "No supported model for this combination. Change family or manufacturer and click Next."
+        "unsupported_eep": "Unsupported EEP profile."
       },
       "abort": {
         "already_configured": "This product is already configured.",
@@ -190,11 +196,10 @@
         "card_out": "Card removed"
       }
     },
-    "device_category": {
+    "manufacturer": {
       "options": {
-        "sensors": "Sensors and probes",
-        "actuators": "Actuators",
-        "controllers": "Controllers"
+        "NodOn": "NodOn",
+        "Generic": "Generic (EEP profile)"
       }
     }
   },

@@ -46,15 +46,14 @@ def _trigger_types(hass: HomeAssistant, device_id: str) -> list[str]:
         for nodon in runtime.devices.values():
             if nodon.id_str != ident:
                 continue
-            if nodon.product.model == "TSB-2":
+            model = nodon.product.profile_model
+            if model == "TSB-2":
                 return SOFT_BUTTON
-            if nodon.product.model == "CRC-2":
+            if model == "CRC-2":
                 return FOUR_BUTTONS
-            if nodon.product.model == "CFS-2":
+            if model == "CFS-2":
                 return FLOOR_SWITCH
-            if nodon.product.model == "CWS-2-1" or (
-                nodon.product.manufacturer != "NodOn" and "button_events" in nodon.product.capabilities
-            ):
+            if model == "CWS-2-1":
                 return (
                     TWO_BUTTONS
                     if nodon.settings.get("buttons") == "2"

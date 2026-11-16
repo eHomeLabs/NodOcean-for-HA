@@ -104,7 +104,7 @@ def _names(bridge: MqttBridge) -> dict[str, str]:
 def device_configs(bridge: MqttBridge, device: NodOnDevice) -> list[tuple[str, str, dict]]:
     """(composant, object_id, configuration) pour un produit."""
     product = device.product
-    model = product.model
+    model = product.profile_model
     eep = product.eep
     topic = bridge.device_topic(device)
     names = _names(bridge)
@@ -197,7 +197,7 @@ def device_configs(bridge: MqttBridge, device: NodOnDevice) -> list[tuple[str, s
         if key in ("power", "energy"):
             if not product.metering:
                 continue
-        elif model not in SENSOR_MODELS[key] and key not in product.capabilities:
+        elif model not in SENSOR_MODELS[key]:
             continue
         cfg: dict[str, Any] = {
             "device_class": dclass,
@@ -226,8 +226,6 @@ def device_configs(bridge: MqttBridge, device: NodOnDevice) -> list[tuple[str, s
                 cfg["device_class"] = dclass
             add("binary_sensor", key, cfg)
     event_types = EVENT_TYPES.get(model)
-    if event_types is None and "button_events" in product.capabilities:
-        event_types = WALL_SWITCH_EVENTS
     if event_types:
         add(
             "event",

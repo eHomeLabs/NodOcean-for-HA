@@ -535,7 +535,7 @@ class MqttBridge:
                 )
             event = device.state.get("event") if "event" in keys else None
             if event:
-                if device.product.model == "CWS-2-1" and device.settings.get("buttons") == "2":
+                if device.product.profile_model == "CWS-2-1" and device.settings.get("buttons") == "2":
                     event = _TWO_BUTTON_MAP.get(event, event)
                 self._publish(topic + "/action", event, False)
             self._publish_state(device)

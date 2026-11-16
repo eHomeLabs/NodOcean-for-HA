@@ -156,7 +156,7 @@ def device_configs(bridge: MqttBridge, device: NodOnDevice) -> list[tuple[str, s
                     "state_on": "ON",
                     "state_off": "OFF",
                     "value_template": _v("state"),
-                    "device_class": "outlet" if model in ("ASP-2", "MSP-2") else "switch",
+                    "device_class": "outlet" if model in ("ASP-2", "ASP-2-METERING", "MSP-2") else "switch",
                 },
             )
     if eep == "D2-05-00":

@@ -14,6 +14,7 @@ Fabricant EnOcean NodOn : **0x046**.
 | SIN-2-FP-01 Fil Pilote | D2-01-0C | 3 appuis en moins de 2 s | `08 0M` mode (0 Arrêt, 1 Confort, 2 Éco, 3 Hors-gel, 4 Confort-1, 5 Confort-2), `09` lecture, `06 20` / `06 00` mesures | `0A 0M`, `07 …` mesure |
 | SIN-2-RS-01 Volet Roulant | D2-05-00 | 3 appuis rapides | `PP 00 00 01` position (0 = haut, 0x64 = bas), `02` stop, `03` lecture | `PP 00 00 04` |
 | ASP-2 Smart Plug | D2-01-0A | appui 2 s (LED rouge), requête toutes les 3 s pendant 30 s | `01 00 64/00`, `03 1E` | `04 60 E4/80` |
+| ASP-2 Metering Smart Plug (ASP-2-1-01 / ASP-2-1-11 / Ubiwizz UBID1501S) | D2-01-0B | appui 2 s (LED rouge) | `01 00 64/00`, `03 1E`, `06 20` puissance, `06 00` énergie | `04 …`, `07 …` mesure |
 | MSP-2 Micro Smart Plug + Mesure | D2-01-0E | appui 2 s (LED rouge) | `01 00 64/00`, `03 1E`, `06 20` puissance, `06 00` énergie | `04 61 E4/80`, `07 UC VV VV VV VV` |
 
 **Mesure (CMD 0x7)** : DB5 bits 7-5 = unité (0 Ws, 1 Wh, 2 kWh, 3 W, 4 kW), bits 4-0 = canal ; DB4..DB1 = valeur sur 32 bits.
@@ -34,3 +35,9 @@ Fabricant EnOcean NodOn : **0x046**.
 | CCS-2 Interrupteur à carte | F6-04-01 | insertion d'une carte | `30` carte insérée, `00` carte retirée |
 | PIR-2 Détecteur de mouvement | A5-07-03 | 1 appui sur le bouton Pairing (teach-in 4BS) | DB3 × 0,02 = tension pile (V) ; DB2/DB1 10 bits = luminosité 0 à 1000 lx ; DB0 bit 7 = mouvement ; émission toutes les 15 à 21 min ou au changement |
 | TSB-2 Soft Button | D2-03-0A | 5 appuis brefs (UTE unidirectionnel `60 01 46 00 0A 03 D2`) | `BB YY` : BB = batterie en %, YY 1 simple / 2 double / 3 long / 4 fin d'appui long |
+
+## Variante ASP avec mesure (v0.8.4)
+
+Choisir **Prise intelligente EnOcean avec mesure (Ubiwizz UBID1501S)** pour un teach-in `A0 01 46 00 0B 01 D2`. Le profil sans mesure `D2-01-0A` reste distinct.
+
+Source : [fiche NodOn Metering Smart Plug](https://www.enocean-alliance.org/wp-content/uploads/2017/10/NodOn_MeteringSmartPlug_EnOcean_Datasheet_EN.pdf). La trame Ubiwizz est issue du retour utilisateur ; les tests sont simulés, la validation sur la prise réelle reste à faire.

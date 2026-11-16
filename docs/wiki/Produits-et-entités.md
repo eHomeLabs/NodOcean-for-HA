@@ -41,3 +41,10 @@ Pour s'en servir, utilisez les déclencheurs d'appareil dans les automatisations
 ## Interrogation des actionneurs
 
 Toutes les 60 s, l'intégration demande aux modules et aux prises leur état (et leurs mesures pour MSP-2 et SIN-2-FP-01). Un changement fait au bouton local ou depuis une autre commande est donc remonté dans Home Assistant.
+
+## ASP avec et sans mesure (v0.8.4)
+
+- **ASP-2-1-00 / ASP-2-1-10** : `D2-01-0A`, prise sans mesure.
+- **ASP-2-1-01 / ASP-2-1-11 / Ubiwizz UBID1501S** : `D2-01-0B`, prise avec puissance et énergie. Choisir la nouvelle entrée **avec mesure** lors de l’ajout, automatique ou manuel.
+
+Les appareils déjà ajoutés avec le modèle ASP-2 sont conservés. Validation radio matérielle de la variante Ubiwizz à confirmer.

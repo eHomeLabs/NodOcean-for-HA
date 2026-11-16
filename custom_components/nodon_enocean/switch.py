@@ -23,6 +23,7 @@ CONFIG_SWITCHES = {
 SWITCH_MODELS = {
     "SIN-2-1-01": None,
     "ASP-2": SwitchDeviceClass.OUTLET,
+    "ASP-2-METERING": SwitchDeviceClass.OUTLET,
     "MSP-2": SwitchDeviceClass.OUTLET,
 }
 

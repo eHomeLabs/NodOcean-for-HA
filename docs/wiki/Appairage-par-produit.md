@@ -77,3 +77,10 @@ Les procédures détaillées sont dans les notices NodOn (lien **Visiter** sur l
 | PIR-2 | [Notice](https://support.nodon.fr/support/solutions/articles/150000053859) |
 | STP-2 | [Notice](https://support.nodon.fr/support/solutions/articles/150000053856) |
 | STPH-2 | [Notice](https://support.nodon.fr/support/solutions/articles/150000053858) |
+
+## ASP avec et sans mesure (v0.8.4)
+
+- **ASP-2-1-00 / ASP-2-1-10** : `D2-01-0A`, prise sans mesure.
+- **ASP-2-1-01 / ASP-2-1-11 / Ubiwizz UBID1501S** : `D2-01-0B`, prise avec puissance et énergie. Choisir la nouvelle entrée **avec mesure** lors de l’ajout, automatique ou manuel.
+
+Les appareils déjà ajoutés avec le modèle ASP-2 sont conservés. Validation radio matérielle de la variante Ubiwizz à confirmer.

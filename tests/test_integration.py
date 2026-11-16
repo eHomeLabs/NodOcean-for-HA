@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 
+from custom_components.nodon_enocean.catalog import PRODUCTS
 from custom_components.nodon_enocean.const import DOMAIN
 
 from .fake_dongle import BASE_ID
@@ -43,7 +44,7 @@ async def _pair(hass, entry, dongle, model, inject, name, area_id=None, new_area
         result["flow_id"], {"model": model}
     )
     assert result["step_id"] == "instructions"
-    assert model in result["description_placeholders"]["model"]
+    assert PRODUCTS[model].references == result["description_placeholders"]["model"]
     result = await hass.config_entries.subentries.async_configure(result["flow_id"], {})
     assert result["type"] is FlowResultType.SHOW_PROGRESS
     await asyncio.sleep(0)
@@ -245,3 +246,52 @@ async def test_manual_entry_after_timeout(hass: HomeAssistant, dongle, monkeypat
     fake.inject(0xD5, bytes.fromhex("08"), 0x05000099)
     await hass.async_block_till_done()
     assert hass.states.get(opening).state == "on"
+
+
+async def test_asp_variants(hass: HomeAssistant, dongle) -> None:
+    """Reported Ubiwizz UTE pairs, exposes metering, and survives reload."""
+    entry = await _setup_gateway(hass)
+    registry = er.async_get(hass)
+    for model, device_id, profile, name in (
+        ("ASP-2", 0x01A33880, "0A", "ASP sans mesure"),
+        ("ASP-2-METERING", 0x01A33881, "0B", "Ubiwizz"),
+    ):
+        entry = await _pair(
+            hass, entry, dongle, model,
+            lambda: dongle.inject(0xD4, bytes.fromhex(f"A0 01 46 00 {profile} 01 D2"), device_id),
+            name,
+        )
+        answer = [s for s in dongle.sent if s.rorg == 0xD4][-1]
+        assert answer.payload == bytes.fromhex(f"91 01 46 00 {profile} 01 D2")
+        assert answer.destination == device_id
+        identity = f"{device_id:08X}"
+        switch = registry.async_get_entity_id("switch", DOMAIN, f"{identity}_switch")
+        assert switch
+        assert hass.states.get(switch).attributes["device_class"] == "outlet"
+        power = registry.async_get_entity_id("sensor", DOMAIN, f"{identity}_power")
+        energy = registry.async_get_entity_id("sensor", DOMAIN, f"{identity}_energy")
+        if model == "ASP-2":
+            assert power is None and energy is None
+        else:
+            assert power and energy
+            dongle.inject(0xD2, bytes.fromhex("07 60 00 00 00 2A"), device_id)
+            dongle.inject(0xD2, bytes.fromhex("07 20 00 00 03 E8"), device_id)
+            await hass.async_block_till_done()
+            assert float(hass.states.get(power).state) == 42.0
+            assert float(hass.states.get(energy).state) == 1.0
+        dongle.sent.clear()
+        await hass.services.async_call("switch", "turn_on", {"entity_id": switch}, blocking=True)
+        command = [s for s in dongle.sent if s.rorg == 0xD2][-1]
+        assert command.payload == bytes.fromhex("01 00 64")
+        assert command.destination == device_id
+        dongle.inject(0xD2, bytes.fromhex("04 60 80"), device_id)
+        await hass.async_block_till_done()
+        assert hass.states.get(switch).state == "off"
+
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert hass.config_entries.async_get_entry(entry.entry_id).state is ConfigEntryState.LOADED
+    assert registry.async_get_entity_id("sensor", DOMAIN, "01A33881_power") == power
+    dongle.inject(0xD2, bytes.fromhex("07 60 00 00 00 64"), 0x01A33881)
+    await hass.async_block_till_done()
+    assert float(hass.states.get(power).state) == 100.0

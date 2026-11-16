@@ -1,4 +1,4 @@
-<p align="center"><a href="https://github.com/eHomeLabs"><img src="https://avatars.githubusercontent.com/u/316657149?s=240" alt="eHome Labs" width="120" height="120"></a><br><strong>eHome Labs</strong></p>
+<p align="center"><img src="https://raw.githubusercontent.com/eHomeLabs/NodOcean-for-HA/refs/heads/develop/multibrand-enocean/docs/images/logo-readme-nodocean.png" alt="NodOcean for HA" width="420"><br>Un projet <a href="https://github.com/eHomeLabs"><strong>eHome Labs</strong></a></p>
 
 # NodOcean for HA
 

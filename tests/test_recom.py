@@ -393,7 +393,7 @@ async def test_unlock_button_and_code_storage(hass: HomeAssistant, dongle) -> No
     await hass.async_block_till_done(wait_background_tasks=True)
     assert fake.code is None
     security = _entity(hass, "sensor", "recom_security", SIN21)
-    assert hass.states.get(security).state == "not_assigned"
+    assert hass.states.get(security).state == "pending"
     unlock = _entity(hass, "button", "recom_unlock", SIN21)
     try:
         await hass.services.async_call("button", "press", {"entity_id": unlock}, blocking=True)
@@ -526,3 +526,80 @@ async def test_unlock_no_answer_at_all(hass: HomeAssistant, dongle) -> None:
         assert "Ping" in str(err)
     else:
         raise AssertionError("le bouton aurait dû échouer")
+
+
+async def test_code_saved_before_send_and_reused(hass, dongle, hass_storage, monkeypatch):
+    """Lost Set Code and Unlock replies must not lose the candidate across reload."""
+    from unittest.mock import AsyncMock
+    from custom_components.nodon_enocean import _code_store_key
+    from custom_components.nodon_enocean.gateway import Gateway
+
+    fake = FakeReComDevice(dongle, SIN21)
+    original = Gateway.set_code
+    attempted = []
+
+    async def lost_ack(gateway, device_id, sender, code):
+        entry = hass.config_entries.async_entries(DOMAIN)[0]
+        stored = hass_storage[_code_store_key(entry)]["data"]
+        assert stored[f"{device_id:08X}"] == f"{code:08X}"
+        assert stored[f"{device_id:08X}_pending"] == "1"
+        attempted.append(code)
+        await original(gateway, device_id, sender, code)
+        return False
+
+    monkeypatch.setattr(Gateway, "set_code", lost_ack)
+    monkeypatch.setattr(Gateway, "unlock", AsyncMock(return_value=False))
+    entry = await _setup_gateway(hass)
+    entry = await _pair(hass, entry, dongle, "SIN-2-1-01",
+                        lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0F 01 D2"), SIN21), "Lampe")
+    await hass.async_block_till_done(wait_background_tasks=True)
+    device = next(iter(entry.runtime_data.devices.values()))
+    code = device.recom_code
+    assert code == fake.code and device.recom_pending
+    assert hass.states.get(_entity(hass, "sensor", "recom_security", SIN21)).state == "pending"
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+    device = next(iter(entry.runtime_data.devices.values()))
+    assert device.recom_code == code and device.recom_pending
+    monkeypatch.setattr(Gateway, "unlock", AsyncMock(return_value=True))
+    assert await device.unlock_recom() == "unlocked"
+    assert not device.recom_pending
+    assert attempted == [code]
+    assert f"{SIN21:08X}_pending" not in hass_storage[_code_store_key(entry)]["data"]
+
+
+async def test_code_write_failure_prevents_radio_assignment(hass, dongle, monkeypatch):
+    from unittest.mock import AsyncMock
+    from custom_components.nodon_enocean.gateway import Gateway
+    from custom_components.nodon_enocean.device import NodOnDevice
+    from custom_components.nodon_enocean.catalog import PRODUCTS
+    import pytest
+
+    gateway = Gateway("/dev/test")
+    gateway.sender_id = lambda offset: 0xFF800001
+    gateway.set_code = AsyncMock()
+    device = NodOnDevice(gateway, PRODUCTS["SIN-2-1-01"], SIN21, 1, "test", "Test")
+    device.on_code_change = AsyncMock(side_effect=OSError("disk full"))
+    with pytest.raises(OSError, match="disk full"):
+        await device.unlock_recom()
+    gateway.set_code.assert_not_awaited()
+    assert device.recom_code is None
+
+
+async def test_confirmed_code_never_replaced_on_timeout(hass, dongle):
+    from unittest.mock import AsyncMock
+    from custom_components.nodon_enocean.gateway import Gateway, ReComError
+    from custom_components.nodon_enocean.device import NodOnDevice
+    from custom_components.nodon_enocean.catalog import PRODUCTS
+    import pytest
+
+    gateway = Gateway("/dev/test")
+    gateway.sender_id = lambda offset: 0xFF800001
+    gateway.unlock = AsyncMock(return_value=False)
+    gateway.set_code = AsyncMock()
+    device = NodOnDevice(gateway, PRODUCTS["SIN-2-1-01"], SIN21, 1, "test", "Test")
+    device.recom_code = 0x12345678
+    with pytest.raises(ReComError):
+        await device.unlock_recom()
+    gateway.set_code.assert_not_awaited()
+    assert device.recom_code == 0x12345678

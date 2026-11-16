@@ -275,7 +275,8 @@
         "name": "Sicherheitscode",
         "state": {
           "assigned": "Zugewiesen",
-          "not_assigned": "Nicht zugewiesen"
+          "not_assigned": "Nicht zugewiesen",
+          "pending": "Zuweisung unbestätigt"
         }
       }
     },

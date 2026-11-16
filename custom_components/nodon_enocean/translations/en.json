@@ -275,7 +275,8 @@
         "name": "Security code",
         "state": {
           "assigned": "Assigned",
-          "not_assigned": "Not assigned"
+          "not_assigned": "Not assigned",
+          "pending": "Assignment unconfirmed"
         }
       }
     },

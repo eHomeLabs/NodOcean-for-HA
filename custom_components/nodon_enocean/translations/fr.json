@@ -275,7 +275,8 @@
         "name": "Code de sécurité",
         "state": {
           "assigned": "Attribué",
-          "not_assigned": "Non attribué"
+          "not_assigned": "Non attribué",
+          "pending": "Attribution non confirmée"
         }
       }
     },

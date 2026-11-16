@@ -99,11 +99,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
     code_store: Store[dict[str, str]] = Store(hass, 1, _code_store_key(entry))
     codes: dict[str, str] = await code_store.async_load() or {}
 
-    @callback
-    def _save_code(device: NodOnDevice) -> None:
-        if device.recom_code is not None:
-            codes[device.id_str] = f"{device.recom_code:08X}"
-            hass.async_create_task(code_store.async_save(dict(codes)))
+    code_save_lock = asyncio.Lock()
+
+    async def _save_code(device: NodOnDevice) -> None:
+        async with code_save_lock:
+            updated = dict(codes)
+            if device.recom_code is not None:
+                updated[device.id_str] = f"{device.recom_code:08X}"
+                if device.recom_pending:
+                    updated[f"{device.id_str}_pending"] = "1"
+                else:
+                    updated.pop(f"{device.id_str}_pending", None)
+                await code_store.async_save(updated)
+                codes.clear()
+                codes.update(updated)
 
     dev_reg = dr.async_get(hass)
     hub = dev_reg.async_get_or_create(
@@ -136,7 +145,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
         )
         if (saved := codes.get(device.id_str)) is not None:
             device.recom_code = int(saved, 16)
-        device.state["recom_secured"] = device.recom_code is not None
+        device.recom_pending = codes.get(f"{device.id_str}_pending") == "1"
+        device.state["recom_secured"] = device.recom_secured
         device.on_code_change = _save_code
         device.start()
         runtime.devices[subentry_id] = device
@@ -190,8 +200,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: NodOnConfigEntry) -> boo
         for device in list(runtime.devices.values()):
             if device.product.model not in features.RECOM:
                 continue
-            # Produit sans code : on lui en attribue un s'il vient d'être mis sous
-            # tension (fenêtre de 15 min), sinon le bouton Déverrouiller le fera.
+            # Le candidat est sauvegardé avant envoi ; sa fenêtre d’acceptation
+            # dépend du produit et de son firmware.
             if device.recom_code is None:
                 try:
                     await device.unlock_recom()

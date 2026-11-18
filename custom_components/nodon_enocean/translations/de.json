@@ -405,6 +405,9 @@
       },
       "recom_unlock": {
         "name": "Entsperren (Remote Commissioning)"
+      },
+      "export_ocean2mqtt": {
+        "name": "Export für Ocean2MQTT"
       }
     },
     "image": {

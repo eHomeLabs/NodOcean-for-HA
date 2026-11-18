@@ -148,6 +148,16 @@ Depuis la v0.5.0, l'intégration peut aussi envoyer l'état des produits vers un
 
 Tous les détails sont dans le wiki : [Pont MQTT](https://github.com/eHomeLabs/NodOcean-for-HA/wiki/Pont-MQTT).
 
+## Passer à Ocean2MQTT
+
+[Ocean2MQTT](https://github.com/eHomeLabs/Ocean2MQTT) est la passerelle EnOcean ↔ MQTT multi-marques d'eHomeLabs, façon Zigbee2MQTT. Vous pouvez y reprendre vos produits NodOcean **sans les réappairer**, en gardant la même clé EnOcean :
+
+- **Add-on Ocean2MQTT** : il détecte NodOcean et propose de reprendre produits, noms, pièces et codes Remote Commissioning. Installation : [![Ajouter le dépôt Ocean2MQTT à Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FeHomeLabs%2Fhassio-ocean2mqtt)
+  ([guide](https://github.com/eHomeLabs/Ocean2MQTT/wiki/Migration-depuis-NodOcean))
+- **Ocean2MQTT sur une autre machine (Docker…)** : appareil **Clé EnOcean** → bouton **Exporter pour Ocean2MQTT** (v0.8.6). Le fichier `nodocean_export_ocean2mqtt.json` est écrit dans le dossier de configuration de Home Assistant ; importez-le dans Ocean2MQTT (Réglages → Migration et sauvegarde). Il contient vos codes Remote Commissioning : ne le partagez pas.
+
+Avant de démarrer Ocean2MQTT, **désactivez NodOcean for HA** : une clé EnOcean ne peut être utilisée que par un seul logiciel.
+
 ## Supprimer un produit
 
 Dans la liste des produits de l'intégration, faites **⋮ → Supprimer**. Pensez aussi à effacer l'appairage côté produit si besoin : réinitialisation usine, par exemple un appui de plus de 5 s sur le bouton des modules SIN-2.
@@ -217,6 +227,8 @@ Existing HACS installations and custom repositories migrate automatically on Hom
 **Add a product:** open the integration, click **Add a NodOn product**, choose the model, follow the on-screen pairing instructions and give it a name.
 
 Supported: SIN-2-1-01, SIN-2-2-01, SIN-2-FP-01, SIN-2-RS-01, ASP-2 (D2-01-0A, no metering), ASP-2-METERING (D2-01-0B: ASP-2-1-01 / ASP-2-1-11 / Ubiwizz UBID1501S, power and energy), MSP-2, CWS-2-1, CRC-2, CFS-2, CCS-2, TSB-2, SDO-2, SWO-2, PIR-2, STP-2, STPH-2.
+
+**Moving to Ocean2MQTT:** [Ocean2MQTT](https://github.com/eHomeLabs/Ocean2MQTT) (multi-brand EnOcean ↔ MQTT gateway) can take your NodOcean devices over without re-pairing when you keep the same stick: the add-on finds them directly, or use the **Export for Ocean2MQTT** button (v0.8.6) on the **EnOcean stick** device. Disable NodOcean for HA before starting Ocean2MQTT.
 
 ### Feedback and suggestions
 

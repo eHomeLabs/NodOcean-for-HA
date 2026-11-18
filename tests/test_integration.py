@@ -295,3 +295,50 @@ async def test_asp_variants(hass: HomeAssistant, dongle) -> None:
     dongle.inject(0xD2, bytes.fromhex("07 60 00 00 00 64"), 0x01A33881)
     await hass.async_block_till_done()
     assert float(hass.states.get(power).state) == 100.0
+
+
+async def test_export_for_ocean2mqtt(hass: HomeAssistant, dongle) -> None:
+    """Bouton « Exporter pour Ocean2MQTT » : fichier d'import et notification."""
+    import json  # noqa: PLC0415
+
+    from homeassistant.helpers import area_registry as ar  # noqa: PLC0415
+
+    entry = await _setup_gateway(hass)
+    salon = ar.async_get(hass).async_get_or_create("Salon")
+    entry = await _pair(
+        hass,
+        entry,
+        dongle,
+        "SIN-2-1-01",
+        lambda: dongle.inject(0xD4, bytes.fromhex("A0 01 46 00 0F 01 D2"), SIN21),
+        "Lampe salon",
+        salon.id,
+    )
+    entry = await _pair(
+        hass,
+        entry,
+        dongle,
+        "STPH-2",
+        lambda: dongle.inject(0xA5, bytes.fromhex("00 00 00 00"), STPH),
+        "Chambre",
+    )
+    runtime = entry.runtime_data
+    lamp = next(d for d in runtime.devices.values() if d.id_str == f"{SIN21:08X}")
+    lamp.recom_code = 0x1234ABCD
+    ent = er.async_get(hass).async_get_entity_id(
+        "button", DOMAIN, f"gateway_{BASE_ID:08X}_export_ocean2mqtt"
+    )
+    assert ent is not None
+    await hass.services.async_call("button", "press", {"entity_id": ent}, blocking=True)
+    await hass.async_block_till_done()
+    path = hass.config.path("nodocean_export_ocean2mqtt.json")
+    data = await hass.async_add_executor_job(lambda: json.load(open(path, encoding="utf-8")))
+    assert data["format"] == "ocean2mqtt-import"
+    assert data["gateway"]["base_id"] == f"{BASE_ID:08X}"
+    devices = {d["id"]: d for d in data["devices"]}
+    assert devices[f"{SIN21:08X}"] == {
+        "id": f"{SIN21:08X}", "model": "SIN-2-1-01", "name": "Lampe salon", "area": "Salon",
+        "sender_offset": 1, "recom_code": "1234ABCD", "recom_pending": False,
+    }
+    assert devices[f"{STPH:08X}"]["sender_offset"] is None
+    assert devices[f"{STPH:08X}"]["recom_code"] is None

@@ -152,7 +152,8 @@ Tous les détails sont dans le wiki : [Pont MQTT](https://github.com/eHomeLabs/N
 
 [Ocean2MQTT](https://github.com/eHomeLabs/Ocean2MQTT) est la passerelle EnOcean ↔ MQTT multi-marques d'eHomeLabs, façon Zigbee2MQTT. Vous pouvez y reprendre vos produits NodOcean **sans les réappairer**, en gardant la même clé EnOcean :
 
-- **Add-on Ocean2MQTT** : il détecte NodOcean et propose de reprendre produits, noms, pièces et codes Remote Commissioning.
+- **Add-on Ocean2MQTT** : il détecte NodOcean et propose de reprendre produits, noms, pièces et codes Remote Commissioning. Installation : [![Ajouter le dépôt Ocean2MQTT à Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FeHomeLabs%2Fhassio-ocean2mqtt)
+  ([guide](https://github.com/eHomeLabs/Ocean2MQTT/wiki/Migration-depuis-NodOcean))
 - **Ocean2MQTT sur une autre machine (Docker…)** : appareil **Clé EnOcean** → bouton **Exporter pour Ocean2MQTT** (v0.8.6). Le fichier `nodocean_export_ocean2mqtt.json` est écrit dans le dossier de configuration de Home Assistant ; importez-le dans Ocean2MQTT (Réglages → Migration et sauvegarde). Il contient vos codes Remote Commissioning : ne le partagez pas.
 
 Avant de démarrer Ocean2MQTT, **désactivez NodOcean for HA** : une clé EnOcean ne peut être utilisée que par un seul logiciel.

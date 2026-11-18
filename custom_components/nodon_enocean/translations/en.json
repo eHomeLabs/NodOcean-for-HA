@@ -405,6 +405,9 @@
       },
       "recom_unlock": {
         "name": "Unlock (Remote Commissioning)"
+      },
+      "export_ocean2mqtt": {
+        "name": "Export for Ocean2MQTT"
       }
     },
     "image": {

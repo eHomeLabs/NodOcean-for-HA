@@ -27,6 +27,11 @@ from .gateway import GatewayError
 
 # Fichier écrit dans le dossier de configuration de Home Assistant
 EXPORT_FILE = "nodocean_export_ocean2mqtt.json"
+# Ajoute le dépôt d'add-ons Ocean2MQTT à Home Assistant (lien My Home Assistant)
+ADDON_REPOSITORY_URL = (
+    "https://my.home-assistant.io/redirect/supervisor_add_addon_repository/"
+    "?repository_url=https%3A%2F%2Fgithub.com%2FeHomeLabs%2Fhassio-ocean2mqtt"
+)
 
 
 async def async_setup_entry(
@@ -114,6 +119,7 @@ class NodOnExportOcean2MQTT(ButtonEntity):
             text = (
                 f"{count} produit(s) exporté(s) dans `{EXPORT_FILE}` (dossier de "
                 "configuration de Home Assistant).\n\n"
+                f"- **Installer l'add-on Ocean2MQTT** : [ajouter le dépôt]({ADDON_REPOSITORY_URL}).\n"
                 "- **Add-on Ocean2MQTT** : rien à faire, il reprend vos produits directement "
                 "(Réglages → Migration et sauvegarde).\n"
                 "- **Ocean2MQTT sur une autre machine** : récupérez ce fichier (Samba, File "
@@ -130,6 +136,7 @@ class NodOnExportOcean2MQTT(ButtonEntity):
             text = (
                 f"{count} Gerät(e) in `{EXPORT_FILE}` exportiert (Home-Assistant-"
                 "Konfigurationsordner).\n\n"
+                f"- **Ocean2MQTT-Add-on installieren**: [Repository hinzufügen]({ADDON_REPOSITORY_URL}).\n"
                 "- **Ocean2MQTT-Add-on**: nichts zu tun, es übernimmt Ihre Geräte direkt "
                 "(Einstellungen → Migration und Sicherung).\n"
                 "- **Ocean2MQTT auf einem anderen Rechner**: Datei holen (Samba, File editor…) "
@@ -143,6 +150,7 @@ class NodOnExportOcean2MQTT(ButtonEntity):
             text = (
                 f"{count} device(s) exported to `{EXPORT_FILE}` (Home Assistant configuration "
                 "folder).\n\n"
+                f"- **Install the Ocean2MQTT add-on**: [add the repository]({ADDON_REPOSITORY_URL}).\n"
                 "- **Ocean2MQTT add-on**: nothing to do, it takes your devices over directly "
                 "(Settings → Migration and backup).\n"
                 "- **Ocean2MQTT on another machine**: fetch this file (Samba, File editor…) and "
